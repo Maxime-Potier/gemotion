@@ -1,0 +1,53 @@
+<dialog data-dialog-target="modal" class="backdrop:bg-slate-400 backdrop:opacity-80 w-full lg:w-2/3 popup-chap-modal">
+    <h3 class="video-h3 mt-6 mb-[32px] tt-uppercase">Personnalisez votre film! </h3>
+    <div class="w-full flex-im flex-row justify-center items-start">
+        <div class="chapter-popup-block">
+        <div class="video-chapter-thumb-wrapper">
+            <div class="video-chapter-thumb-wrapper-simpletext">
+            <% if res[:ct].image.attached? %>
+                <%= image_tag res[:ct].image, class: "video-chapter-thumb" %>
+            <% else %>
+                <p>Pas d'image</p>
+            <% end %>
+            <div class="flex flex-row justify-start items-center video-chapter-thumb-wrapper-text">
+                <%= res[:ct].name %>
+                <%= image_tag "icons/carbon_edit.png", class: "ml-15"%>
+            </div>
+            </div>
+            <p class="mt-2 mb-2 p-text-16">“Description des chapitres lorem ipsum dolor sit amet consectetur. Dictum eu morbi ac elit enim at neque urna. Eleifend condimentum ipsum a lectus tortor est arcu”</p>
+            <div class="font-bold">Choisissez la couleur du diapositive</div>
+            <div class="color-picker flex-im flex-row justify-start items-center mt-4">
+            <% colors = { white: 'white', red: 'red', orange: 'orange', yellow: 'yellow', green: 'green', lightblue: 'lightblue', dodgerblue: 'dodgerblue', violet: 'violet' } %>
+            <% default_color = colors.keys.first.to_s %> <!-- Set the default color to the first in the list -->
+            <% colors.each do |color_name, color_value| %>
+                <%= f.radio_button "chapters[#{res[:ct].id}][slide_color]", color_value,
+                                id: "#{color_value}_#{res[:ct].id}",
+                                checked: (res[:slide_color] == color_value || (res[:slide_color].nil? && color_value == default_color)) %>
+                <%= f.label "#{color_value}_#{res[:ct].id}", "&nbsp;".html_safe, class: "color-circle #{color_value}" %>
+            <% end %>
+            </div>
+            <div class="font-bold mt-4">Text</div>
+            <div class="text-options">
+            <div class="form-group">
+                <%= f.select "chapters[#{res[:ct].id}][text_family]", options_for_select(['Poppins','Arial', 'Helvetica', 'Times New Roman', 'Verdana', 'Courier New'], res[:text_family]), {}, class: 'custom-select w-full mt-2' %>
+            </div>
+
+            <div class="form-group">
+                <%= f.select "chapters[#{res[:ct].id}][text_style]", options_for_select(['Normal', 'Bold', 'Italic', 'Bold Italic'], res[:text_style]), {}, class: 'custom-select w-full mt-2' %>
+            </div>
+
+            <div class="form-group">
+                <%= f.select "chapters[#{res[:ct].id}][text_size]", options_for_select([12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56], res[:text_size]), {}, class: 'custom-select w-full mt-2' %>
+            </div>
+            </div>
+
+            <div class="prev-your-text flex-im justify-start items-center">Aperçu de votre texte</div>
+            <%= button_tag type: 'button', formmethod: 'dialog', class: 'black-link w-100i', data: { action: 'click->dialog#close' } do %>
+            Appliquer les modifications
+            <%= image_tag 'icons/mdi_magic.png', alt: 'Download Icon', class: 'inline-block', style: 'height: 16px; width: 16px; margin-left: 10px; margin-bottom:3px;' %>
+            <% end %>
+        </div>
+        </div>
+    </div>
+</dialog>
+

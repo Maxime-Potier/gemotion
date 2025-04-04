@@ -278,15 +278,61 @@ class VideosController < ApplicationController
       if (new_order_index = ordered_previews.index(filename))
         video_preview.update(order: new_order_index)
       end
+      
+      # Update text overlay properties for existing previews
+      if params[:preview_overlay] && params[:preview_overlay][video_preview.preview.id.to_s]
+        preview_overlay = params[:preview_overlay][video_preview.preview.id.to_s]
+        video_preview.preview.update(
+          text: preview_overlay[:text],
+          text_position: preview_overlay[:text_position],
+          start_time: 0,#preview_overlay[:start_time],
+          duration: 3,#preview_overlay[:duration],
+          font_type: preview_overlay[:font_type],
+          font_style: preview_overlay[:font_style],
+          font_size: preview_overlay[:font_size],
+          animation: preview_overlay[:animation],
+          text_color: preview_overlay[:text_color]
+        )
+      end
     end
 
     # Add new previews and assign order based on their position in `images_order`
+    # Also handle text overlay data for new previews
     uploaded_previews.each do |preview_file|
       next if preview_file.blank?
 
-      preview = Preview.create(image: preview_file)
+      # Get position from filename in ordered_previews
+      position = 1
+      positions = []
+      positions = params[:previews].values
+      keys = params[:previews].keys
+      positions.each_with_index do |value,index|
+        position = keys[index] if value == preview_file
+      end
+
       order_index = ordered_previews.index(preview_file.original_filename)
-      @video.video_previews.create(preview:, order: order_index) if order_index
+      
+      # Create the preview with text overlay properties if available
+      preview_attrs = { image: preview_file }
+      
+      # Check if we have text overlay data for this position
+      if params[:new_preview_overlay] && params[:new_preview_overlay][position.to_s]
+        overlay_data = params[:new_preview_overlay][position.to_s]
+        preview_attrs.merge!(
+          text: overlay_data[:text],
+          text_position: overlay_data[:text_position],
+          start_time: overlay_data[:start_time],
+          duration: overlay_data[:duration],
+          font_type: overlay_data[:font_type],
+          font_style: overlay_data[:font_style],
+          font_size: overlay_data[:font_size],
+          animation: overlay_data[:animation],
+          text_color: overlay_data[:text_color]
+        )
+      end
+      
+      preview = Preview.create(preview_attrs)
+      @video.video_previews.create(preview: preview, order: order_index) if order_index
     end
 
     # Re-assign previews_order for the video model

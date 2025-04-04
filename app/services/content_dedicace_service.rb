@@ -67,13 +67,13 @@ class ContentDedicaceService
     finalize_mlt
 
     attach_final_video(final_video_path)
-    rescue StandardError => e
-      # Log the error or take other actions if necessary
-      Rails.logger.error("Error in call method: #{e.message}")
-      { error: e.message }
-    ensure
-      # Always clean up the temp directory
-      # FileUtils.rm_rf(@temp_dir)
+  rescue StandardError => e
+    # Log the error or take other actions if necessary
+    Rails.logger.error("Error in call method: #{e.message}")
+    { error: e.message }
+  ensure
+    # Always clean up the temp directory
+    # FileUtils.rm_rf(@temp_dir)
   end
 
   private
@@ -147,13 +147,91 @@ class ContentDedicaceService
     preview_assets.each_with_index do |preview, index|
       preview_path = ActiveStorage::Blob.service.send(:path_for, preview.preview.image.key)
       output_path = @temp_dir.join("preview_#{index}.ts")
+
+      # Check if this preview has text overlay settings
+      preview_text = preview.preview.text
+      text_position = preview.preview.text_position
+      start_time = preview.preview.start_time
+      duration = preview.preview.duration || @imgs_to_video_duration_in_seconds.to_f
+      font_type = preview.preview.font_type
+      font_style = preview.preview.font_style
+      font_size = preview.preview.font_size
+      animation = preview.preview.animation
+      text_color = preview.preview.text_color
+
       p "+" * 100 + "process_preview" + "+" * 100
-      system(
-        "ffmpeg -y -loop 1 -i \"#{preview_path}\" " \
-        "-f lavfi -i anullsrc=r=44100:cl=stereo " \
-        "-c:v libx264 -c:a aac -t #{@imgs_to_video_duration_in_seconds} -r 30 -vf \"scale=1280:720\" -pix_fmt yuvj420p " \
-        "\"#{output_path}\""
-      )
+
+      # Use default values if not provided
+      duration ||= @imgs_to_video_duration_in_seconds.to_f
+      start_time ||= 0
+
+      # Build the ffmpeg filter command based on text overlay properties
+      if preview_text.present?
+        fontfile = Rails.root.join("app/assets/images/fonts/#{font_type || 'Arial'}-#{font_style}.ttf").to_s
+        font_size ||= 80
+        text_color ||= "white"
+
+        # Determine text position
+        text_position ||= "middle" # Default to middle
+        position_params = case text_position
+                          when "top"
+                            "x=(w-text_w)/2:y=h/10"
+                          when "bottom"
+                            "x=(w-text_w)/2:y=h-h/10-text_h"
+                          when "middle"
+                            "x=(w-text_w)/2:y=(h-text_h)/2"
+                          when "top-left"
+                            "x=w/10:y=h/10"
+                          when "top-right"
+                            "x=w-w/10-text_w:y=h/10"
+                          when "bottom-left"
+                            "x=w/10:y=h-h/10-text_h"
+                          when "bottom-right"
+                            "x=w-w/10-text_w:y=h-h/10-text_h"
+                          else
+                            "x=(w-text_w)/2:y=(h-text_h)/2"
+                          end
+
+        # Add animation if specified
+        animation_params = case animation
+                           when "fade-in"
+                             ":alpha='if(lt(t,#{start_time}),0,if(lt(t,#{start_time + 0.5}),(t-#{start_time})/0.5,1))'"
+                           when "slide-in"
+                             ":x='if(lt(t,#{start_time}),-text_w,if(lt(t,#{start_time + 0.5}),((t-#{start_time})/0.5)*(w-text_w)/2+(-text_w),#{position_params.split(':')[0].sub(
+                               'x=', ''
+                             )}))'"
+                           when "zoom-in"
+                             ":fontsize='if(lt(t,#{start_time}),0,if(lt(t,#{start_time + 0.5}),(t-#{start_time})/0.5*#{font_size},#{font_size}))'"
+                           when "typewriter"
+                             # Typewriter effect is complex in ffmpeg; we'll do a simple version
+                             ":text='#{preview_text.chars.each_with_index.map do |c, i|
+                               preview_text[0..i]
+                             end.join('\\\\|')}':enable='between(t,#{start_time},#{start_time + duration})'"
+                           else
+                             ":enable='between(t,#{start_time},#{start_time + duration})'"
+                           end
+
+        # Build the complete drawtext filter
+        drawtext_filter = "drawtext=text='#{preview_text}':fontfile='#{fontfile}':" \
+                         "fontcolor=#{text_color}:fontsize=#{font_size}:#{position_params}:" \
+                         "box=1:boxcolor=black@0.0:boxborderw=5#{animation_params}"
+
+        # Apply the filter to the image
+        system(
+          "ffmpeg -y -loop 1 -i \"#{preview_path}\" " \
+          "-f lavfi -i anullsrc=r=44100:cl=stereo " \
+          "-c:v libx264 -c:a aac -t #{@imgs_to_video_duration_in_seconds} -r 30 -vf \"scale=1280:720,#{drawtext_filter}\" -pix_fmt yuvj420p " \
+          "\"#{output_path}\""
+        )
+      else
+        # No text overlay, just use the standard processing
+        system(
+          "ffmpeg -y -loop 1 -i \"#{preview_path}\" " \
+          "-f lavfi -i anullsrc=r=44100:cl=stereo " \
+          "-c:v libx264 -c:a aac -t #{@imgs_to_video_duration_in_seconds} -r 30 -vf \"scale=1280:720\" -pix_fmt yuvj420p " \
+          "\"#{output_path}\""
+        )
+      end
       p "-" * 100 + "process_preview" + "-" * 100
       @ts_videos << output_path.to_s
 

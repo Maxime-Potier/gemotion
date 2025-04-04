@@ -1,0 +1,102 @@
+<div id="text-overlay-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white p-8 rounded-lg w-11/12 md:w-2/3 lg:w-1/2 max-h-90vh overflow-y-auto">
+    <h2 class="text-2xl font-bold mb-4"><%= t("add_text_to_image") %></h2>
+    
+    <div class="mb-4">
+      <label for="overlay-text" class="block mb-2 font-bold"><%= t("text") %></label>
+      <textarea id="overlay-text" class="w-full p-2 border rounded" placeholder=<%= t("enter_your_text_here") %>></textarea>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div>
+        <label for="text-position" class="block mb-2 font-bold"><%= t("position") %></label>
+        <select id="text-position" class="w-full p-2 border rounded">
+          <option value="top"><%= t("top") %></option>
+          <option value="middle" selected><%= t("middle") %></option>
+          <option value="bottom"><%= t("bottom") %></option>
+          <option value="top-left"><%= t("top_left") %></option>
+          <option value="top-right"><%= t("top_right") %></option>
+          <option value="bottom-left"><%= t("bottom_left") %></option>
+          <option value="bottom-right"><%= t("bottom_right") %></option>
+        </select>
+      </div>
+      
+      <div>
+        <label for="text-animation" class="block mb-2 font-bold"><%= t("animation") %></label>
+        <select id="text-animation" class="w-full p-2 border rounded">
+          <option value="none" selected><%= t("none") %></option>
+          <option value="fade-in"><%= t("fade_in") %></option>
+          <option value="slide-in"><%= t("slide_in") %></option>
+          <option value="zoom-in"><%= t("zoom_in") %></option>
+        </select>
+      </div>
+      
+      <div>
+        <label for="font-type" class="block mb-2 font-bold"><%= t("font_type") %></label>
+        <select id="font-type" class="w-full p-2 border rounded">
+          <option value="Poppins">Poppins</option>
+          <option value="Arial">Arial</option>
+          <option value="Helvetica">Helvetica</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Courier New">Courier New</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="font-style" class="block mb-2 font-bold"><%= t("font_style") %></label>
+        <select id="font-style" class="w-full p-2 border rounded">
+          <option value="Normal">Normal</option>
+          <option value="Bold">Bold</option>
+          <option value="Italic">Italic</option>
+          <option value="Bold Italic">Bold Italic</option>
+        </select>
+      </div>
+      
+      <div>
+        <label for="text-color" class="block mb-2 font-bold"><%= t("colour") %></label>
+        <input type="color" id="text-color" class="w-full p-0 h-10 border rounded" value="#ffffff">
+      </div>
+
+      <!-- div class="color-picker flex-im flex-row justify-start items-center mt-4">
+        <% colors = { white: 'white', red: 'red', orange: 'orange', yellow: 'yellow', green: 'green', lightblue: 'lightblue', dodgerblue: 'dodgerblue', violet: 'violet' } %>
+        <% default_color = colors.keys.first.to_s %>
+        <% colors.each do |color_name, color_value| %>
+            <%= radio_button_tag "text-color", color_value, (color_value == default_color), id: "text-color-#{color_value}", onclick: "document.getElementById('text-color').value = this.value;" %>
+            <%= label_tag "text-color-#{color_value}", "&nbsp;".html_safe, class: "color-circle #{color_value}" %>
+        <% end %>
+      </div -->
+      
+      <!-- div>
+        <label for="start-time" class="block mb-2 font-bold"><%= t("start_time") %></label>
+        <input type="number" id="start-time" class="w-full p-2 border rounded" min="0" max="3" step="0.1" value="0">
+      </div>
+      
+      <div>
+        <label for="duration" class="block mb-2 font-bold"><%= t("duration") %></label>
+        <input type="number" id="duration" class="w-full p-2 border rounded" min="0.5" max="3" step="0.1" value="3">
+      </div -->
+      
+      <div>
+        <label for="font-size" class="block mb-2 font-bold"><%= t("font_size") %></label>
+        <!-- input type="number" id="font-size" class="w-full p-2 border rounded" min="12" max="72" value="80" -->
+        <select id="font-size" class="w-full p-2 border rounded">
+          <option value="40"><%= t("small") %></option>
+          <option value="80"><%= t("medium") %></option>
+          <option value="120"><%= t("large") %></option>
+          <option value="160"><%= t("extra_large") %></option>
+        </select>
+      </div>
+    </div>
+    
+    <input type="hidden" id="current-preview-id">
+    <input type="hidden" id="current-preview-position">
+    <input type="hidden" id="start-time" value="0">
+    <input type="hidden" id="duration" value="3">
+    
+    <div class="flex justify-end gap-4">
+      <button id="cancel-overlay" class="px-4 py-2 bg-gray-300 rounded"><%= t("cancel") %></button>
+      <button id="save-overlay" class="px-4 py-2 bg-blue-600 rounded"><%= t("save") %></button>
+    </div>
+  </div>
+</div>

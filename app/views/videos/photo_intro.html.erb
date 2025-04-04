@@ -1,14 +1,14 @@
 <div class="introduction" id="video_intro" data-controller="switchvideo">
   <div class="w-full flex flex-row justify-center">
     <section class="hero w-80">
-      <h1 class="h1-video gradient-text">Ajoutez 3 photos du destinataire pour l'introduction de votre vidéo</h1>
+      <h1 class="h1-video gradient-text"><%= t("photo_intro.add_3_photos_and_text") %></h1>
     </section>
   </div>
   <div class="flex flex-row justify-center w-full">
     <%= image_tag 'left-no-star.png', class: 'image-sides left-image' %>
     <div class="content w-full flex flex-col justify-center items-center">
       <div class="text-with-image-block-adjusted flex justify-center items-center mb-[72px] w-full p-text-16">
-        Ajoutez 3 photos du destinataire pour l'introduction de votre vidéo.
+        <%= t("photo_intro.add_3_photos_and_text") %>
         <%= image_tag 'icons/previews.png', class: 'image-from-image-text-block-occasion' %>
       </div>
 
@@ -17,9 +17,9 @@
         <div class="flex flex-col justify-center">
           <div class="flex-block-container flex flex-col justify-center items-start mb-[48px] relative inline-block w-full">
             <div class="w-full flex flex-col justify-center items-center">
-              <h3 class="video-h3 mb-45">Regardez l'aperçu</h3>
+              <h3 class="video-h3 mb-45"><%= t("photo_intro.watch_the_preview") %></h3>
               <p class="w-100 mb-[32px] p-text-center-16">
-                L'introduction de votre vidéo dépendra de l'option que vous avez sélectionné
+                <%= t("photo_intro.the_introduction_of_your_video") %>
               </p>
             </div>
             <div class="w-full flex flex-col justify-center items-center">
@@ -33,13 +33,28 @@
               <div class="flex flex-row justify-start gap-[10px] this-should-be-sortable-container" id="sortable-container">
                 <% @ordered_previews.each_with_index do |preview, index| %>
                   <div class="flex flex-col justify-center items-center w-full preview-small-image-block"
-                      data-position="<%= index + 1 %>" data-filename="<%= preview.image.blob.filename.to_s %>">
+                      data-position="<%= index + 1 %>" data-filename="<%= preview.image.blob.filename.to_s %>"
+                      data-preview-id="<%= preview.id %>">
                     <div class="delete-preview-icon-btn"
                         data-url="<%= drop_preview_path(preview, video_id: @video.id) %>">
                       <%= image_tag "icons/delete_icon.png", alt: "Delete Icon", class: "purge-chap-icon" %>
                     </div>
                     <%= image_tag preview.image, class: "preview-photo-intro-image" %>
+                    <div class="edit-text-overlay-btn" data-preview-id="<%= preview.id %>">
+                      <%= image_tag "icons/akar-icons_edit.svg", alt: "Edit Text", class: "edit-text-icon" %>
+                    </div>
                   </div>
+                  
+                  <!-- Hidden form fields for this preview's text overlay properties -->
+                  <%= f.hidden_field "preview_overlay[#{preview.id}][text]", id: "preview_text_#{preview.id}", value: preview.text %>
+                  <%= f.hidden_field "preview_overlay[#{preview.id}][text_position]", id: "preview_text_position_#{preview.id}", value: preview.text_position %>
+                  <%= f.hidden_field "preview_overlay[#{preview.id}][start_time]", id: "preview_start_time_#{preview.id}", value: preview.start_time %>
+                  <%= f.hidden_field "preview_overlay[#{preview.id}][duration]", id: "preview_duration_#{preview.id}", value: preview.duration %>
+                  <%= f.hidden_field "preview_overlay[#{preview.id}][font_type]", id: "preview_font_type_#{preview.id}", value: preview.font_type %>
+                  <%= f.hidden_field "preview_overlay[#{preview.id}][font_style]", id: "preview_font_style_#{preview.id}", value: preview.font_style %>
+                  <%= f.hidden_field "preview_overlay[#{preview.id}][font_size]", id: "preview_font_size_#{preview.id}", value: preview.font_size %>
+                  <%= f.hidden_field "preview_overlay[#{preview.id}][animation]", id: "preview_animation_#{preview.id}", value: preview.animation %>
+                  <%= f.hidden_field "preview_overlay[#{preview.id}][text_color]", id: "preview_text_color_#{preview.id}", value: preview.text_color %>
                 <% end %>
                 <% (3 - @ordered_previews.size).times do |i| %>
                   <div class="flex flex-col justify-center items-center w-full preview-small-image-block"
@@ -53,6 +68,9 @@
                     <div class="delete-preview-icon-btn hidden" data-url="">
                       <%= image_tag "icons/delete_icon.png", alt: "Delete Icon", class: "purge-chap-icon" %>
                     </div>
+                    <div class="edit-text-overlay-btn hidden" data-position="<%= @ordered_previews.size + i + 1 %>">
+                      <%= image_tag "icons/akar-icons_edit.svg", alt: "Edit Text", class: "edit-text-icon" %>
+                    </div>
                   </div>
                 <% end %>
               </div>
@@ -60,26 +78,26 @@
             <div class="w-full flex flex-col justify-center items-start mt-2">
               <div class="flex flex-row justify-start gap-[10px]">
                 <div class="flex items-center w-108 text-left">
-                  1 position
+                  1 <%= t("position") %>
                 </div>
                 <div class="flex items-center w-108 text-left">
-                  2 position
+                  2 <%= t("position") %>
                 </div>
                 <div class="flex items-center w-108 text-left">
-                  Child Photo
+                  <%= t("photo_intro.child_photo") %>
                 </div>
               </div>
             </div>
             <%= f.hidden_field :images_order, id: 'image_order', value: @ordered_previews.map { |preview| preview.image.blob.filename.to_s }.join(',') %>
             <div class="edit-video-alert w-full mt-8">
               <%= image_tag "icons/alert.svg" %>
-              <p class="p-text-16">Cliquez et faites glisser pour changer l'ordre</p>
+              <p class="p-text-16"><%= t("photo_intro.click_and_drag") %></p>
             </div>
           </div>
         </div>
         <div class="video-steps">
           <%= render "videos/shared/back_button" %>
-          <%= f.submit "Étape suivante", class: "black-link" %>
+          <%= f.submit t("next_step"), class: "black-link" %>
         </div>
       <% end %>
     </div>
@@ -87,6 +105,8 @@
   </div>
 </div>
 
+<!-- Text Overlay Modal -->
+<%= render "videos/shared/text_overlay_modal" %>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script>
@@ -94,6 +114,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const sortableContainer = document.getElementById("sortable-container");
   const imageOrderInput = document.getElementById("image_order");
   const bigImageBlock = document.querySelector(".preview-big-image-block");
+  const textOverlayModal = document.getElementById("text-overlay-modal");
+
+  // Text overlay form elements
+  const overlayText = document.getElementById("overlay-text");
+  const textPosition = document.getElementById("text-position");
+  const textAnimation = document.getElementById("text-animation");
+  const fontType = document.getElementById("font-type");
+  const fontStyle = document.getElementById("font-style");
+  const textColor = document.getElementById("text-color");
+  const startTime = document.getElementById("start-time");
+  const duration = document.getElementById("duration");
+  const fontSize = document.getElementById("font-size");
+  const currentPreviewId = document.getElementById("current-preview-id");
+  const currentPreviewPosition = document.getElementById("current-preview-position");
+  const cancelOverlayBtn = document.getElementById("cancel-overlay");
+  const saveOverlayBtn = document.getElementById("save-overlay");
 
   // Initialize Sortable.js
   new Sortable(sortableContainer, {
@@ -153,6 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
           block.querySelector(".preview-photo-intro-image").classList.remove("hidden");
           block.querySelector(".add-more-preview-circle").classList.add("hidden");
           block.querySelector(".delete-preview-icon-btn").classList.remove("hidden");
+          block.querySelector(".edit-text-overlay-btn").classList.remove("hidden");
           block.dataset.filename = file.name; // Save filename
           updateOrder(); // Update order with new filename
           displayInBigPreview(e.target.result); // Show the uploaded image in the big preview block
@@ -182,6 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
           deleteButton.dataset.url = ""; // No server-side URL for newly uploaded files
           deleteButton.classList.remove("hidden");
           parentBlock.dataset.filename = file.name; // Save filename in dataset
+          parentBlock.querySelector(".edit-text-overlay-btn").classList.remove("hidden");
           updateOrder(); // Update order with new filename
 
           // Show the uploaded image in the big preview block
@@ -280,6 +318,110 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+  // Handle text overlay editing
+  document.querySelectorAll(".edit-text-overlay-btn").forEach(btn => {
+    btn.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const previewBlock = btn.closest(".preview-small-image-block");
+      const previewId = previewBlock.dataset.previewId;
+      const position = previewBlock.dataset.position;
+      
+      // If it's an existing preview, load its text overlay properties
+      if (previewId) {
+        currentPreviewId.value = previewId;
+        
+        // Load existing values if available
+        const textField = document.getElementById(`preview_text_${previewId}`);
+        const positionField = document.getElementById(`preview_text_position_${previewId}`);
+        const startTimeField = document.getElementById(`preview_start_time_${previewId}`);
+        const durationField = document.getElementById(`preview_duration_${previewId}`);
+        const fontTypeField = document.getElementById(`preview_font_type_${previewId}`);
+        const fontStyleField = document.getElementById(`preview_font_style_${previewId}`);
+        const fontSizeField = document.getElementById(`preview_font_size_${previewId}`);
+        const animationField = document.getElementById(`preview_animation_${previewId}`);
+        const textColorField = document.getElementById(`preview_text_color_${previewId}`);
+
+        overlayText.value = textField ? textField.value || "" : "";
+        textPosition.value = positionField ? positionField.value || "middle" : "middle";
+        startTime.value = startTimeField ? startTimeField.value || 0 : 0;
+        duration.value = durationField ? durationField.value || 3 : 3;
+        fontType.value = fontTypeField ? fontTypeField.value || "Poppins" : "Poppins";
+        fontStyle.value = fontStyleField ? fontStyleField.value || "Normal" : "Normal";
+        fontSize.value = fontSizeField ? fontSizeField.value || 80 : 80;
+        textAnimation.value = animationField ? animationField.value || "none" : "none";
+        textColor.value = textColorField ? textColorField.value || "#ffffff" : "#ffffff";
+      } else {
+        // For new image uploads, use default values and store the position
+        currentPreviewId.value = "";
+        currentPreviewPosition.value = position;
+        
+        // Set default values
+        overlayText.value = "";
+        textPosition.value = "middle";
+        startTime.value = 0;
+        duration.value = 3;
+        fontType.value = "Poppins";
+        fontStyle.value = "Normal";
+        fontSize.value = 80;
+        textAnimation.value = "none";
+        textColor.value = "#ffffff";
+      }
+      
+      // Show the modal
+      textOverlayModal.classList.remove("hidden");
+    });
+  });
+  
+  // Cancel button for text overlay modal
+  cancelOverlayBtn.addEventListener("click", () => {
+    textOverlayModal.classList.add("hidden");
+  });
+  
+  // Save button for text overlay modal
+  saveOverlayBtn.addEventListener("click", () => {
+    const previewId = currentPreviewId.value;
+    const position = currentPreviewPosition.value;
+    
+    if (previewId) {
+      // Update existing preview's hidden fields
+      document.getElementById(`preview_text_${previewId}`).value = overlayText.value;
+      document.getElementById(`preview_text_position_${previewId}`).value = textPosition.value;
+      document.getElementById(`preview_start_time_${previewId}`).value = startTime.value;
+      document.getElementById(`preview_duration_${previewId}`).value = duration.value;
+      document.getElementById(`preview_font_type_${previewId}`).value = fontType.value;
+      document.getElementById(`preview_font_style_${previewId}`).value = fontStyle.value;
+      document.getElementById(`preview_font_size_${previewId}`).value = fontSize.value;
+      document.getElementById(`preview_animation_${previewId}`).value = textAnimation.value;
+      document.getElementById(`preview_text_color_${previewId}`).value = textColor.value;
+    } else if (position) {
+      // For new uploads, create new hidden fields
+      const form = document.getElementById('previews-form');
+      
+      const createHiddenField = (name, value) => {
+        const field = document.createElement('input');
+        field.type = 'hidden';
+        field.name = `new_preview_overlay[${position}][${name}]`;
+        field.value = value;
+        return field;
+      };
+      
+      form.appendChild(createHiddenField('text', overlayText.value));
+      form.appendChild(createHiddenField('text_position', textPosition.value));
+      form.appendChild(createHiddenField('start_time', startTime.value));
+      form.appendChild(createHiddenField('duration', duration.value));
+      form.appendChild(createHiddenField('font_type', fontType.value));
+      form.appendChild(createHiddenField('font_style', fontStyle.value));
+      form.appendChild(createHiddenField('font_size', fontSize.value));
+      form.appendChild(createHiddenField('animation', textAnimation.value));
+      form.appendChild(createHiddenField('text_color', textColor.value));
+    }
+    
+    // Close the modal
+    textOverlayModal.classList.add("hidden");
+  });
+
   // Ensure at least one image is uploaded before form submission
   document.getElementById("previews-form").addEventListener("submit", (event) => {
     const filledInputs = Array.from(document.querySelectorAll(".image-input")).filter((input) => input.files.length > 0);
@@ -297,3 +439,40 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
+<style>
+.edit-text-overlay-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  padding: 5px;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+  margin: 5px;
+}
+
+.edit-text-overlay-btn:hover {
+  background-color: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+}
+
+.edit-text-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.preview-small-image-block {
+  position: relative;
+}
+
+.delete-preview-icon-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 5px;
+  z-index: 10;
+}
+</style>
