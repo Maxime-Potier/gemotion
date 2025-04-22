@@ -287,8 +287,8 @@ class VideosController < ApplicationController
       video_preview.preview.update(
         text: preview_overlay[:text],
         text_position: preview_overlay[:text_position],
-        start_time: 0, # preview_overlay[:start_time],
-        duration: 3, # preview_overlay[:duration],
+        start_time: preview_overlay[:start_time],
+        duration: preview_overlay[:duration],
         font_type: preview_overlay[:font_type],
         font_style: preview_overlay[:font_style],
         font_size: preview_overlay[:font_size],
