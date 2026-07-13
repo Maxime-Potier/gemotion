@@ -219,6 +219,7 @@ en:
       browser_not_supported: "Your browser does not support the video element."
       download_final_video: "Download final video"
       download_mlt_archives: "Download MLT archives"
+      download_final_cut_pro: "Download Final Cut Pro export"
       no_mlt_file: "No MLT file generated."
       refresh_video: "Refresh video"
       refreshing: "Refreshing..."

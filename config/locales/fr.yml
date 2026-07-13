@@ -195,6 +195,7 @@ fr:
       browser_not_supported: "Votre navigateur ne prend pas en charge l'élément vidéo."
       download_final_video: "Télécharger la vidéo finale"
       download_mlt_archives: "Télécharger les archives MLT"
+      download_final_cut_pro: "Télécharger l’export Final Cut Pro"
       no_mlt_file: "Aucun fichier MLT généré."
       refresh_video: "Actualiser la vidéo"
       refreshing: "Actualisation..."

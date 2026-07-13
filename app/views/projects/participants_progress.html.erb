@@ -76,6 +76,11 @@
               <% else %>
                 <p><%= t('.no_mlt_file') %></p>
               <% end %>
+              <% if @video.final_cut_pro_archive.attached? %>
+                <div>
+                  <a href="<%= url_for(@video.final_cut_pro_archive) %>" class="black-link ml-4" download><%= t('.download_final_cut_pro') %></a>
+                </div>
+              <% end %>
             </div>
             <br>
           </div>

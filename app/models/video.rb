@@ -26,6 +26,7 @@ class Video < ApplicationRecord
   has_one_attached :final_video_with_watermark
   has_one_attached :final_video_with_transition
   has_one_attached :final_video_xml
+  has_one_attached :final_cut_pro_archive
 
   belongs_to :user
   belongs_to :music, optional: true

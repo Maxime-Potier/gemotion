@@ -79,9 +79,10 @@ class ContentDedicaceService
     set_final_video_length(final_video_path)
 
     finalize_mlt
+    final_cut_pro_archive_path = build_final_cut_pro_archive(final_video_path)
 
     prepare_progress_stage(94, 99, 1)
-    attach_final_video(final_video_path)
+    attach_final_video(final_video_path, final_cut_pro_archive_path)
   rescue StandardError => e
     # Log the error or take other actions if necessary
     Rails.logger.error("Error in call method: #{e.message}")
@@ -563,6 +564,8 @@ class ContentDedicaceService
     final_video_path = @temp_dir.join("final_video.mp4")
     if @video.whole_video? && final_music_path
 
+      @final_timeline_paths = @ts_videos.dup
+
       add_to_mlt_music(final_music_path, "music_whole_video.mp3", "music_whole_video")
       upload_to_archive("music_whole_video.mp3", final_music_path)
 
@@ -574,7 +577,7 @@ class ContentDedicaceService
       )
       p "-" * 100 + "concatenate_final_video_with_music_on_whole_video" + "-" * 100
     else
-      rebuild_final_video_with_music_by_chapters(final_video_path)
+      @final_timeline_paths = rebuild_final_video_with_music_by_chapters(final_video_path)
     end
     final_video_path
   end
@@ -594,8 +597,9 @@ class ContentDedicaceService
       p "-" * 100 + "Convert final_chapters_videos_with_music to .ts format if needed" + "-" * 100
     end
 
-    final_chapter_videos_introduction = @ts_videos.grep(/introduction\.ts$/)
-    final_chapter_videos_previews = @ts_videos.grep(/preview_\d+\.ts/)
+    transitioned_previews = @ts_videos.grep(/previews_with_transitions\.ts$/)
+    final_chapter_videos_introduction = transitioned_previews.empty? ? @ts_videos.grep(/introduction\.ts$/) : []
+    final_chapter_videos_previews = transitioned_previews.presence || @ts_videos.grep(/preview_\d+\.ts/)
     final_chapter_videos_with_music_ts = final_chapter_videos_with_music.map { |video| video.sub(/\.mp4$/, ".ts") }
 
     if @video.video_type == "colab" && @video.dedicace.present?
@@ -629,9 +633,25 @@ class ContentDedicaceService
       "-r 30 -c:a aac -ar 44100 \"#{final_video_path}\""
     )
     p "-" * 100 + "concatenate_final_video_with_music_by_chapter_video" + "-" * 100
+
+    all_videos_to_concat
   end
 
-  def attach_final_video(final_video_path)
+  def build_final_cut_pro_archive(final_video_path)
+    timeline_paths = Array(@final_timeline_paths).select { |path| File.exist?(path) && File.size(path).positive? }
+    timeline_paths = [final_video_path] if timeline_paths.empty?
+
+    FinalCutProExportService.new(
+      video: @video,
+      media_paths: timeline_paths,
+      output_dir: @temp_dir
+    ).call
+  rescue StandardError => e
+    Rails.logger.error("Unable to build Final Cut Pro export: #{e.message}")
+    nil
+  end
+
+  def attach_final_video(final_video_path, final_cut_pro_archive_path = nil)
     @video.final_video.attach(io: File.open(final_video_path), filename: "final_video.mp4")
 
     watermarked_video_path = generate_watermarked_video(final_video_path)
@@ -641,9 +661,17 @@ class ContentDedicaceService
       File.delete(watermarked_video_path) # Clean up the temporary file
     end
 
-    return unless File.exist?(@archive_path)
+    if File.exist?(@archive_path)
+      @video.final_video_xml.attach(io: File.open(@archive_path), filename: "video_mlt.zip")
+    end
 
-    @video.final_video_xml.attach(io: File.open(@archive_path), filename: "video_mlt.zip")
+    return unless final_cut_pro_archive_path && File.exist?(final_cut_pro_archive_path)
+
+    @video.final_cut_pro_archive.attach(
+      io: File.open(final_cut_pro_archive_path),
+      filename: "final_cut_pro_#{@video.id}.zip",
+      content_type: "application/zip"
+    )
   end
 
   def generate_watermarked_video(video_path)
