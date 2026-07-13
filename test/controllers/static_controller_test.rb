@@ -11,9 +11,18 @@ class StaticControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "#primary_menu", text: /Home/
-    assert_select "a[href='/fr']", text: "FR"
-    assert_select "a[href='/en']", text: "EN"
+    assert_select "#language_switcher a[href='/fr'][data-locale='fr']", text: "FR"
+    assert_select "#language_switcher a[href='/en'][data-locale='en'][aria-current='page']", text: "EN"
     assert_no_match(/translation_missing/, response.body)
+  end
+
+  test "language switch preserves the page and marks French as active" do
+    get about_url(locale: :fr)
+
+    assert_response :success
+    assert_select "#primary_menu", text: /Comment ça marche/
+    assert_select "#language_switcher a[href='/fr/about'][data-locale='fr'][aria-current='page']", text: "FR"
+    assert_select "#language_switcher a[href='/en/about'][data-locale='en']:not([aria-current])", text: "EN"
   end
 
   test "should get about" do
