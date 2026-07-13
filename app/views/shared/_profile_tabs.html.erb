@@ -1,11 +1,11 @@
   <div class="choose-prof-block flex items-center justify-between mt-6 px-[16px]">
     <div class="choose-prof-block-child <%= 'choose-prof-block-child-highlight' if page_count == 0 %>">
-      <%= link_to 'Détails du profil', profile_path, class: 'block w-full h-full' %>
+      <%= link_to t('profile.tabs.details'), profile_path, class: 'block w-full h-full' %>
     </div>
     <div class="choose-prof-block-child <%= 'choose-prof-block-child-highlight' if page_count == 1 %>">
-      <%= link_to 'Projets en cours', as_creator_projects_path, class: 'block w-full h-full' %>
+      <%= link_to t('profile.tabs.projects'), as_creator_projects_path, class: 'block w-full h-full' %>
     </div>
     <div class="choose-prof-block-child <%= 'choose-prof-block-child-highlight' if page_count == 2 %>">
-      <%= button_to 'Se déconnecter', destroy_user_session_path, method: :delete, class: 'block w-full h-full' %>
+      <%= button_to t('profile.tabs.logout'), destroy_user_session_path, method: :delete, class: 'block w-full h-full' %>
     </div>
   </div>

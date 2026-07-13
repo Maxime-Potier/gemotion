@@ -946,10 +946,17 @@ class VideosController < ApplicationController
     @duration_in_minutes = Video.calculate_duration(@video.final_video_duration) # Replace with your logic to fetch duration
     @amount = Video.calculate_price(@duration_in_minutes)
     @stripe_publishable_key = ENV["STRIPE_PUBLISHABLE_KEY"]
+    @payment_bypass_enabled = payment_bypass_enabled?
   end
 
   def payment_post
     authorize @video, :payment_post?, policy_class: VideoPolicy
+
+    if payment_bypass_enabled?
+      @video.update!(paid: true, project_status: :finished)
+      return redirect_to participants_progress_path(video_id: @video.id),
+                         notice: I18n.t("videos.payment.demo_success")
+    end
 
     if params[:stripeToken].blank?
       return redirect_to payment_path, alert: I18n.t("videos.payment.card_required")
@@ -1161,6 +1168,10 @@ class VideosController < ApplicationController
   end
 
   private
+
+  def payment_bypass_enabled?
+    Rails.env.development? || Rails.env.test? || ActiveModel::Type::Boolean.new.cast(ENV["PAYMENT_BYPASS_ENABLED"])
+  end
 
   def prepare_dedicace_de_fin
     @dedicace = @video.dedicace

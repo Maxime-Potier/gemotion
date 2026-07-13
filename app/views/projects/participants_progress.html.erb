@@ -9,13 +9,13 @@
     <div class='flex flex-row items-center justify-start'>
 
       <div data-controller="dialog" data-action="click->dialog#clickOutside">
-        <button data-action="click->dialog#open" class="text-black text-decoration-underline font-bold">Modifier la date limite</button>
+        <button data-action="click->dialog#open" class="text-black text-decoration-underline font-bold"><%= t('.modify_deadline') %></button>
         <dialog data-dialog-target="modal" class="backdrop:bg-slate-400 backdrop:opacity-80 w-full lg:w-2/3 modify-time-modal">
 
 
           <%= form_with url: modify_deadline_path(id: @video.id), method: :patch, html:{class: "h-full", data: { turbo: false }} do |f| %>
             <div class="flex flex-col items-center gap-[48px] h-full pt-40 pb-40 px-[40px] rounded-[20px] border border-[#C9E1FF] bg-white shadow-custom">
-              <p class="p-text-center-bold-16">Vous pouvez modifier la date limite du projet en cours</p>
+              <p class="p-text-center-bold-16"><%= t('.modify_deadline_help') %></p>
               <div class="custom-calendar-container" data-controller="custom-calendar" data-custom-calendar-end-date="<%= @video.end_date %>">
                 <%= hidden_field_tag 'end_date', @video.end_date, id: 'customDateField', data: { custom_calendar_target: "hiddenField" } %>
                 <div id="customCalendar" class="custom-calendar" data-custom-calendar-target="calendarContainer">
@@ -23,8 +23,8 @@
                 </div>
               </div>
               <div class="flex justify-between items-center">
-                <button formmethod="dialog" class="black-link">Annuler</button>
-                <%= f.submit "Étape suivante", class:"transparent-link ml-2" %>
+                <button formmethod="dialog" class="black-link"><%= t('.cancel') %></button>
+                <%= f.submit t('.next_step'), class:"transparent-link ml-2" %>
               </div>
             </div>
 
@@ -33,21 +33,21 @@
       </div>
 
       <div data-controller="dialog" data-action="click->dialog#clickOutside" class="h-[53px]">
-        <button data-action="click->dialog#open" class="ml-15 transparent-link-smaller">Clôturer le projet</button>
+        <button data-action="click->dialog#open" class="ml-15 transparent-link-smaller"><%= t('.close_project') %></button>
         <dialog data-dialog-target="modal" class="backdrop:bg-slate-400 backdrop:opacity-80 w-full w-1063 popup-close-project-modal bg-transparent">
           <div class="text-with-image-block-close-project flex flex-col justify-center items-center mt-65 mb-[72px] px-[27px] w-full p-text-center-16">
-            <p class="font-bold pt-40">Êtes-vous sûr de vouloir arrêter ce projet ?</p>
+            <p class="font-bold pt-40"><%= t('.close_project_confirmation') %></p>
 
             <div class="frame-close-proj">
-              <div>Invitez des amis par e-mail, lien simple, lien WhatsApp, lien Facebook Messenger.</div>
+              <div><%= t('.invite_friends') %></div>
               <div class="close-proj-blue-block flex items-center justify-center">
-                <span>Vous pouvez déplacer la date limite pour permettre à tous les participants de contribuer à la création du film.</span>
+                <span><%= t('.extend_deadline_help') %></span>
               </div>
             </div>
 
             <%= form_with url: close_project_path(id: @video.id), method: :patch, html: {class: "mb-[32px]", data: { turbo: false }} do |f| %>
-              <button formmethod="dialog" class="transparent-link font-bold">Prolonger le délai</button>
-              <%= f.submit "Terminer le projet et enregistrer comme brouillon", class:"black-link ml-2" %>
+              <button formmethod="dialog" class="transparent-link font-bold"><%= t('.extend_deadline') %></button>
+              <%= f.submit t('.finish_as_draft'), class:"black-link ml-2" %>
             <% end %>
             <%= image_tag 'icons/lamp.png', class: 'image-from-image-text-block' %>
           </div>
@@ -65,16 +65,16 @@
           <div>
             <video controls style="max-width: 100%; height: auto; border-radius: 20px;">
               <source src="<%= url_for(@video.final_video) %>" type="video/mp4">
-              Votre navigateur ne prend pas en charge l'élément vidéo.
+              <%= t('.browser_not_supported') %>
             </video>
             <div class="flex flex-row justify-center items-center mt-2">
-              <a href="<%= url_for(@video.final_video) %>" class= "black-link mr-4" download>Télécharger la vidéo finale</a>
+              <a href="<%= url_for(@video.final_video) %>" class= "black-link mr-4" download><%= t('.download_final_video') %></a>
               <% if @video.completed? && @video.final_video_xml.attached? %>
                 <div>
-                  <a href="<%= url_for(@video.final_video_xml) %>" class= "black-link" download>Télécharger les archives MLT</a>
+                  <a href="<%= url_for(@video.final_video_xml) %>" class= "black-link" download><%= t('.download_mlt_archives') %></a>
                 </div>
               <% else %>
-                <p>Aucun fichier MLT généré.</p>
+                <p><%= t('.no_mlt_file') %></p>
               <% end %>
             </div>
             <br>
@@ -82,15 +82,15 @@
         <% else %>
           <video controls style="max-width: 100%; height: auto; border-radius: 20px;">
             <source src="<%= url_for(@video.final_video_with_watermark) %>" type="video/mp4">
-            Votre navigateur ne prend pas en charge l'élément vidéo.
+            <%= t('.browser_not_supported') %>
           </video>
         <%end%>
       </div>
       <div class="w-full flex justify-center items-center mt-6">
-        <%= button_to "Actualiser la vidéo", creator_refresh_video_path(video_id: @video.id), method: :post, class: "black-link", data: { disable_with: "Refreshing...", turbo: false } %>
+        <%= button_to t('.refresh_video'), creator_refresh_video_path(video_id: @video.id), method: :post, class: "black-link", data: { disable_with: t('.refreshing'), turbo: false } %>
       </div>
     <% elsif @video.processing? %>
-      <p>Votre vidéo est en cours de traitement. Cette page sera actualisée une fois prête.</p>
+      <p><%= t('.processing_message') %></p>
     <% else %>
       <div class="flex relative items-center gap-[61px]">
         <%= video_tag asset_path('about.mp4'), id: 'about-video-element', controls: false, width: 982, height: 425, poster: asset_path('gemotion-about-video-poster.svg') %>
@@ -105,8 +105,8 @@
   <hr class='hr-divider-gray mt-65 '/>
 
   <div class="flex justify-start items-center mt-6">
-    <div class="p-text-18-bold">Ajouter mon contenu dans les chapitres</div>
-    <a href="<%= creator_manage_chapters_path(@video.id) %>" class="transparent-link ml-50" data-turbo="false">Gérer les chapitres</a>
+    <div class="p-text-18-bold"><%= t('.add_chapter_content') %></div>
+    <a href="<%= creator_manage_chapters_path(@video.id) %>" class="transparent-link ml-50" data-turbo="false"><%= t('.manage_chapters') %></a>
   </div>
 
   <%if @video_chapters.present? and @video_chapters.count>0%>
@@ -117,7 +117,7 @@
           <%= render "videos/shared/popup_edit_video", chapters: @video_chapters, musics: @musics, video: @video, f: f, collab: false %>
 
           <div class="flex justify-center mt-6">
-            <%= f.submit "Confirmer les modifications", class: "black-link" %>
+            <%= f.submit t('.confirm_changes'), class: "black-link" %>
           </div>
         </div>
       <% end %>
@@ -126,8 +126,8 @@
   <hr class='hr-divider-gray mt-65 '/>
 
   <div class="flex justify-start items-center mt-6">
-    <div class="p-text-18-bold ">Participation à la Dédicace de fin</div>
-    <%= link_to "Gérer Dédicace de fin", creator_manage_dedicace_path(@video.id), data: { turbo: false }, class: "transparent-link ml-50" %>
+    <div class="p-text-18-bold "><%= t('.final_dedication_participation') %></div>
+    <%= link_to t('.manage_final_dedication'), creator_manage_dedicace_path(@video.id), data: { turbo: false }, class: "transparent-link ml-50" %>
   </div>
   <%if @video_dedicace.present? && @video_dedicace.creator_end_dedication_video.attached?%>
     <div class="projects-grid mt-8">
@@ -145,18 +145,18 @@
   <div class="mt-8 w-full">
     <%if @video.colab?%>
       <div class="w-full flex flex-row justify-center items-center">
-        <%= link_to "Inviter des collaborateurs", invite_collaborators_path(video_id: @video.id), data: { turbo: false }, class: "transparent-link" %>
+        <%= link_to t('.invite_collaborators'), invite_collaborators_path(video_id: @video.id), data: { turbo: false }, class: "transparent-link" %>
       </div>
     <% end %>
     <% @participants.each do |collaboration| %>
       <div class="flex flex-col justify-center w-full mt-25">
         <div class="flex flex-row justify-start items-center">
-          <p><%= collaboration.invited_user.first_name.capitalize %> <%= collaboration.invited_user.last_name.capitalize %> Progress</p>
-            <%= button_to 'Supprimer un collaborateur',
+          <p><%= t('.participant_progress', name: "#{collaboration.invited_user.first_name.capitalize} #{collaboration.invited_user.last_name.capitalize}") %></p>
+            <%= button_to t('.delete_collaborator'),
               delete_collaboration_path(collaboration.id),
               method: :delete,
               class: 'ml-2 font-medium text-black text-decoration-underline',
-              form: { data: { turbo: false, confirm: 'Êtes-vous sûr de vouloir supprimer ce collaborateur ?' } } %>
+              form: { data: { turbo: false, confirm: t('.delete_collaborator_confirmation') } } %>
         </div>
           <%= form_with url: approving_collaborator_attachments_path(video_id: @video.id), method: :post, html: { data: { turbo: false } } do |f| %>
 
@@ -167,7 +167,7 @@
           <%if collaboration.collaborator_dedicace.present? && collaboration.collaborator_dedicace.creator_end_dedication_video.attached?%>
             <div class="project-main-block flex flex-col justify-start items-center chapter-item">
               <div class="mb-2 p-text-16">
-                Approuvée
+                <%= t('.approved') %>
                 <%= f.check_box "collaborator_attachment[dedicace]",
                 { checked: collaboration.collaborator_dedicace.approved_by_creator,
                   data: { toggle: true } },
@@ -184,7 +184,7 @@
           <% collaboration.collaborator_chapters.order(:order).each do |chapter| %>
             <div class="project-main-block flex flex-col justify-start items-center chapter-item" data-id="<%= chapter.id %>">
               <div class="mb-2 p-text-16">
-                Approuvée
+                <%= t('.approved') %>
                 <%= f.check_box "collaborator_attachment[chapter][#{chapter.id}]",
                 { checked: chapter.approved_by_creator,
                   data: { toggle: true } },
@@ -201,7 +201,7 @@
                           <% if chapter.chapter_type.image.attached? %>
                               <%= image_tag chapter.chapter_type.image, class: "h-[150px] w-[200px] object-cover rounded" %>
                           <% else %>
-                              <p>Pas d'image</p>
+                              <p><%= t('.no_image') %></p>
                           <% end %>
                         </div>
                         <div class="w-full">
@@ -245,7 +245,7 @@
                           </div>
                         <%end%>
                         <%= button_tag type: 'button', formmethod: 'dialog', class: 'cta w-100i h-45', data: { action: 'click->dialog#close' } do %>
-                          Fermer
+                          <%= t('.close') %>
                         <% end %>
                       </div>
                     </div>
@@ -261,7 +261,7 @@
         </div>
         <br>
           <div class="flex justify-center">
-            <%= f.submit "Enregistrer les approbations", class: "black-link" %>
+            <%= f.submit t('.save_approvals'), class: "black-link" %>
           </div>
         <%end%>
       </div>

@@ -66,4 +66,63 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
   ensure
     Dir[Rails.root.join("tmp/temp_video_*_1_*.webm")].each { |path| File.delete(path) }
   end
+
+  test "demo payment is always available and completes the project without a Stripe token" do
+    user = User.create!(
+      email: "demo-payment-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456782"
+    )
+    video = user.videos.create!(video_type: :solo, stop_at: "content_dedicace")
+    sign_in user
+
+    get payment_url(locale: :en)
+
+    assert_response :success
+    assert_select "#payment-form button[type='submit']:not([disabled])", text: "Pay"
+    assert_select "[role='status']", text: /Temporary demo mode/
+
+    post payment_post_url(locale: :en)
+
+    assert_redirected_to participants_progress_url(locale: :en, video_id: video.id)
+    assert video.reload.paid?
+    assert video.finished?
+
+    follow_redirect!
+    assert_response :success
+    assert_select ".hello-block", text: /Hello, Test User!/
+    assert_select ".choose-prof-block", text: /Profile details.*Current projects.*Log out/m
+    assert_select "button", text: "Change deadline"
+    assert_select "button", text: "Close project"
+    assert_select "a", text: "Manage chapters"
+    assert_no_match(/Modifier la date limite|Clôturer le projet|Gérer les chapitres/, response.body)
+  end
+
+  test "edit video shows processing state and polls until the preview is ready" do
+    user = User.create!(
+      email: "processing-preview-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456783"
+    )
+    video = user.videos.create!(video_type: :solo, stop_at: "deadline", concat_status: :processing)
+    sign_in user
+
+    get edit_video_url(locale: :en)
+
+    assert_response :success
+    assert_select "#video-processing-state[data-status-url='#{video_concat_status_path(video, locale: :en)}']"
+    assert_select "#video-processing-title", text: "Your video is being prepared"
+    assert_select "video", count: 0
+    assert_select "input[type='submit'][value='Save and pay']", count: 0
+    assert_includes response.body, "window.location.reload()"
+
+    get video_concat_status_url(video, locale: :en)
+
+    assert_response :success
+    assert_equal "processing", response.parsed_body["concat_status"]
+  end
 end
