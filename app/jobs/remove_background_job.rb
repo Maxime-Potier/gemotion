@@ -60,11 +60,12 @@ class RemoveBackgroundJob < ApplicationJob
     python_script = Rails.root.join("lib/scripts/remove_background.py")
 
     # Use the system Python or the virtual environment Python
-    python_path = if File.exist?(Rails.root.join("venv/bin/python"))
-                    Rails.root.join("venv/bin/python").to_s
-                  else
-                    "python3"
-                  end
+    python_path = [
+      ENV["PYTHON_BIN"],
+      "/venv/bin/python",
+      Rails.root.join("venv/bin/python").to_s,
+      "python3"
+    ].compact.find { |path| path == "python3" || File.executable?(path) }
 
     # Execute the Python script and capture output
     logger.info("Executing Python script")

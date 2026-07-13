@@ -8,12 +8,18 @@ class CombineVideoDedicaceJob < ApplicationJob
     video = Video.find(video_id)
     video_dedicace = video.video_dedicace
 
-    return if video_dedicace.nil?
+    return false if video_dedicace.nil?
+
+    ready_slots = video_dedicace.video_dedicace_slots.order(:slot).select do |slot|
+      slot.status == "done" && slot.video.attached?
+    end
+    return false if ready_slots.empty?
 
     # Create temporary directory for processing
     timestamp = Time.now.to_i
     temp_dir = Rails.root.join("tmp", "video_combine_#{timestamp}")
     FileUtils.mkdir_p(temp_dir)
+    output_path = temp_dir.join("final_output.mp4")
 
     begin
       # Download background image
@@ -25,9 +31,7 @@ class CombineVideoDedicaceJob < ApplicationJob
       last_output = "0:v" # Start with background
 
       # Download and prepare each video
-      video_dedicace.video_dedicace_slots.order(:slot).each_with_index do |video_dedicace_slot, index|
-        next unless video_dedicace_slot.video.attached?
-
+      ready_slots.each_with_index do |video_dedicace_slot, index|
         # Download video to temp directory
         video_path = temp_dir.join("input_#{index}.mp4")
         File.open(video_path, "wb") do |file|
@@ -52,20 +56,17 @@ class CombineVideoDedicaceJob < ApplicationJob
         end
 
         # Process video: scale and remove green background
-        filter_complex << "[#{index + 1}:v]scale=#{scale}:-1,chromakey=0x00FF00:0.15:0.2[v#{index}];"
+        filter_complex << "[#{index + 1}:v]scale=#{scale}:-1,chromakey=0x00FF00:0.15:0.2[v#{index}]"
 
         # Overlay on previous result with proper centering
-        filter_complex << "[#{last_output}][v#{index}]overlay=#{x}:#{y}:format=auto[v#{index}out];"
+        filter_complex << "[#{last_output}][v#{index}]overlay=#{x}:#{y}:format=auto[v#{index}out]"
 
         # Update last output for next iteration
         last_output = "v#{index}out"
       end
 
-      # Prepare output path
-      output_path = temp_dir.join("final_output.mp4")
-
       # Build ffmpeg command
-      filter_str = filter_complex.join
+      filter_str = filter_complex.join(";")
 
       Rails.logger.info("Starting video combination with filter: #{filter_str}")
 
@@ -113,10 +114,7 @@ class CombineVideoDedicaceJob < ApplicationJob
       false
     ensure
       # Clean up temporary files
-      p output_path
-      [output_path].each do |path|
-        File.delete(path) if File.exist?(path)
-      end
+      FileUtils.rm_rf(temp_dir)
     end
   end
 end

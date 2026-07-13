@@ -1,5 +1,5 @@
 
-<%= form_with url: dedicace_de_fin_post_path(@video_dedicace), method: :patch, multipart: true, local: true do |f| %>
+<%= form_with url: dedicace_de_fin_post_path(@video), method: :patch, multipart: true, local: true do |f| %>
   <div>
     <h1 class="video-h1"><%= t('videos.dedicace_de_fin.title') %></h1>
     <div class="flex flex-row justify-center w-full">
@@ -15,13 +15,7 @@
               <div class="mr-2 p-text-16"><%= t('videos.dedicace_de_fin.your_media') %></div>
               <div class="flex justify-start items-center p-text-16">
                 <%= image_tag 'icons/mingcute_time-line.png', alt: 'Time Icon', class: 'inline-block ml-15 mr-2', style: 'height: 24px; width: 24px;' %>
-                <span id="recordingDuration">
-                  <%# <% if @video_dedicace.present? && @video_dedicace.creator_end_dedication_video.attached? %> %>
-                    <%# <%= @video_dedicace.creator_end_dedication_video_duration %> %>
-                  <%# else %>
-                    <%# Duration: N/A %>
-                  <%# <% end %> %>
-                </span>
+                <span id="recordingDuration"></span>
               </div>
             </div>
 
@@ -50,7 +44,7 @@
                       <% if video_dedicace_slot.present? && video_dedicace_slot.video.attached? %>
                         <img src="<%= url_for(video_dedicace_slot.preview) %>" class="video-preview" alt="Video Preview">
                         <div class="re-record-overlay">
-                          <span>Re-record?</span>
+                          <span><%= t('videos.dedicace_de_fin.rerecord') %></span>
                         </div>
                       <% else %>
                         <div class="plus-button">
@@ -92,7 +86,7 @@
                     <div class="spinner-animation">
                       <span class="loader"></span>
                     </div>
-                    <p>Processing video...</p>
+                    <p><%= t('videos.dedicace_de_fin.processing_video') %></p>
                   </div>
                   
                   <div id="recordingTimer" class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded" style="display: none;">
@@ -103,12 +97,12 @@
                 <div class="modal-buttons">
                   <button type="button" id="startRecording" class="record-transparent">
                     <%= image_tag "icons/fluent_record-24-regular.png", alt: "Start Recording", class: "inline-block", style: "height: 16px; width: 16px;" %>
-                    Commencer l'enregistrement vidéo
+                    <%= t('videos.dedicace_de_fin.start_recording') %>
                   </button>
 
                   <button type="button" id="stopRecording" class="record-transparent" style="display: none;">
                     <%= image_tag "icons/fluent_record-24-regular.png", alt: "Stop Recording", class: "inline-block", style: "height: 16px; width: 16px;" %>
-                    Arrêter l'enregistrement vidéo
+                    <%= t('videos.dedicace_de_fin.stop_recording') %>
                   </button>
 
                   <button type="button" id="confirmRecording" class="black-link" style="display: none;">
@@ -116,7 +110,7 @@
                   </button>
 
                   <button type="button" id="cancelRecording" class="black-link">
-                    Annuler
+                    <%= t('videos.dedicace_de_fin.cancel') %>
                   </button>
                 </div>
               </div>
@@ -316,14 +310,26 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  let lastValidSegmentation = null;
   let mediaRecorder;
   let recordedChunks = [];
+  let recordingBlob = null;
+  let recordingMimeType = "video/webm";
   let recordingInterval;
+  let statusInterval;
   let timeLeft = 30;
   let isRecording = false;
   let currentSlot = null;
   let processedVideo = false;
+
+  const messages = {
+    cameraRequired: "<%= j t('videos.dedicace_de_fin.camera_required') %>",
+    saveFailed: "<%= j t('videos.dedicace_de_fin.save_failed') %>",
+    processingFailed: "<%= j t('videos.dedicace_de_fin.processing_failed') %>",
+    replaceRecording: "<%= j t('videos.dedicace_de_fin.replace_recording') %>",
+    rerecord: "<%= j t('videos.dedicace_de_fin.rerecord') %>"
+  };
+  const updateSlotUrl = "<%= j update_video_slot_path(@video) %>";
+  const slotStatusUrl = "<%= j get_video_slot_status_path(@video) %>";
 
   const videoPreview = document.getElementById("videoPreview");
   const recordingTimer = document.getElementById("recordingTimer");
@@ -336,47 +342,38 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadingSpinner = document.querySelector(".spinner");
   const videoRecordingPreviewBlock = document.querySelector(".video-recording__preview");
 
-  // Open recording modal with proper sizing
   function openRecordingModal(slotNumber) {
-    if (videoPreview.srcObject) {
-      videoPreview.srcObject.getTracks().forEach(track => track.stop());
-    }
+    stopMediaTracks();
     currentSlot = slotNumber;
+    recordedChunks = [];
+    recordingBlob = null;
+    processedVideo = false;
     recordingModal.style.display = 'flex';
     videoPreview.style.display = 'none';
+    videoRecordingPreviewBlock.style.display = 'block';
     videoPreview.controls = false;
     videoPreview.muted = true;
     loadingSpinner.style.display = 'none';
-    
-    // Reset video and canvas
-    
     startButton.style.display = 'block';
     stopButton.style.display = 'none';
     confirmButton.style.display = 'none';
+    cancelButton.style.display = 'block';
     recordingTimer.style.display = 'none';
   }
 
-  // Close recording modal
-  function closeRecordingModal() {
-    recordingModal.style.display = 'none';
-    videoPreview.srcObject = null;
-    videoPreview.src = '';
-    videoPreview.currentTime = 0;
-    processedVideo = false;
-    currentSlot = null;
-
+  function stopMediaTracks() {
     if (videoPreview.srcObject) {
       videoPreview.srcObject.getTracks().forEach(track => track.stop());
     }
-    currentSlot = null;
   }
 
-  // Start recording with improved settings
   async function startRecording() {
     try {
       isRecording = true;
       recordedChunks = [];
+      recordingBlob = null;
       timeLeft = 30;
+      recordingTimer.textContent = `${timeLeft}s`;
       videoRecordingPreviewBlock.style.display = 'none';
       videoPreview.style.display = 'block'; 
 
@@ -394,12 +391,17 @@ document.addEventListener("DOMContentLoaded", () => {
       videoPreview.srcObject = stream;
       await videoPreview.play();
 
-      const options = {
-        mimeType: 'video/webm;codecs=vp8,opus',
-        videoBitsPerSecond: 1500000
-      };
-
+      const supportedTypes = [
+        'video/webm;codecs=vp8,opus',
+        'video/webm;codecs=vp9,opus',
+        'video/webm',
+        'video/mp4'
+      ];
+      recordingMimeType = supportedTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
+      const options = { videoBitsPerSecond: 1500000 };
+      if (recordingMimeType) options.mimeType = recordingMimeType;
       mediaRecorder = new MediaRecorder(stream, options);
+      recordingMimeType = mediaRecorder.mimeType || recordingMimeType || 'video/webm';
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -408,7 +410,29 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: options.mimeType });
+        isRecording = false;
+        recordingBlob = new Blob(recordedChunks, { type: recordingMimeType });
+        if (!recordingBlob.size) {
+          alert(messages.saveFailed);
+          openRecordingModal(currentSlot);
+          return;
+        }
+
+        const videoURL = URL.createObjectURL(recordingBlob);
+        videoPreview.pause();
+        videoPreview.srcObject = null;
+        videoPreview.src = videoURL;
+        videoPreview.controls = true;
+        videoPreview.muted = false;
+        videoPreview.style.display = 'block';
+        videoPreview.onloadedmetadata = () => {
+          videoPreview.currentTime = 0;
+          videoPreview.play().catch(() => {});
+        };
+        recordingTimer.style.display = 'none';
+        stopButton.style.display = 'none';
+        confirmButton.style.display = 'block';
+        cancelButton.style.display = 'block';
       };
 
       mediaRecorder.start(1000);
@@ -427,15 +451,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (err) {
       console.error('Error in recording process:', err);
-      alert('Camera access is required. Please ensure you have granted camera permissions.');
+      isRecording = false;
+      alert(messages.cameraRequired);
       closeRecordingModal();
     }
   }
 
-  // Stop recording
   function stopRecording() {
-    isRecording = false;
-    
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
     }
@@ -444,57 +466,29 @@ document.addEventListener("DOMContentLoaded", () => {
       clearInterval(recordingInterval);
     }
 
-    if (videoPreview.srcObject) {
-      videoPreview.srcObject.getTracks().forEach(track => track.stop());
-    }
-
-    recordingTimer.style.display = 'none';
-    stopButton.style.display = 'none';
-    confirmButton.style.display = 'block';
-    cancelButton.style.display = 'block';
-
-    // Show the last frame in the preview
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-    const videoURL = URL.createObjectURL(blob);
-    videoPreview.style.display = 'block';
-    videoPreview.pause();
-    videoPreview.currentTime = 0;
-    videoPreview.srcObject = null;
-    videoPreview.controls = true;
-    videoPreview.muted = false;
-    videoPreview.src = videoURL;
-
-    videoPreview.onloadedmetadata = () => {
-      videoPreview.currentTime = 0;
-      videoPreview.play();
-    };
+    stopMediaTracks();
   }
 
-  // Confirm recording with improved preview handling
   async function confirmRecording() {
     videoPreview.pause();
-    if (!recordedChunks.length) return;
+    if (!recordingBlob || !recordingBlob.size) return;
     if (processedVideo) {
       closeRecordingModal();
       return;
     }
 
     const formData = new FormData();
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-    formData.append('video_file', blob, 'recorded_video.webm');
+    const extension = recordingMimeType.includes('mp4') ? 'mp4' : 'webm';
+    formData.append('video_file', recordingBlob, `recorded_video.${extension}`);
     formData.append('slot_number', currentSlot);
-    
-    // Add CSRF token
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     try {
-      // Show loading spinner
       videoPreview.style.display = 'none';
-      confirmButton.style.display = 'flex';
+      confirmButton.style.display = 'none';
       loadingSpinner.style.display = 'flex';
 
-      const url = `/videos/${<%= @video.id %>}/update_video_slot`;
-      const response = await fetch(url, {
+      const response = await fetch(updateSlotUrl, {
         method: 'PATCH',
         headers: {
           'X-CSRF-Token': token
@@ -506,12 +500,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.errors ? data.errors.join(', ') : 'Failed to process video');
+        throw new Error(data.message || (data.errors && data.errors.join(', ')) || messages.processingFailed);
       }
 
       if (data.status === 'processing') {
-        const checkSlotStatus = setInterval(async () => {
-          const url = `/videos/${<%= @video.id %>}/get_video_slot_status?${new URLSearchParams({
+        statusInterval = setInterval(async () => {
+          const url = `${slotStatusUrl}?${new URLSearchParams({
             slot_number: currentSlot
           }).toString()}`
           const checkResponse = await fetch(url, {
@@ -524,20 +518,21 @@ document.addEventListener("DOMContentLoaded", () => {
           const checkData = await checkResponse.json();
 
           if (checkData.status === 'error') {
-            clearInterval(checkSlotStatus);
-            alert('Error processing video: ' + checkData.message);
+            clearInterval(statusInterval);
+            alert(`${messages.processingFailed}: ${checkData.message || ''}`);
             loadingSpinner.style.display = 'none';
+            confirmButton.style.display = 'block';
             return;
           }
           
           if (checkData.status === 'done') {
-            clearInterval(checkSlotStatus);
+            clearInterval(statusInterval);
             processedVideo = true;
             const slot = document.querySelector(`.video-slot[data-slot-number="${currentSlot}"]`);
             slot.innerHTML = `
               <img src="${checkData.preview_url}" class="video-preview" alt="Video Preview">
               <div class="re-record-overlay">
-                <span>Re-record?</span>
+                <span>${messages.rerecord}</span>
               </div>
             `;
             videoPreview.src = checkData.video_url;
@@ -545,44 +540,23 @@ document.addEventListener("DOMContentLoaded", () => {
             loadingSpinner.style.display = 'none';
             videoPreview.style.display = 'block';
             videoPreview.controls = true;
+            confirmButton.style.display = 'block';
           }
         }, 5000);
-
       }
-
-      // if (data.success) {
-      //   processedVideo = true;
-      //   const slot = document.querySelector(`.video-slot[data-slot-number="${currentSlot}"]`);
-      //   slot.innerHTML = `
-      //     <img src="${data.preview_url}" class="video-preview" alt="Video Preview">
-      //     <div class="re-record-overlay">
-      //       <span>Re-record?</span>
-      //     </div>
-      //   `;
-      //   // closeRecordingModal();
-      //   videoPreview.src = data.video_url;
-      //   videoPreview.currentTime = 0;
-      //   loadingSpinner.style.display = 'none';
-      //   videoPreview.style.display = 'block';
-      //   videoPreview.controls = true;
-      // } else {
-      //   throw new Error(data.errors ? data.errors.join(', ') : 'Failed to process video');
-      // }
     } catch (error) {
       console.error('Error saving video:', error);
       loadingSpinner.style.display = 'none';
-      alert('Failed to save video: ' + error.message);
+      confirmButton.style.display = 'block';
+      alert(`${messages.saveFailed}: ${error.message}`);
     }
   }
 
-  // Close recording modal with cleanup
   function closeRecordingModal() {
     recordingModal.style.display = 'none';
-    
-    // Clean up video element
-    if (videoPreview.srcObject) {
-      videoPreview.srcObject.getTracks().forEach(track => track.stop());
-    }
+    stopMediaTracks();
+    if (recordingInterval) clearInterval(recordingInterval);
+    if (statusInterval) clearInterval(statusInterval);
     videoPreview.pause();
     timeLeft = 30;
     videoPreview.currentTime = 0;
@@ -590,19 +564,18 @@ document.addEventListener("DOMContentLoaded", () => {
     videoPreview.src = '';
     videoPreview.muted = true;
     videoRecordingPreviewBlock.style.display = 'block';
-    
+    isRecording = false;
     currentSlot = null;
     processedVideo = false;
   }
 
-  // Event listeners
   videoSlots.forEach(slot => {
     slot.addEventListener('click', () => {
       const slotNumber = slot.dataset.slotNumber;
       const hasVideo = slot.querySelector('.video-preview');
       
       if (hasVideo) {
-        if (confirm('Replace existing video?')) {
+        if (confirm(messages.replaceRecording)) {
           openRecordingModal(slotNumber);
         }
       } else {
@@ -616,7 +589,6 @@ document.addEventListener("DOMContentLoaded", () => {
   confirmButton.addEventListener('click', confirmRecording);
   cancelButton.addEventListener('click', closeRecordingModal);
 
-  // Clean up on page unload
   window.addEventListener('beforeunload', () => {
     if (isRecording) {
       stopRecording();

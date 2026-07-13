@@ -735,39 +735,26 @@ class VideosController < ApplicationController
 
   def dedicace_de_fin
     authorize @video, :dedicace_de_fin?, policy_class: VideoPolicy
-    @dedicace = @video.dedicace
-    @video_dedicace = @video.video_dedicace || @video.create_video_dedicace(dedicace: @dedicace)
+    prepare_dedicace_de_fin
   end
 
   def dedicace_de_fin_post
-    # @dedicace = Dedicace.find(params[:id])
-    # video = Video.find_by(dedicace_id: params[:id])
     authorize @video, :dedicace_de_fin_post?, policy_class: VideoPolicy
+    prepare_dedicace_de_fin
 
-    # position = params[:dedicace][:car_position]
+    ready_slots = @video_dedicace.video_dedicace_slots.select do |slot|
+      slot.status == "done" && slot.video.attached?
+    end
+    if ready_slots.empty?
+      flash.now[:alert] = t("videos.dedicace_de_fin.recording_required")
+      return render :dedicace_de_fin, status: :unprocessable_entity
+    end
 
-    # @video.stop_at = @video.next_step
-
-    # if @video.save
-    #   redirect_to send("#{@video.next_step}_path")
-    # else
-    #   @video.update(stop_at: @video.current_step)
-    #   render dedicace_path, status: :unprocessable_entity
-    # end
-
-    # unless params[:dedicace].present?
-    #   skip_element(dedicace_de_fin_path)
-    #   return
-    # end
     result = CombineVideoDedicaceJob.perform_now(@video.id)
-    if result
-      if @video.video_dedicace.creator_end_dedication_video.attached?
-        @video.video_dedicace.save
-        skip_element(dedicace_de_fin_path)
-      else
-        render :dedicace_de_fin, status: :unprocessable_entity
-      end
+    if result && @video_dedicace.creator_end_dedication_video.attached?
+      skip_element(dedicace_de_fin_path)
     else
+      flash.now[:alert] = t("videos.dedicace_de_fin.combine_failed")
       render :dedicace_de_fin, status: :unprocessable_entity
     end
   end
@@ -1101,9 +1088,7 @@ class VideosController < ApplicationController
       end
 
       # Create or find video_dedicace with the dedicace
-      video_dedicace = @video.video_dedicace || @video.create_video_dedicace(dedicace: @dedicace)
-
-      video_dedicace.save
+      video_dedicace = @video.video_dedicace || @video.create_video_dedicace!(dedicace: dedicace)
 
       video_dedicace_slot = video_dedicace.video_dedicace_slots.find_or_create_by(
         slot: params[:slot_number]
@@ -1128,13 +1113,14 @@ class VideosController < ApplicationController
       else
         render json: {
           status: "error",
-          errors: ["No video file provided"]
+          message: "No video file provided"
         }, status: :unprocessable_entity
       end
     rescue StandardError => e
       render json: {
         success: false,
-        errors: ["An error occurred: #{e.message}"]
+        status: "error",
+        message: "An error occurred: #{e.message}"
       }, status: :unprocessable_entity
     end
   end
@@ -1145,13 +1131,13 @@ class VideosController < ApplicationController
 
     video_dedicace = @video.video_dedicace
 
-    video_dedicace_slot = video_dedicace.video_dedicace_slots.find_by(
-      slot: params[:slot_number]
-    )
+    if video_dedicace.present?
+      video_dedicace_slot = video_dedicace.video_dedicace_slots.find_by(slot: params[:slot_number])
+      unless video_dedicace_slot
+        return render json: { status: "error", message: "Video slot not found" }, status: :not_found
+      end
 
-    if @video.video_dedicace.present?
-      video_dedicace_slot_status = video_dedicace_slot.status
-      if video_dedicace_slot_status == "done"
+      if video_dedicace_slot.status == "done" && video_dedicace_slot.video.attached? && video_dedicace_slot.preview.attached?
         video_url = url_for(video_dedicace_slot.video)
         preview_url = url_for(video_dedicace_slot.preview)
         render json: {
@@ -1159,6 +1145,8 @@ class VideosController < ApplicationController
           video_url:,
           preview_url:
         }
+      elsif video_dedicace_slot.status == "error"
+        render json: { status: "error", message: "Video processing failed" }, status: :unprocessable_entity
       else
         render json: {
           status: "processing"
@@ -1167,12 +1155,17 @@ class VideosController < ApplicationController
     else
       render json: {
         status: "error",
-        errors: ["No video_dedicace found for this video"]
-      }
+        message: "No video dedication found for this video"
+      }, status: :not_found
     end
   end
 
   private
+
+  def prepare_dedicace_de_fin
+    @dedicace = @video.dedicace
+    @video_dedicace = @video.video_dedicace || @video.create_video_dedicace!(dedicace: @dedicace)
+  end
 
   def generate_fcpxml(final_video_path, video_path, music_path)
     <<~XML
