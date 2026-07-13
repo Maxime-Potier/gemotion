@@ -587,7 +587,7 @@ class ProjectsController < ApplicationController
   def creator_refresh_video
     authorize @video, :creator_refresh_video?, policy_class: ProjectPolicy
     # Update the status to processing
-    @video.update!(concat_status: :processing)
+    @video.update!(concat_status: :processing, processing_progress: 0)
 
     # Purge existing final video attachments
     @video.final_video.purge if @video.final_video.attached?

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_04_17_151305) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_13_183000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -271,6 +271,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_17_151305) do
     t.text "special_request_music"
     t.text "special_request_dedicace"
     t.integer "introduction_video", default: 0, null: false
+    t.integer "processing_progress", default: 0, null: false
     t.index ["dedicace_id"], name: "index_videos_on_dedicace_id"
     t.index ["music_id"], name: "index_videos_on_music_id"
     t.index ["user_id"], name: "index_videos_on_user_id"

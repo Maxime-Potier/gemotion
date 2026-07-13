@@ -49,10 +49,21 @@
                  role="status"
                  aria-live="polite"
                  data-status-url="<%= video_concat_status_path(@video) %>"
+                 data-progress="<%= @video.processing_progress %>"
                  data-failure-message="<%= t('videos.edit_video.processing_failed') %>">
               <div class="video-processing-spinner" aria-hidden="true"></div>
               <h2 id="video-processing-title"><%= t('videos.edit_video.processing_title') %></h2>
               <p id="video-processing-message"><%= t('videos.edit_video.processing_message') %></p>
+              <div class="video-processing-progress" aria-label="<%= t('videos.edit_video.processing_progress') %>">
+                <div id="video-processing-progress-bar"
+                     class="video-processing-progress__bar"
+                     role="progressbar"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-valuenow="<%= @video.processing_progress %>"
+                     style="width: <%= @video.processing_progress %>%"></div>
+              </div>
+              <strong id="video-processing-progress-value"><%= @video.processing_progress %>%</strong>
               <p class="video-processing-hint"><%= t('videos.edit_video.processing_hint') %></p>
             </div>
           <% else %>
@@ -93,6 +104,15 @@
       let requestInProgress = false;
       let pollingStopped = false;
       let pollingInterval = null;
+      const progressBar = document.getElementById("video-processing-progress-bar");
+      const progressValue = document.getElementById("video-processing-progress-value");
+
+      const updateProgress = (value) => {
+        const progress = Math.max(0, Math.min(100, Number(value) || 0));
+        progressBar.style.width = `${progress}%`;
+        progressBar.setAttribute("aria-valuenow", progress);
+        progressValue.textContent = `${progress}%`;
+      };
 
       const stopWithError = () => {
         pollingStopped = true;
@@ -117,6 +137,7 @@
           if (!response.ok) throw new Error(`Status request failed: ${response.status}`);
 
           const data = await response.json();
+          updateProgress(data.processing_progress);
           if (data.concat_status === "completed") {
             pollingStopped = true;
             if (pollingInterval) window.clearInterval(pollingInterval);
@@ -320,6 +341,25 @@ document.addEventListener("DOMContentLoaded", () => {
   margin-top: 8px;
   color: #667085;
   font-size: 15px;
+}
+.video-processing-progress {
+  width: min(520px, 90%);
+  height: 14px;
+  margin-top: 24px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #ccecf5;
+}
+.video-processing-progress__bar {
+  height: 100%;
+  border-radius: inherit;
+  background: #0d6783;
+  transition: width 0.3s ease;
+}
+#video-processing-progress-value {
+  margin-top: 8px;
+  color: #0d6783;
+  font-size: 20px;
 }
 .video-processing-state--failed {
   background: #fff4f4;

@@ -1,6 +1,7 @@
 class TransitionsVideoService
-  def initialize(temp_dir)
+  def initialize(temp_dir, command_runner: nil)
     @temp_dir = temp_dir
+    @command_runner = command_runner || ->(command) { Kernel.system(command) }
   end
 
   def create_transition_wipelt_videos(videos, transition_types = [], transition_duration = Rails.application.config.transition_duration, custom_output_path = nil)
@@ -73,7 +74,7 @@ class TransitionsVideoService
       end
 
       puts "Creating transition #{i + 1} of #{normalized_videos.length - 1}"
-      system(ffmpeg_command)
+      run_command(ffmpeg_command)
 
       if File.exist?(transition_output) && File.size(transition_output) > 0
         transition_outputs << transition_output
@@ -106,7 +107,7 @@ class TransitionsVideoService
     # puts "Concatenating all transitions"
     puts "Copy last transition as video output"
     # system(concat_command)
-    system(copy_command)
+    run_command(copy_command)
 
     # Clean up intermediate files
     [*normalized_videos, *transition_outputs].each { |file| File.delete(file) if File.exist?(file) }
@@ -125,6 +126,12 @@ class TransitionsVideoService
         #{Shellwords.escape(output_path.to_s)}
     CMD
 
-    raise "Failed to normalize video: #{input_path}" unless system(ffmpeg_command)
+    raise "Failed to normalize video: #{input_path}" unless run_command(ffmpeg_command)
+  end
+
+  private
+
+  def run_command(command)
+    @command_runner.call(command)
   end
 end

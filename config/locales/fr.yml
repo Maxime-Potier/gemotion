@@ -307,6 +307,7 @@ fr:
       save_and_pay: "Enregistrer et payer"
       processing_title: "Votre vidéo est en cours de préparation"
       processing_message: "Nous assemblons vos médias et créons l'aperçu. Cela prend généralement quelques instants."
+      processing_progress: "Progression du traitement de la vidéo"
       processing_hint: "Vous pouvez laisser cette page ouverte. Elle s'actualisera automatiquement lorsque la vidéo sera prête."
       processing_failed_title: "Nous n'avons pas pu préparer la vidéo"
       processing_failed: "Le traitement de la vidéo a échoué. Actualisez la page ou réessayez plus tard."

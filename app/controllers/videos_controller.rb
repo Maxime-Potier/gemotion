@@ -690,7 +690,7 @@ class VideosController < ApplicationController
     # Check if a refresh has been requested
     if params[:refresh]
       # Update the status to processing
-      @video.update!(concat_status: :processing)
+      @video.update!(concat_status: :processing, processing_progress: 0)
 
       # Purge existing final video attachments
       @video.final_video.purge if @video.final_video.attached?
@@ -710,7 +710,7 @@ class VideosController < ApplicationController
       # Start processing if no final video exists
       flash[:notice] = "Le traitement de la vidéo est déjà en cours."
     else # Check if not already processing
-      @video.update!(concat_status: :processing)
+      @video.update!(concat_status: :processing, processing_progress: 0)
       ContentDedicaceJob.perform_later(@video.id)
       flash[:notice] = "Le traitement de la vidéo a été lancé en arrière-plan."
     end
@@ -825,6 +825,7 @@ class VideosController < ApplicationController
 
   def edit_video
     authorize @video, :edit_video?, policy_class: VideoPolicy
+    enqueue_preview_generation_if_needed
     @chapters = @video.video_chapters.order(:order).includes(:chapter_type, videos_attachments: :blob,
                                                                             photos_attachments: :blob)
   end
@@ -1077,7 +1078,10 @@ class VideosController < ApplicationController
   def concat_status
     video = Video.find(params[:id])
     authorize video, :concat_status?, policy_class: VideoPolicy
-    render json: { concat_status: video.concat_status }
+    render json: {
+      concat_status: video.concat_status,
+      processing_progress: video.processing_progress
+    }
   end
 
   def update_video_slot
@@ -1226,6 +1230,21 @@ class VideosController < ApplicationController
       end
 
     end
+  end
+
+  def enqueue_preview_generation_if_needed
+    should_enqueue = @video.with_lock do
+      next false unless @video.pending?
+      next false if @video.final_video_with_watermark.attached?
+
+      @video.update!(concat_status: :processing, processing_progress: 0)
+      true
+    end
+
+    ContentDedicaceJob.perform_later(@video.id) if should_enqueue
+  rescue StandardError => e
+    Rails.logger.error("Unable to enqueue video preview generation for video #{@video.id}: #{e.message}")
+    @video.update!(concat_status: :failed)
   end
 
   def define_chapter_type

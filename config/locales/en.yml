@@ -331,6 +331,7 @@ en:
       save_and_pay: "Save and pay"
       processing_title: "Your video is being prepared"
       processing_message: "We are assembling your media and creating the preview. This usually takes a few moments."
+      processing_progress: "Video processing progress"
       processing_hint: "You can keep this page open. It will refresh automatically when the video is ready."
       processing_failed_title: "We couldn't prepare the video"
       processing_failed: "Video processing failed. Please refresh the page or try again later."

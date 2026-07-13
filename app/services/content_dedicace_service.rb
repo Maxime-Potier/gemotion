@@ -1,4 +1,6 @@
 require "zip"
+require "open3"
+require "shellwords"
 
 class ContentDedicaceService
   def initialize(video)
@@ -31,6 +33,7 @@ class ContentDedicaceService
   end
 
   def call
+    persist_progress(1)
     preview_assets = fetch_preview_assets
     chapter_assets = fetch_chapter_assets
 
@@ -46,21 +49,29 @@ class ContentDedicaceService
     previews_duration_calc(preview_assets.count) if @video.by_chapters?
 
     # Process the introduction defining  @introduction_mp4_path and @introduction_duration
+    prepare_progress_stage(2, 8, 1)
     process_introduction
 
     # Process the Previews with texts and transitions
+    prepare_progress_stage(8, 35, (preview_assets.count * 3) + 2)
     process_previews(preview_assets)
 
     # Process the chapters
+    prepare_progress_stage(35, 75, chapter_ffmpeg_command_count(united_chapter_assets))
     process_chapters(united_chapter_assets)
 
     if @video.video_type == "colab" && @video.dedicace.present?
+      approved_collaborations = @collaborations.count do |collaboration|
+        collaboration.collaborator_dedicace.present? && collaboration.collaborator_dedicace.approved_by_creator
+      end
+      prepare_progress_stage(75, 80, 1 + approved_collaborations)
       dedicace_video
       @collaborations.each do |collaboration|
         collaborator_dedicace_video(collaboration)
       end
     end
 
+    prepare_progress_stage(80, 94, final_ffmpeg_command_count)
     final_video_path = concatenate_final_video
 
     return { error: "La concaténation des vidéos finales a échoué." } unless File.exist?(final_video_path)
@@ -69,6 +80,7 @@ class ContentDedicaceService
 
     finalize_mlt
 
+    prepare_progress_stage(94, 99, 1)
     attach_final_video(final_video_path)
   rescue StandardError => e
     # Log the error or take other actions if necessary
@@ -270,7 +282,7 @@ class ContentDedicaceService
     end
 
     # Initialize transition service
-    transitions_service = TransitionsVideoService.new(@temp_dir)
+    transitions_service = TransitionsVideoService.new(@temp_dir, command_runner: method(:system))
 
     # Prepare all videos for transitions including introduction if available
     all_videos = []
@@ -647,6 +659,151 @@ class ContentDedicaceService
 
     system(ffmpeg_command)
     watermarked_video_path
+  end
+
+  def chapter_ffmpeg_command_count(chapter_assets)
+    chapter_assets.sum do |assets|
+      music_command = @video.by_chapters? && assets[:music].present? ? 1 : 0
+      3 + assets[:videos].count + assets[:photos].count + music_command
+    end
+  end
+
+  def final_ffmpeg_command_count
+    return 2 if @video.whole_video?
+
+    chapter_conversions = @ts_videos.count { |path| path.match?(/final_chapter_\d+_video_with_music\.mp4/) }
+    2 + chapter_conversions
+  end
+
+  def prepare_progress_stage(start_percent, end_percent, command_count)
+    @progress_stage_start = start_percent.to_f
+    @progress_stage_end = end_percent.to_f
+    @progress_stage_command_count = [command_count.to_i, 1].max
+    @progress_stage_command_index = 0
+    persist_progress(start_percent)
+  end
+
+  def next_command_progress_range
+    command_width = (@progress_stage_end - @progress_stage_start) / @progress_stage_command_count
+    range_start = @progress_stage_start + (command_width * @progress_stage_command_index)
+    range_end = [range_start + command_width, @progress_stage_end].min
+    @progress_stage_command_index += 1
+    [range_start, range_end]
+  end
+
+  # All FFmpeg calls in this service pass through this method. FFmpeg reports the
+  # media timestamp it has processed, allowing the UI to display measured progress
+  # inside long-running encoding commands instead of advancing on a timer.
+  def system(command)
+    normalized_command = command.to_s.strip
+    return Kernel.system(command) unless normalized_command.start_with?("ffmpeg ", "ffmpeg-concat ")
+
+    range_start, range_end = next_command_progress_range
+
+    unless normalized_command.start_with?("ffmpeg ")
+      result = Kernel.system(command)
+      persist_progress(range_end) if result
+      return result
+    end
+
+    run_ffmpeg_with_progress(command, range_start, range_end)
+  end
+
+  def run_ffmpeg_with_progress(command, range_start, range_end)
+    expected_duration = ffmpeg_expected_duration(command)
+    progress_command = command.sub(/\bffmpeg\b/, "ffmpeg -progress pipe:1 -nostats")
+    stderr_tail = []
+    success = false
+
+    Open3.popen3(progress_command) do |stdin, stdout, stderr, wait_thread|
+      stdin.close
+      stderr_reader = Thread.new do
+        stderr.each_line do |line|
+          stderr_tail << line
+          stderr_tail.shift while stderr_tail.length > 30
+        end
+      end
+
+      stdout.each_line do |line|
+        key, value = line.strip.split("=", 2)
+        next unless %w[out_time_us out_time_ms].include?(key)
+        next unless expected_duration&.positive?
+
+        processed_seconds = value.to_f / 1_000_000
+        ratio = [[processed_seconds / expected_duration, 0].max, 1].min
+        persist_progress(range_start + ((range_end - range_start) * ratio))
+      end
+
+      stderr_reader.join
+      success = wait_thread.value.success?
+    end
+
+    if success
+      persist_progress(range_end)
+    else
+      Rails.logger.error("FFmpeg command failed:\n#{stderr_tail.join}")
+    end
+
+    success
+  rescue StandardError => e
+    Rails.logger.error("Unable to track FFmpeg progress: #{e.message}")
+    false
+  end
+
+  def ffmpeg_expected_duration(command)
+    command_tokens = Shellwords.split(command.gsub(/\s+/, " "))
+    duration_index = command_tokens.index("-t")
+    return parse_ffmpeg_duration(command_tokens[duration_index + 1]) if duration_index
+
+    input_index = command_tokens.index("-i")
+    return if input_index.nil?
+
+    input = command_tokens[input_index + 1]
+    return concat_input_duration(input.delete_prefix("concat:")) if input.start_with?("concat:")
+    return concat_file_duration(input) if command_tokens.each_cons(2).any? { |left, right| left == "-f" && right == "concat" }
+
+    probe_duration(input)
+  rescue ArgumentError
+    nil
+  end
+
+  def parse_ffmpeg_duration(value)
+    return value.to_f unless value.include?(":")
+
+    value.split(":").map(&:to_f).reverse.each_with_index.sum { |part, index| part * (60**index) }
+  end
+
+  def concat_input_duration(input)
+    input.split("|").sum { |path| probe_duration(path).to_f }
+  end
+
+  def concat_file_duration(path)
+    return unless File.exist?(path)
+
+    File.readlines(path).sum do |line|
+      media_path = line[/\Afile\s+['\"]?(.+?)['\"]?\s*\z/, 1]
+      media_path ? probe_duration(media_path).to_f : 0
+    end
+  end
+
+  def probe_duration(path)
+    stdout, status = Open3.capture2(
+      "ffprobe", "-v", "error", "-show_entries", "format=duration",
+      "-of", "default=noprint_wrappers=1:nokey=1", path.to_s
+    )
+    return unless status.success?
+
+    duration = stdout.strip.to_f
+    duration if duration.positive?
+  end
+
+  def persist_progress(value)
+    progress = [[value.to_i, 0].max, 99].min
+    @last_persisted_progress ||= @video.processing_progress.to_i
+    return if progress <= @last_persisted_progress
+
+    @video.update_columns(processing_progress: progress, updated_at: Time.current)
+    @last_persisted_progress = progress
   end
 
   def time_to_seconds(time_str)

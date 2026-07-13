@@ -2,6 +2,7 @@ require "test_helper"
 
 class VideosControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
+  include ActiveJob::TestHelper
 
   test "should get start" do
     get start_url
@@ -108,7 +109,12 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
       last_name: "User",
       phone: "+33123456783"
     )
-    video = user.videos.create!(video_type: :solo, stop_at: "deadline", concat_status: :processing)
+    video = user.videos.create!(
+      video_type: :solo,
+      stop_at: "deadline",
+      concat_status: :processing,
+      processing_progress: 42
+    )
     sign_in user
 
     get edit_video_url(locale: :en)
@@ -116,6 +122,8 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "#video-processing-state[data-status-url='#{video_concat_status_path(video, locale: :en)}']"
     assert_select "#video-processing-title", text: "Your video is being prepared"
+    assert_select "#video-processing-progress-bar[style='width: 42%']"
+    assert_select "#video-processing-progress-value", text: "42%"
     assert_select "video", count: 0
     assert_select "input[type='submit'][value='Save and pay']", count: 0
     assert_includes response.body, "window.location.reload()"
@@ -124,5 +132,27 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "processing", response.parsed_body["concat_status"]
+    assert_equal 42, response.parsed_body["processing_progress"]
+  end
+
+  test "edit video starts preview generation when the video is pending" do
+    user = User.create!(
+      email: "pending-preview-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456784"
+    )
+    video = user.videos.create!(video_type: :solo, stop_at: "deadline", concat_status: :pending)
+    sign_in user
+
+    assert_enqueued_with(job: ContentDedicaceJob, args: [video.id]) do
+      get edit_video_url(locale: :en)
+    end
+
+    assert_response :success
+    assert video.reload.processing?
+    assert_equal 0, video.processing_progress
+    assert_select "#video-processing-state"
   end
 end
