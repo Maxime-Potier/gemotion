@@ -131,7 +131,10 @@ fr:
     pricing:
       title: "Nos tarifs"
   devise:
+    failure:
+      unauthenticated: "Veuillez vous connecter ou créer un compte avant de continuer."
     registrations:
+      signed_up: "Bienvenue ! Votre inscription a bien été enregistrée."
       sign_up_first: "Inscrivez"
       sign_up_second: "-vous"
       subtitle: "Pour commencer à créer vos souvenirs vidéo"
@@ -192,6 +195,8 @@ fr:
       delivery: "Livraison"
       bag_total: "Total du sac"
       pay: "Payer"
+      card_required: "Veuillez saisir les informations de votre carte."
+      unavailable: "Le paiement par carte n'est pas configuré dans cet environnement."
       thank_you_message: "Merci ! Nous traitons déjà votre demande de thème vidéo personnalisé. Cela peut prendre jusqu'à 2 jours. Nous vous enverrons une confirmation par e-mail."
       create_new_film: "Créer un nouveau film"
       my_account: "Mon compte"

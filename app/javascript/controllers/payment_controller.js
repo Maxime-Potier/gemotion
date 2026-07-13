@@ -1,10 +1,12 @@
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["form", "cardElement", "stripeToken"];
+  static targets = ["form", "cardElement", "stripeToken", "cardErrors", "submitButton"];
   static values = { stripePublishableKey: String };
 
   async connect() {
+    if (!this.stripePublishableKeyValue) return;
+
     // Dynamically load Stripe if not already loaded
     if (typeof Stripe === "undefined") {
       await this.loadStripe();
@@ -30,10 +32,18 @@ export default class extends Controller {
   async submit(event) {
     event.preventDefault();
 
+    if (!this.stripe) {
+      this.cardErrorsTarget.textContent = this.cardErrorsTarget.textContent.trim();
+      return;
+    }
+
+    this.submitButtonTarget.disabled = true;
+
     // Create Stripe token
     const { token, error } = await this.stripe.createToken(this.card);
     if (error) {
-      console.error("Stripe Error:", error.message);
+      this.cardErrorsTarget.textContent = error.message;
+      this.submitButtonTarget.disabled = false;
       return;
     }
 

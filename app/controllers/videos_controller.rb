@@ -675,7 +675,7 @@ class VideosController < ApplicationController
     end
 
     flash[:notice] = "Content added."
-    redirect_to content_path
+    skip_element(content_path)
   end
 
   def skip_content
@@ -963,11 +963,16 @@ class VideosController < ApplicationController
 
   def payment_post
     authorize @video, :payment_post?, policy_class: VideoPolicy
+
+    if params[:stripeToken].blank?
+      return redirect_to payment_path, alert: I18n.t("videos.payment.card_required")
+    end
+
     duration_in_minutes = Video.calculate_duration(@video.final_video_duration)
     amount = Video.calculate_price(duration_in_minutes) * 100 # Convert to cents
 
     begin
-      charge = Stripe::Charge.create(
+      Stripe::Charge.create(
         amount:,
         currency: "eur",
         description: "Payment for video rendering (#{duration_in_minutes} minutes)",
@@ -981,7 +986,7 @@ class VideosController < ApplicationController
       # Save payment record and update video status
       @video.update!(paid: true, project_status: :finished) # Ensure `paid` is a boolean in the Video model
       redirect_to participants_progress_path(video_id: @video.id), notice: "Paiement r\u00E9ussi!"
-    rescue Stripe::CardError => e
+    rescue Stripe::StripeError => e
       flash[:alert] = e.message
       redirect_to payment_path
     end

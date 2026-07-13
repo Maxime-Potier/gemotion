@@ -219,6 +219,8 @@ en:
       delivery: "Delivery"
       bag_total: "Bag total"
       pay: "Pay"
+      card_required: "Please enter your card details."
+      unavailable: "Card payment is not configured in this environment."
       thank_you_message: "Thank you! We are already processing your custom video theme request. This may take up to 2 days. We will send you an email confirmation."
       create_new_film: "Create a new film"
       my_account: "My account"

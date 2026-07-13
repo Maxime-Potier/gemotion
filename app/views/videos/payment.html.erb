@@ -55,17 +55,10 @@
 
               <div class="mb-[16px]"><%= t('videos.payment.credit_card') %></div>
               <div id="card-element" data-payment-target="cardElement"></div>
-
-              <div class="flex flex-col justify-start items-start mb-4 mt-8">
-                <span class="font-bold"><%= t('videos.payment.delivery') %></span>
-                <div class="flex flex-col mt-2">
-                  <% 5.times do %>
-                    <div class="flex flex-row justify-start items-center mt-2">
-                      <%= image_tag "icons/radio.png", alt: "Livraison Icon", style: "vertical-align: middle; margin-left: 5px; margin-right: 5px; width: 16px; height: 16px;" %>
-                      <div class="p-text-16">Lorem ipsum dolor sit amet (10$)</div>
-                    </div>
-                  <% end %>
-                </div>
+              <div class="payment-error mt-2" data-payment-target="cardErrors" role="alert">
+                <% if @stripe_publishable_key.blank? %>
+                  <%= t('videos.payment.unavailable') %>
+                <% end %>
               </div>
 
               <div class="flex justify-between items-center mt-8">
@@ -73,21 +66,9 @@
                 <span>€<%= @amount %></span>
               </div>
             </div>
-            <div data-controller="dialog" data-action="click->dialog#clickOutside" class="payment-modal">
-              <div data-action="click->dialog#open" class="black-link w-full"><%= t('videos.payment.pay') %></div>
-              <dialog data-dialog-target="modal" class="backdrop:bg-slate-400 backdrop:opacity-80 w-full w-1006 popup-payment-modal bg-transparent">
-                <div class="text-with-image-block-payment w-100i flex flex-col justify-center items-center mt-65 mb-[72px] px-[27px] w-full p-text-center-16">
-                  <p class="w-80 mb-45 p-text-center-16"><%= t('videos.payment.thank_you_message') %></p>
-                  <div class="flex justify-center items-center">
-                    <%= button_tag type: 'button', formmethod: 'dialog', class: 'transparent-link mr-8', data: { action: 'click->dialog#close' } do %>
-                      <%= t('videos.payment.create_new_film') %>
-                    <% end %>
-                    <button type="submit" class="black-link"><%= t('videos.payment.my_account') %></button>
-                  </div>
-                  <%= image_tag 'icons/plus.png', class: 'image-from-image-text-block' %>
-                </div>
-              </dialog>
-            </div>
+            <button type="submit" class="black-link w-full" data-payment-target="submitButton" <%= 'disabled' if @stripe_publishable_key.blank? %>>
+              <%= t('videos.payment.pay') %>
+            </button>
           </div>
         </form>
       </div>

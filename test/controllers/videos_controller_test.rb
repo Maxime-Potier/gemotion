@@ -2,7 +2,7 @@ require "test_helper"
 
 class VideosControllerTest < ActionDispatch::IntegrationTest
   test "should get start" do
-    get videos_start_url
-    assert_response :success
+    get start_url
+    assert_redirected_to new_user_session_url
   end
 end

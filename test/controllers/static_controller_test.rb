@@ -2,17 +2,17 @@ require "test_helper"
 
 class StaticControllerTest < ActionDispatch::IntegrationTest
   test "should get home" do
-    get static_home_url
+    get root_url
     assert_response :success
   end
 
   test "should get about" do
-    get static_about_url
+    get about_url
     assert_response :success
   end
 
   test "should get pricing" do
-    get static_pricing_url
+    get pricing_url
     assert_response :success
   end
 
