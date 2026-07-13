@@ -65,7 +65,7 @@ class VideosController < ApplicationController
       @video = Video.new(user: current_user)
       @video.user = current_user
       skip_authorization
-      return render start_path, status: :unprocessable_entity if params[:video_type].nil?
+      return render :start, status: :unprocessable_entity if params[:video_type].nil?
 
       @video.video_type = params[:video_type].downcase
 
@@ -81,7 +81,7 @@ class VideosController < ApplicationController
     if @video.validate_start && @video.save
       redirect_to send("#{@video.next_step}_path")
     else
-      render start_path, status: :unprocessable_entity
+      render :start, status: :unprocessable_entity
     end
   end
 
@@ -94,7 +94,7 @@ class VideosController < ApplicationController
       redirect_to send("#{@video.next_step}_path")
     else
       @video.update(stop_at: @video.current_step)
-      render occasion_path, status: :unprocessable_entity
+      render :occasion, status: :unprocessable_entity
     end
   end
 
@@ -107,7 +107,7 @@ class VideosController < ApplicationController
       redirect_to send("#{@video.next_step}_path")
     else
       @video.update(stop_at: @video.current_step)
-      render destinataire_path, status: :unprocessable_entity
+      render :destinataire, status: :unprocessable_entity
     end
   end
 
@@ -179,7 +179,7 @@ class VideosController < ApplicationController
       redirect_to send("#{@video.next_step}_path"), turbo: false
     else
       @video.update(stop_at: @video.current_step)
-      render destinataire_details_path, status: :unprocessable_entity
+      render :destinataire_details, status: :unprocessable_entity
     end
   end
 
@@ -218,7 +218,7 @@ class VideosController < ApplicationController
 
   def date_fin_post
     authorize @video, :date_fin_post?, policy_class: VideoPolicy
-    return render date_fin_path, status: :unprocessable_entity if params[:end_date].blank?
+    return render :date_fin, status: :unprocessable_entity if params[:end_date].blank?
 
     @video.end_date = DateTime.parse(params[:end_date])
     @video.stop_at = @video.next_step
@@ -227,7 +227,7 @@ class VideosController < ApplicationController
       redirect_to send("#{@video.next_step}_path")
     else
       @video.update(stop_at: @video.current_step)
-      render date_fin_path, status: :unprocessable_entity
+      render :date_fin, status: :unprocessable_entity
     end
   end
 
@@ -240,7 +240,7 @@ class VideosController < ApplicationController
       redirect_to send("#{@video.next_step}_path")
     else
       @video.update(stop_at: @video.current_step)
-      render introduction_path, status: :unprocessable_entity
+      render :introduction, status: :unprocessable_entity
     end
   end
 
@@ -424,7 +424,7 @@ class VideosController < ApplicationController
     # 12 chapitres maximum
     if (chapter_to_create.size + chapter_to_updates.size) >= 12
       flash[:alert] = "Ne sélectionnez que 12 chapitres maximum"
-      return render select_chapters_path, status: :unprocessable_entity
+      return render :select_chapters, status: :unprocessable_entity
     end
 
     # Création, Mise à jour et suppression
@@ -444,7 +444,7 @@ class VideosController < ApplicationController
     else
       @video.update(stop_at: @video.current_step)
       @chapterstype = ChapterType.all
-      render select_chapters_path, status: :unprocessable_entity
+      render :select_chapters, status: :unprocessable_entity
     end
   end
 
@@ -453,7 +453,7 @@ class VideosController < ApplicationController
     # Check for params indicating the whole video or chapters
     if params[:music].nil? && params.keys.none? { |key| key.start_with?("music_") }
       flash[:alert] = "Vous devez sélectionner au moins une musique"
-      return render music_path, status: :unprocessable_entity
+      return render :music, status: :unprocessable_entity
     end
 
     @video.special_request_music = params[:special_request_music] if params[:special_request_music]
@@ -463,7 +463,7 @@ class VideosController < ApplicationController
       music = Music.find_by(id: params[:music])
       if music.nil?
         flash[:alert] = "Sélection incorrecte. La musique n'existe pas."
-        return render music_path, status: :unprocessable_entity
+        return render :music, status: :unprocessable_entity
       end
       @video.music = music
     end
@@ -483,7 +483,7 @@ class VideosController < ApplicationController
             VideoMusic.create(music:, video_chapter:)
           else
             flash[:alert] = "Musique non trouvée pour le chapitre #{chapter_id}."
-            return render music_path, status: :unprocessable_entity
+            return render :music, status: :unprocessable_entity
           end
         end
       elsif key.start_with?("custom_music_")
@@ -510,7 +510,7 @@ class VideosController < ApplicationController
       redirect_to send("#{@video.next_step}_path")
     else
       @video.update(stop_at: @video.current_step)
-      render music_path, status: :unprocessable_entity
+      render :music, status: :unprocessable_entity
     end
   end
 
@@ -532,7 +532,7 @@ class VideosController < ApplicationController
     authorize @video, :dedicace_post?, policy_class: VideoPolicy
     if params[:dedicace].nil?
       flash[:alert] = "Vous devez séléctionnez une dedicace"
-      return render dedicace_path, status: :unprocessable_entity
+      return render :dedicace, status: :unprocessable_entity
     end
 
     @video.special_request_dedicace = params[:special_request_dedicace] if params[:special_request_dedicace]
@@ -541,7 +541,7 @@ class VideosController < ApplicationController
     dedicace = Dedicace.find_by(id: params[:dedicace])
     if dedicace.nil?
       flash[:alert] = "Sélection incorrecte. La dedicace n'existe pas."
-      return render dedicace_path, status: :unprocessable_entity
+      return render :dedicace, status: :unprocessable_entity
     end
 
     @video.dedicace = dedicace
@@ -552,7 +552,7 @@ class VideosController < ApplicationController
       redirect_to send("#{@video.next_step}_path")
     else
       @video.update(stop_at: @video.current_step)
-      render dedicace_path, status: :unprocessable_entity
+      render :dedicace, status: :unprocessable_entity
     end
   end
 
@@ -562,14 +562,14 @@ class VideosController < ApplicationController
     email = params[:email]
     if email.blank?
       flash[:alert] = "Un email doit être indiqué pour envoyer l'invitation."
-      return render share_path, status: :unprocessable_entity
+      return render :share, status: :unprocessable_entity
     end
 
     # create Collab obj
     collab_user = User.find_by_email(params[:email])
     if collab_user == @video.user
       flash[:alert] = "Il s'agit de l'e-mail du créateur du projet, veuillez utiliser l'e-mail correct."
-      return render share_path, status: :unprocessable_entity
+      return render :share, status: :unprocessable_entity
     end
 
     @video.update(video_type: :colab) # update to collab if was solo before
@@ -765,10 +765,10 @@ class VideosController < ApplicationController
         @video.video_dedicace.save
         skip_element(dedicace_de_fin_path)
       else
-        render dedicace_de_fin_path, status: :unprocessable_entity
+        render :dedicace_de_fin, status: :unprocessable_entity
       end
     else
-      render dedicace_de_fin_path, status: :unprocessable_entity
+      render :dedicace_de_fin, status: :unprocessable_entity
     end
   end
 
@@ -787,13 +787,13 @@ class VideosController < ApplicationController
     email = params[:email]
     if email.blank?
       flash[:alert] = "Un email doit être indiqué pour envoyer l'invitation."
-      return render confirmation_path, status: :unprocessable_entity
+      return render :confirmation, status: :unprocessable_entity
     end
 
     collab_user = User.find_by_email(params[:email])
     if collab_user == @video.user
       flash[:alert] = "Il s'agit de l'e-mail du créateur du projet, veuillez utiliser l'e-mail correct."
-      return render share_path, status: :unprocessable_entity
+      return render :share, status: :unprocessable_entity
     end
 
     @video.update(video_type: :colab) # update to collab if was solo before
@@ -819,7 +819,7 @@ class VideosController < ApplicationController
 
   def deadline_post
     authorize @video, :deadline_post?, policy_class: VideoPolicy
-    return render deadline_path, status: :unprocessable_entity if params[:end_date].blank?
+    return render :deadline, status: :unprocessable_entity if params[:end_date].blank?
 
     @video.end_date = DateTime.parse(params[:end_date])
     @video.stop_at = @video.next_step
@@ -828,7 +828,7 @@ class VideosController < ApplicationController
       redirect_to send("#{@video.next_step}_path")
     else
       @video.update(stop_at: @video.current_step)
-      render deadline_path, status: :unprocessable_entity
+      render :deadline, status: :unprocessable_entity
     end
   end
 
@@ -1279,7 +1279,7 @@ class VideosController < ApplicationController
       redirect_to send("#{@video.next_step}_path"), turbo: false
     else
       @video.update(stop_at: @video.current_step)
-      render error_path, status: :unprocessable_entity
+      redirect_to error_path, status: :see_other
     end
   end
 
