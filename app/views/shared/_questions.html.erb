@@ -1,7 +1,7 @@
 <section id="questions" class="py-[104px] bg-[#F2FCFF]">
-    <h2 class="mb-[16px]">Encore des questions ?</h2>
-    <p class="mb-[24px] p-text-18">Contactez-nous pour obtenir de l'aide supplémentaire.</p>
-    <%= link_to "Contactez-nous", new_contact_path, class: "black-link" %>
+    <h2 class="mb-[16px]"><%= t('home.questions.title') %></h2>
+    <p class="mb-[24px] p-text-18"><%= t('home.questions.description') %></p>
+    <%= link_to t('home.questions.contact_us'), new_contact_path, class: "black-link" %>
 </section>
 
 <style>

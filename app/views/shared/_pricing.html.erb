@@ -1,6 +1,6 @@
 <section class="pricing-table pb-[56px]">
   <p class="max-w-[837px] mx-auto text-center mb-[48px] p-text-18">
-    Le coût de votre vidéo est basé sur sa durée. Faites des prévisualisations gratuites et payez seulement à la fin lorsque vous êtes complètement satisfait et prêt à finaliser votre cadeau vidéo.
+    <%= t('home.pricing.description') %>
   </p>
   <div class="w-[1280px] mx-auto flex justify-center items-start gap-[67px]  mb-[48px]">
     <!-- Card 1 -->
@@ -8,7 +8,7 @@
       <%= image_tag 'gemotion-home-price-img.png', alt: 'Image 1', class: 'mb-4' %>
       <p class="price text-xl font-bold mb-2">€20/min</p>
       <div class="duration text-center">
-        <p class="label text-sm font-medium text-gray-600">Durée</p>
+        <p class="label text-sm font-medium text-gray-600"><%= t('home.pricing.duration') %></p>
         <p class="value text-lg font-bold text-gray-900">0:00-5:00 min</p>
       </div>
     </div>
@@ -17,7 +17,7 @@
       <%= image_tag 'gemotion-home-price-img.png', alt: 'Image 2', class: 'mb-4' %>
       <p class="price text-xl font-bold mb-2">€15/min</p>
       <div class="duration text-center">
-        <p class="label text-sm font-medium text-gray-600">Durée</p>
+        <p class="label text-sm font-medium text-gray-600"><%= t('home.pricing.duration') %></p>
         <p class="value text-lg font-bold text-gray-900">5:00-15:00 min</p>
       </div>
     </div>
@@ -26,10 +26,10 @@
       <%= image_tag 'gemotion-home-price-img.png', alt: 'Image 3', class: 'mb-4' %>
       <p class="price text-xl font-bold mb-2">€10/min</p>
       <div class="duration text-center">
-        <p class="label text-sm font-medium text-gray-600">Durée</p>
-        <p class="value text-lg font-bold text-gray-900">After 15 min</p>
+        <p class="label text-sm font-medium text-gray-600"><%= t('home.pricing.duration') %></p>
+        <p class="value text-lg font-bold text-gray-900"><%= t('home.pricing.after_15_minutes') %></p>
       </div>
     </div>
   </div>
-  <%= link_to "Créer une vidéo", start_path, class: "black-link create-video-link" %>
+  <%= link_to t('home.create_video'), start_path, class: "black-link create-video-link" %>
 </section>

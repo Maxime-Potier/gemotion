@@ -107,6 +107,7 @@ fr:
   seo:
     home: "Accueil"
   home:
+    create_video: "Créer une vidéo"
     satisfied:
       title: "Vous ne payez que si vous êtes satisfait du résultat!"
       description: "E-motions Vidéo est une plateforme innovante qui vous permet de créer à plusieurs des vidéos personnalisées uniques et chargées d'émotions pour toutes les occasions. Offrez un cadeau original et inoubliable à vos proches en retraçant les moments forts de leur vie."
@@ -130,6 +131,18 @@ fr:
         shots: "08 Les shots"
     pricing:
       title: "Nos tarifs"
+      description: "Le coût de votre vidéo est basé sur sa durée. Faites des prévisualisations gratuites et payez seulement lorsque vous êtes complètement satisfait et prêt à finaliser votre cadeau vidéo."
+      duration: "Durée"
+      after_15_minutes: "Après 15 min"
+    testimonials:
+      customer: "Client"
+      first: "E Motions-video nous a fait un film pour notre départ de Dubaï, un film chargé en émotions et une véritable page de vie de notre famille. On y retrouve les meilleurs moments de ces six années et une très belle surprise de nos amis, orchestrée avec beaucoup d'humour."
+      second: "L'un des plus beaux cadeaux jamais reçus ! Quelle émotion de voir s'animer ces photos qui me rappellent tant de beaux souvenirs avec les gens que j'aime. Les messages personnalisés de nos proches effacent les distances et donnent le sentiment d'être entouré."
+      third: "Il est souvent difficile de trouver une idée de cadeau, mais ce film a été une évidence. E Motions-video a tout de suite su cerner notre amie et créer un film à son image. La musique, le fil conducteur et le mélange de photos et vidéos en font un cadeau parfait."
+    questions:
+      title: "Encore des questions ?"
+      description: "Contactez-nous pour obtenir de l'aide supplémentaire."
+      contact_us: "Contactez-nous"
   devise:
     failure:
       unauthenticated: "Veuillez vous connecter ou créer un compte avant de continuer."
@@ -162,6 +175,10 @@ fr:
     click_and_drag: "Cliquez et faites glisser pour modifier l'ordre"
     child_photo: "Photo de l'enfant"
   videos:
+    messages:
+      dedicace_required: "Veuillez sélectionner une dédicace."
+      dedicace_invalid: "La dédicace sélectionnée n'existe pas."
+      complete_current_step: "Vous devez finaliser cette étape avant de passer à la suivante."
     start:
       title: "Choisissez la méthode de création vidéo"
       video_choices: "Plusieurs choix de vidéos :"
@@ -299,12 +316,23 @@ fr:
       describe_placeholder: "Décrivez votre musique..."
     dedicace:
       title: "Choisissez votre dédicace personnalisée pour la fin de votre film"
+      description: "Choisissez le thème de dédicace finale qui correspond le mieux à votre film. Vous pouvez prévisualiser chaque option avant de faire votre sélection."
       no_video: "Pas de vidéo"
       read_more: "Lire plus"
       special_request: "Vous pouvez également nous envoyer une demande pour commander une vidéo avec votre thème spécial"
       processing_time: "* Le traitement et la confirmation de votre thème peuvent prendre jusqu'à 2 jours."
       describe_theme: "Décrivez votre thème..."
       additional_fees: "Veuillez noter que des frais supplémentaires seront appliqués pour une vidéo sur mesure."
+      themes:
+        carpool:
+          name: "Carpool"
+          description: "Une dédicace finale conviviale inspirée d'un trajet partagé en voiture."
+        chanson:
+          name: "Chanson"
+          description: "Une dédicace finale musicale construite autour d'une chanson."
+        on_danse:
+          name: "On danse"
+          description: "Une dédicace finale dynamique où tout le monde se joint à la danse."
     dedicace_de_fin:
       title: "Ajoutez votre partie vidéo à la dédicace finale"
       film_yourself: "Filmez vous directement sur notre plateforme (via votre tablette, téléphone, ordinateur)"
@@ -313,6 +341,15 @@ fr:
       camera_view: "La vue depuis la caméra frontale s'ouvre ici"
       start_recording: "Commencer l'enregistrement vidéo"
       stop_recording: "Arrêter l'enregistrement vidéo"
+      cancel: "Annuler"
+      processing_video: "Traitement de la vidéo..."
+      camera_required: "L'accès à la caméra et au microphone est requis. Autorisez-le puis réessayez."
+      save_failed: "Impossible d'enregistrer la vidéo"
+      processing_failed: "Le traitement de la vidéo a échoué"
+      replace_recording: "Remplacer la vidéo existante ?"
+      rerecord: "Réenregistrer ?"
+      recording_required: "Enregistrez et traitez au moins une vidéo de dédicace avant de continuer."
+      combine_failed: "Impossible de créer la vidéo de dédicace finale. Veuillez réessayer."
       drag_media: "Faites glisser ou appuyez pour ajouter vos médias"
       continue_later: "Continuer plus tard"
     content_dedicace:

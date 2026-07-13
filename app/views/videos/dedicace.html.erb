@@ -2,7 +2,7 @@
   <h1 class="video-h1"><%= t('videos.dedicace.title') %></h1>
   <div class="w-full flex flex-col justify-center items-center">
     <div class="text-with-image-block-occasion flex justify-center items-center mb-[72px] w-full p-text-16">
-      Lorem ipsum dolor sit amet consectetur. Dictum eu morbi ac elit enim at neque urna. Eleifend condimentum ipsum a lectus tortor est arcu. Feugiat lectus auctor cursus netus eu sit in pharetra. Convallis eget odio molestie urna phasellus etiam ac euismod justo. Ipsum tristique purus risus at ultrices non. Eget lectus diam eget feugiat nulla imperdiet ornare libero.
+      <%= t('videos.dedicace.description') %>
       <%= image_tag 'icons/three-stars.png', class: 'image-from-image-text-block' %>
     </div>
   </div>
@@ -12,6 +12,7 @@
         <div class="frame-no-border">
             <div class="dedications">
               <% @dedicaces.each do |dedicace| %>
+                <% theme_key = dedicace.name.parameterize(separator: "_") %>
                 <div class="dedication">
                   <%= f.radio_button "dedicace", dedicace.id, { checked: dedicace == @video.dedicace } %>
                   <div class="dedication-wrapper">
@@ -35,9 +36,9 @@
                       <% else %>
                         <p><%= t('videos.dedicace.no_video') %></p>
                       <% end %>
-                      <span class="dedication-name"><%= dedicace.name %></span>
+                      <span class="dedication-name"><%= t("videos.dedicace.themes.#{theme_key}.name", default: dedicace.name) %></span>
                     </div>
-                    <p class="p-text-16 mt-4"><%= dedicace.description %></p>
+                    <p class="p-text-16 mt-4"><%= t("videos.dedicace.themes.#{theme_key}.description", default: dedicace.description) %></p>
                     <p class="p-text-16-bold mt-2 text-decoration-underline"><%= t('videos.dedicace.read_more') %></p>
                   </div>
                 </div>

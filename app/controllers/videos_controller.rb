@@ -531,7 +531,7 @@ class VideosController < ApplicationController
   def dedicace_post
     authorize @video, :dedicace_post?, policy_class: VideoPolicy
     if params[:dedicace].nil?
-      flash[:alert] = "Vous devez séléctionnez une dedicace"
+      flash[:alert] = I18n.t("videos.messages.dedicace_required")
       return render :dedicace, status: :unprocessable_entity
     end
 
@@ -540,7 +540,7 @@ class VideosController < ApplicationController
     # Utilisation de find_by pour avoir un objet nil si pas trouvé.
     dedicace = Dedicace.find_by(id: params[:dedicace])
     if dedicace.nil?
-      flash[:alert] = "Sélection incorrecte. La dedicace n'existe pas."
+      flash[:alert] = I18n.t("videos.messages.dedicace_invalid")
       return render :dedicace, status: :unprocessable_entity
     end
 
@@ -1218,7 +1218,7 @@ class VideosController < ApplicationController
         redirect_to send("#{@video.next_step}_path"), turbo: false
       else
         redirect_to send("#{@video.next_step}_path"),
-                    alert: "Vous devez finaliser cette étape avant de passer à la prochaine.", turbo: false
+                    alert: I18n.t("videos.messages.complete_current_step"), turbo: false
       end
 
     end
