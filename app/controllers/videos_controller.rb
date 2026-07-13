@@ -1304,7 +1304,7 @@ class VideosController < ApplicationController
         id: music.id,
         name: music.name,
         waveform: music.waveform.to_json,
-        url: music.music.attached? ? url_for(music.music) : nil
+        url: music.music.attached? ? rails_blob_path(music.music, disposition: "inline") : nil
       }
     end
     # @musics = Music.all

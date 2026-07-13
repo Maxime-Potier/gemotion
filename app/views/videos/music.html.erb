@@ -38,10 +38,10 @@
                 <div class="music-name p-text-16"><%= music[:name] %></div>
                 <div class="music-audio">
                   <%= f.radio_button "music", music[:id], {checked: music[:id] == @video.music&.id}%>
-                  <div class="audio-visualizer" data-controller="audio-visualizer" data-audio-src="<%= music[:url] %>" data-waveform="<%= music[:waveform] %>">
-                    <div class="play-icon play-button" data-audio-visualizer-target="playPauseButton">
+                  <div class="audio-visualizer" data-controller="audio-visualizer" data-player-kind="whole-video" data-music-id="<%= music[:id] %>" data-audio-src="<%= music[:url] %>" data-waveform="<%= music[:waveform] %>">
+                    <button type="button" class="play-icon play-button" aria-label="<%= t('videos.music.play_track', name: music[:name]) %>" data-audio-visualizer-target="playPauseButton">
                       <div class="play-button-icon"></div>
-                    </div>
+                    </button>
                     <canvas class="waveform-canvas" data-audio-visualizer-target="waveformCanvas"></canvas>
                   </div>
                 </div>
@@ -91,10 +91,10 @@
                   </div>
                 </div>
                 <%if video_chapter.custom_music.attached? && video_chapter.waveform.present?%>
-                  <div class="relative audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= url_for(video_chapter.custom_music) %>" data-waveform="<%= video_chapter.waveform.to_json %>">
-                    <div class="play-icon play-button" data-audio-visualizer-target="playPauseButton">
+                  <div class="relative audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= rails_blob_path(video_chapter.custom_music, disposition: 'inline') %>" data-waveform="<%= video_chapter.waveform.to_json %>">
+                    <button type="button" class="play-icon play-button" aria-label="<%= t('videos.music.play') %>" data-audio-visualizer-target="playPauseButton">
                       <div class="play-button-icon"></div>
-                    </div>
+                    </button>
                     <canvas class="waveform-canvas" data-audio-visualizer-target="waveformCanvas"></canvas>
                       <div class="delete-music-icon-btn"
                           data-url="<%= drop_custom_music_path(video_chapter, video_id: @video.id) %>">
@@ -137,9 +137,9 @@
                               <input type="radio" class="mr-6" name="music_<%= video_chapter.id %>" value="<%= music[:id] %>" <%= selected_music_id == music[:id] ? 'checked' : '' %> />
                               <div class="flex flex-col w-full">
                                 <div class="audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= music[:url] %>" data-waveform="<%= music[:waveform] %>">
-                                  <div class="play-icon play-button" data-audio-visualizer-target="playPauseButton">
+                                  <button type="button" class="play-icon play-button" aria-label="<%= t('videos.music.play') %>" data-audio-visualizer-target="playPauseButton">
                                     <div class="play-button-icon"></div>
-                                  </div>
+                                  </button>
                                   <canvas class="waveform-canvas" data-audio-visualizer-target="waveformCanvas"></canvas>
                                 </div>
                               </div>

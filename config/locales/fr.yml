@@ -354,6 +354,8 @@ fr:
       share_link: "Ou partagez le lien"
       skip_step_warning: "Vous pouvez sauter cette étape maintenant et ajouter des collaborateurs aux étapes suivantes."
     music:
+      play: "Lire la musique"
+      play_track: "Lire %{name}"
       title: "Optionnel: Choisissez les musiques pour chacun des chapitres de votre film"
       description: "Cette étape est facultative. Mais si vous le souhaitez, choisissez la musique pour chacun des chapitres que vous avez créés en sélectionnant la musique dans la liste proposée ou en téléchargeant la musique de votre choix (lien youtube, mp3). Si vous préférez passer cette étape, ne vous en faites pas nous sélectionnerons la musique pour vous."
       full_video: "Vidéo complète"

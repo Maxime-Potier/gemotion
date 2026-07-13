@@ -378,6 +378,8 @@ en:
       share_link: "Or share the link"
       skip_step_warning: "You can skip this step now and add collaborators later."
     music:
+      play: "Play music"
+      play_track: "Play %{name}"
       title: "Optional: Choose music for each chapter of your film"
       description: "This step is optional. But if you wish, choose the music for each of the chapters you have created by selecting music from the proposed list or by uploading music of your choice (youtube link, mp3). If you prefer to skip this step, don't worry, we'll select the music for you."
       full_video: "Full video"

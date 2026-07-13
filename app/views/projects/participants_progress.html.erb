@@ -228,17 +228,17 @@
 
 
                             <%if chapter.custom_music.attached? && chapter.waveform.present?%>
-                              <div class="relative audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= url_for(chapter.custom_music) %>" data-waveform="<%= chapter.waveform.to_json %>">
-                                <div class="play-icon play-button" data-audio-visualizer-target="playPauseButton">
+                              <div class="relative audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= rails_blob_path(chapter.custom_music, disposition: 'inline') %>" data-waveform="<%= chapter.waveform.to_json %>">
+                                <button type="button" class="play-icon play-button" aria-label="<%= t('videos.music.play') %>" data-audio-visualizer-target="playPauseButton">
                                   <div class="play-button-icon"></div>
-                                </div>
+                                </button>
                                 <canvas class="waveform-canvas" data-audio-visualizer-target="waveformCanvas"></canvas>
                               </div>
                             <% elsif chapter.collaborator_music.present? %>
-                              <div class="relative audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= url_for(chapter.collaborator_music.music.music) %>" data-waveform="<%= chapter.collaborator_music.music.waveform.to_json %>">
-                                <div class="play-icon play-button" data-audio-visualizer-target="playPauseButton">
+                              <div class="relative audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= rails_blob_path(chapter.collaborator_music.music.music, disposition: 'inline') %>" data-waveform="<%= chapter.collaborator_music.music.waveform.to_json %>">
+                                <button type="button" class="play-icon play-button" aria-label="<%= t('videos.music.play') %>" data-audio-visualizer-target="playPauseButton">
                                   <div class="play-button-icon"></div>
-                                </div>
+                                </button>
                                 <canvas class="waveform-canvas" data-audio-visualizer-target="waveformCanvas"></canvas>
                               </div>
                             <% end %>

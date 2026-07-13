@@ -69,10 +69,10 @@
                 <% if video.by_chapters? %>
                   <div class="music-selection w-full">
                     <%if chapter.custom_music.attached? && chapter.waveform.present?%>
-                      <div class="relative audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= url_for(chapter.custom_music) %>" data-waveform="<%= chapter.waveform.to_json %>">
-                        <div class="play-icon play-button" data-audio-visualizer-target="playPauseButton">
+                      <div class="relative audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= rails_blob_path(chapter.custom_music, disposition: 'inline') %>" data-waveform="<%= chapter.waveform.to_json %>">
+                        <button type="button" class="play-icon play-button" aria-label="<%= t('videos.music.play') %>" data-audio-visualizer-target="playPauseButton">
                           <div class="play-button-icon"></div>
-                        </div>
+                        </button>
                         <canvas class="waveform-canvas" data-audio-visualizer-target="waveformCanvas"></canvas>
                       </div>
                     <%end%>
@@ -121,9 +121,9 @@
                                   <input type="radio" class="mr-6" name="music_<%= chapter.id %>" value="<%= music[:id] %>" <%= selected_music_id == music[:id] ? 'checked' : '' %> />
                                   <div class="flex flex-col w-full">
                                     <div class="audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= music[:url] %>" data-waveform="<%= music[:waveform] %>">
-                                      <div class="play-icon play-button" data-audio-visualizer-target="playPauseButton">
+                                      <button type="button" class="play-icon play-button" aria-label="<%= t('videos.music.play') %>" data-audio-visualizer-target="playPauseButton">
                                         <div class="play-button-icon"></div>
-                                      </div>
+                                      </button>
                                       <canvas class="waveform-canvas" data-audio-visualizer-target="waveformCanvas"></canvas>
                                     </div>
                                   </div>

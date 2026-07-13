@@ -5,7 +5,7 @@ export default class extends Controller {
 
   connect() {
     const audioSrc = this.element.dataset.audioSrc;
-    const waveformData = JSON.parse(this.element.dataset.waveform).data;
+    const waveformData = this.parseWaveform(this.element.dataset.waveform);
 
     // Process waveform: Trim zeros and downsample to 32 bars (half of 64)
     const processedWaveform = this.processWaveform(waveformData, 48); // Target 32 bars
@@ -44,23 +44,38 @@ export default class extends Controller {
     };
 
     // Play/Pause functionality
-    const togglePlayPause = () => {
+    const resetPlayButton = () => {
+      const iconElement = playPauseButton.querySelector(".play-button-icon, .stop-button-icon");
+
+      playPauseButton.classList.remove("playing");
+      this.element.dataset.playbackState = "paused";
+      if (iconElement) {
+        iconElement.classList.remove("stop-button-icon");
+        iconElement.classList.add("play-button-icon");
+      }
+    };
+
+    const togglePlayPause = async () => {
       const iconElement = playPauseButton.querySelector(".play-button-icon, .stop-button-icon");
 
       if (audio.paused) {
-        audio.play();
-        playPauseButton.classList.add("playing");
-        if (iconElement) {
-          iconElement.classList.remove("play-button-icon");
-          iconElement.classList.add("stop-button-icon");
+        try {
+          await audio.play();
+          playPauseButton.classList.add("playing");
+          this.element.dataset.playbackState = "playing";
+          delete this.element.dataset.playbackError;
+          if (iconElement) {
+            iconElement.classList.remove("play-button-icon");
+            iconElement.classList.add("stop-button-icon");
+          }
+        } catch (error) {
+          resetPlayButton();
+          this.element.dataset.playbackError = error.message;
+          console.error("Unable to play audio:", error);
         }
       } else {
         audio.pause();
-        playPauseButton.classList.remove("playing");
-        if (iconElement) {
-          iconElement.classList.remove("stop-button-icon");
-          iconElement.classList.add("play-button-icon");
-        }
+        resetPlayButton();
       }
     };
 
@@ -69,6 +84,36 @@ export default class extends Controller {
 
     // Attach event listener to the play/pause button
     playPauseButton.addEventListener("click", togglePlayPause);
+    audio.addEventListener("ended", resetPlayButton);
+    audio.addEventListener("error", () => {
+      resetPlayButton();
+      this.element.dataset.playbackError = audio.error?.message || "Audio could not be loaded";
+    });
+
+    this.audio = audio;
+    this.togglePlayPause = togglePlayPause;
+    this.resetPlayButton = resetPlayButton;
+  }
+
+  disconnect() {
+    if (!this.audio) return;
+
+    this.audio.pause();
+    this.playPauseButtonTarget.removeEventListener("click", this.togglePlayPause);
+    this.audio.removeEventListener("ended", this.resetPlayButton);
+  }
+
+  parseWaveform(rawWaveform) {
+    try {
+      const parsedWaveform = JSON.parse(rawWaveform || "null");
+      const waveformData = Array.isArray(parsedWaveform) ? parsedWaveform : parsedWaveform?.data;
+
+      if (Array.isArray(waveformData) && waveformData.length > 0) return waveformData;
+    } catch (error) {
+      console.warn("Unable to parse waveform data:", error);
+    }
+
+    return Array(48).fill(24);
   }
 
   /**

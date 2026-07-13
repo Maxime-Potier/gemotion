@@ -179,6 +179,11 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     )
     sign_in user
 
+    get music_url(locale: :en)
+
+    assert_response :success
+    assert_select "[data-controller='audio-visualizer'][data-audio-src*='disposition=inline']"
+
     post music_post_url(locale: :en)
 
     assert_redirected_to dedicace_url(locale: :en)

@@ -21,6 +21,7 @@ module Gemotion
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
     config.active_storage.previewers += [ActiveStorage::Previewer::VideoPreviewer]
+    config.active_storage.content_types_allowed_inline += %w[audio/mpeg audio/mp3 audio/mp4 audio/wav audio/x-wav]
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
