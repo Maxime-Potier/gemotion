@@ -17,11 +17,15 @@
               <% @chapterstype.each do |res| %>
 
                 <% checkbox_test_id = "chapter_checkbox_#{res[:ct].id}" %>
+                <% checkbox_id = "chapter_select_#{res[:ct].id}" %>
                 <% input_test_id = "chapter_input_#{res[:ct].id}" %>
                 <% slide_color_test_id = "chapter_slide_color_#{res[:ct].id}" %>
                 <div class="video-chapter">
                   <div class="video-chapter-wrapper">
-                    <%= f.check_box "chapters[#{res[:ct].id}][select]", {checked: res[:select], 'data-testid': checkbox_test_id }, true, false %>
+                    <div class="chapter-select-control">
+                      <%= f.check_box "chapters[#{res[:ct].id}][select]", {checked: res[:select], id: checkbox_id, 'data-testid': checkbox_test_id }, true, false %>
+                      <%= f.label checkbox_id, t('videos.select_chapters.select_chapter'), for: checkbox_id %>
+                    </div>
                     <div class="video-chapter-thumb-wrapper">
                       <div class='relative'>
                         <div data-controller="dialog" data-action="click->dialog#clickOutside">

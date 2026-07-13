@@ -241,6 +241,7 @@ en:
       dedicace_required: "Please select a dedication."
       dedicace_invalid: "The selected dedication does not exist."
       complete_current_step: "Please complete this step before moving to the next one."
+      music_unavailable: "No music track is available. Please try again later."
     start:
       title: "Choose the video creation method"
       video_choices: "Multiple video choices:"
@@ -287,6 +288,7 @@ en:
       choose_chapters: "Choose the chapters that will appear in the film (12 chapters max)"
       video_intro_depends: "The introduction of your video will depend on the option you selected"
       no_image: "No image"
+      select_chapter: "Select chapter"
       chapter_text_placeholder: "What text should this chapter contain..."
     destinataire_details:
       title: "Tell us more about the recipient(s) of the film"
@@ -367,6 +369,14 @@ en:
       drag_to_change: "Click and drag to change the order"
       add_videos_limit: "Add 2 videos maximum"
       add_photos_limit: "Add 2 photos maximum"
+    share:
+      title_colab: "Invite your loved ones to participate in your project"
+      title_solo: "Invite friends to collaborate on your project!"
+      description_colab: "Your loved ones can add their own photos and videos and participate in the final dedication."
+      description_solo: "If you invite friends, they can add content and record a video conclusion for the final dedication."
+      invitation_header: "Send an invitation by email or share the project link"
+      share_link: "Or share the link"
+      skip_step_warning: "You can skip this step now and add collaborators later."
     music:
       title: "Optional: Choose music for each chapter of your film"
       description: "This step is optional. But if you wish, choose the music for each of the chapters you have created by selecting music from the proposed list or by uploading music of your choice (youtube link, mp3). If you prefer to skip this step, don't worry, we'll select the music for you."

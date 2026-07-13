@@ -450,11 +450,6 @@ class VideosController < ApplicationController
 
   def music_post
     authorize @video, :music_post?, policy_class: VideoPolicy
-    # Check for params indicating the whole video or chapters
-    if params[:music].nil? && params.keys.none? { |key| key.start_with?("music_") }
-      flash[:alert] = "Vous devez sélectionner au moins une musique"
-      return render :music, status: :unprocessable_entity
-    end
 
     @video.special_request_music = params[:special_request_music] if params[:special_request_music]
 
@@ -502,6 +497,11 @@ class VideosController < ApplicationController
           MusicProcessingJob.perform_later("VideoChapter", video_chapter.id, music_path.to_s)
         end
       end
+    end
+
+    unless ensure_preview_music
+      flash[:alert] = I18n.t("videos.messages.music_unavailable")
+      return render :music, status: :unprocessable_entity
     end
 
     @video.stop_at = @video.next_step
@@ -1237,6 +1237,8 @@ class VideosController < ApplicationController
       next false unless @video.pending?
       next false if @video.final_video_with_watermark.attached?
 
+      raise I18n.t("videos.messages.music_unavailable") unless ensure_preview_music
+
       @video.update!(concat_status: :processing, processing_progress: 0)
       true
     end
@@ -1245,6 +1247,31 @@ class VideosController < ApplicationController
   rescue StandardError => e
     Rails.logger.error("Unable to enqueue video preview generation for video #{@video.id}: #{e.message}")
     @video.update!(concat_status: :failed)
+  end
+
+  def ensure_preview_music
+    default_music = Music.with_attached_music.first
+
+    if @video.whole_video?
+      return true if @video.music&.music&.attached?
+      return false unless default_music
+
+      @video.music = default_music
+      return true
+    end
+
+    chapters_have_music = @video.video_chapters.all? do |chapter|
+      chapter.custom_music.attached? || chapter.video_music.present?
+    end
+    return false unless default_music || chapters_have_music
+
+    @video.video_chapters.each do |chapter|
+      next if chapter.custom_music.attached? || chapter.video_music.present?
+
+      VideoMusic.create!(music: default_music, video_chapter: chapter)
+    end
+
+    true
   end
 
   def define_chapter_type

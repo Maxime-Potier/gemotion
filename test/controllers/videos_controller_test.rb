@@ -144,6 +144,12 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
       phone: "+33123456784"
     )
     video = user.videos.create!(video_type: :solo, stop_at: "deadline", concat_status: :pending)
+    music = Music.create!(name: "Pending preview default")
+    music.music.attach(
+      io: File.open(Rails.root.join("app/assets/musiques/voyage-1.mp3")),
+      filename: "voyage-1.mp3",
+      content_type: "audio/mpeg"
+    )
     sign_in user
 
     assert_enqueued_with(job: ContentDedicaceJob, args: [video.id]) do
@@ -154,5 +160,67 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert video.reload.processing?
     assert_equal 0, video.processing_progress
     assert_select "#video-processing-state"
+  end
+
+  test "music step assigns an available track when the optional selection is empty" do
+    user = User.create!(
+      email: "optional-music-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456785"
+    )
+    video = user.videos.create!(video_type: :solo, stop_at: "select_chapters")
+    music = Music.create!(name: "Automatic soundtrack")
+    music.music.attach(
+      io: File.open(Rails.root.join("app/assets/musiques/voyage-1.mp3")),
+      filename: "voyage-1.mp3",
+      content_type: "audio/mpeg"
+    )
+    sign_in user
+
+    post music_post_url(locale: :en)
+
+    assert_redirected_to dedicace_url(locale: :en)
+    assert video.reload.music.music.attached?
+    assert_equal "music", video.stop_at
+  end
+
+  test "chapter checkboxes have a visible clickable label" do
+    user = User.create!(
+      email: "chapter-selection-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456786"
+    )
+    user.videos.create!(video_type: :solo, stop_at: "photo_intro")
+    chapter_type = ChapterType.create!(name: "Journey")
+    sign_in user
+
+    get select_chapters_url(locale: :en)
+
+    assert_response :success
+    assert_select "input#chapter_select_#{chapter_type.id}[type='checkbox']"
+    assert_select "label[for='chapter_select_#{chapter_type.id}']", text: "Select chapter"
+  end
+
+  test "solo share page is fully translated in English" do
+    user = User.create!(
+      email: "share-translation-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456787"
+    )
+    user.videos.create!(video_type: :solo, stop_at: "dedicace", token: SecureRandom.urlsafe_base64(20))
+    sign_in user
+
+    get share_url(locale: :en)
+
+    assert_response :success
+    assert_select "h1", text: "Invite friends to collaborate on your project!"
+    assert_includes response.body, "If you invite friends, they can add content"
+    assert_no_match(/translation missing/, response.body)
   end
 end

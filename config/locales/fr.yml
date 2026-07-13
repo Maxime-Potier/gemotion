@@ -217,6 +217,7 @@ fr:
       dedicace_required: "Veuillez sélectionner une dédicace."
       dedicace_invalid: "La dédicace sélectionnée n'existe pas."
       complete_current_step: "Vous devez finaliser cette étape avant de passer à la suivante."
+      music_unavailable: "Aucune piste musicale n'est disponible. Veuillez réessayer plus tard."
     start:
       title: "Choisissez la méthode de création vidéo"
       video_choices: "Plusieurs choix de vidéos :"
@@ -263,6 +264,7 @@ fr:
       choose_chapters: "Choisissez les chapitres qui figureront dans le film ( 12 chapitres max )"
       video_intro_depends: "L'introduction de votre vidéo dépendra de l'option que vous avez sélectionné"
       no_image: "Pas d'image"
+      select_chapter: "Sélectionner"
       chapter_text_placeholder: "Quel texte doit contenir ce chapitre ..."
     destinataire_details:
       title: "Dites nous en plus sur le, la, les destinataires du film"
