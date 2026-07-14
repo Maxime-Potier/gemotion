@@ -1,4 +1,12 @@
 class Video < ApplicationRecord
+  GENERATED_OUTPUT_ATTACHMENTS = %i[
+    final_video
+    final_video_with_watermark
+    final_video_with_transition
+    final_video_xml
+    final_cut_pro_archive
+  ].freeze
+
   enum :video_type, { solo: 0, colab: 1 }
   enum :occasion, { anniversaire: 0, mariage: 1 }
   enum :theme, { specific_request: 0, theme_1: 1, theme_2: 2 }
@@ -49,6 +57,14 @@ class Video < ApplicationRecord
     else
       nil
     end
+  end
+
+  def invalidate_generated_outputs!
+    GENERATED_OUTPUT_ATTACHMENTS.each do |attachment_name|
+      public_send(attachment_name).purge if public_send(attachment_name).attached?
+    end
+
+    update!(concat_status: :pending, processing_progress: 0)
   end
 
   def get_preview

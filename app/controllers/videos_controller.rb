@@ -437,6 +437,10 @@ class VideosController < ApplicationController
 
       chapter_to_delete.destroy_all
 
+      # The selected chapters define the generated preview. Any change here
+      # must invalidate the previous render so edit_video can generate a new one.
+      @video.invalidate_generated_outputs!
+
       @video.update(stop_at: @video.next_step)
       p "*" * 1000
       redirect_to send("#{@video.next_step}_path"), turbo: false
@@ -937,6 +941,10 @@ class VideosController < ApplicationController
         end
       end
     end
+
+    # Chapter, media, order, or music changes make the existing preview stale.
+    # The next step will enqueue a fresh preview from the updated content.
+    @video.invalidate_generated_outputs!
 
     redirect_to skip_edit_video_path
     # redirect_to edit_video_path, notice: 'Video chapters updated successfully'
