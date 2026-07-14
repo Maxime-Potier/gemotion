@@ -350,6 +350,7 @@ en:
       title: "Tell us more about the recipient(s) of the film"
       subtitle: "Tell us more about the recipient(s)"
       submit_add_more: "Submit and add another recipient"
+      required_fields: "Please fill in all required fields."
     deadline:
       title: "Confirm the deadline for creating the film"
       subtitle: "At least 7 days before the video publication date"

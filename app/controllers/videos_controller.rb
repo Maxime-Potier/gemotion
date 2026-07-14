@@ -148,13 +148,13 @@ class VideosController < ApplicationController
           redirect_to info_destinataire_path
         end
       else
-        redirect_to info_destinataire_path, alert: "Veuillez remplir tous les champs obligatoires."
+        redirect_to info_destinataire_path, alert: t("videos.info_destinataire.required_fields")
       end
     elsif is_empty_params && @video.video_destinataires.count > 0
       @video.update(stop_at: @video.current_step)
       redirect_to destinataire_details_path, turbo: false
     else
-      redirect_to info_destinataire_path, alert: "Veuillez remplir tous les champs obligatoires."
+      redirect_to info_destinataire_path, alert: t("videos.info_destinataire.required_fields")
     end
 
     nil if params[:special_request_destinataire].nil?

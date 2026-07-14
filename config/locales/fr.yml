@@ -326,6 +326,7 @@ fr:
       title: "Dites nous en plus sur le, la, les destinataires du film"
       subtitle: "Dites nous en plus sur le ou les destinataires"
       submit_add_more: "Soumettre et ajouter un autre destinataire"
+      required_fields: "Veuillez remplir tous les champs obligatoires."
     deadline:
       title: "Confirmez la date limite pour la création du film"
       subtitle: "Au moins 7 jours avant la date de publication de la vidéo"

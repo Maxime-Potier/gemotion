@@ -26,6 +26,33 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_select ".alert", text: "Please select a dedication."
   end
 
+  test "recipient validation alert uses the requested locale" do
+    user = User.create!(
+      email: "recipient-validation-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456779"
+    )
+    user.videos.create!(video_type: :solo, stop_at: "occasion")
+    sign_in user
+
+    post info_destinataire_post_url(locale: :en), params: {
+      age_destinataire: "10",
+      name_destinataire: "",
+      more_info_destinataire: "Some details",
+      passions_and_hobbies: "Music",
+      personality_description: "Kind",
+      favorite_quotes: "A quote"
+    }
+
+    assert_redirected_to info_destinataire_url(locale: :en)
+    follow_redirect!
+    assert_response :success
+    assert_select ".alert", text: "Please fill in all required fields."
+    assert_no_match(/Veuillez remplir/, response.body)
+  end
+
   test "final dedication step requires at least one processed recording" do
     user = User.create!(
       email: "final-dedicace-test@example.com",
@@ -42,6 +69,9 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
     assert_select ".alert", text: "Please record and process at least one dedication video before continuing."
+    assert_select "#dedicace-recording-form[data-turbo='false']"
+    assert_select ".video-slot[data-slot-number]", count: 3
+    assert_includes response.body, 'document.addEventListener("turbo:load", initializeDedicaceRecording)'
     assert_equal dedicace, video.reload.video_dedicace.dedicace
   end
 

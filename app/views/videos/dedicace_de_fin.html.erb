@@ -1,5 +1,6 @@
 
-<%= form_with url: dedicace_de_fin_post_path(@video), method: :patch, multipart: true, local: true do |f| %>
+<%= form_with url: dedicace_de_fin_post_path(@video), method: :patch, multipart: true,
+              local: true, data: { turbo: false }, html: { id: "dedicace-recording-form" } do |f| %>
   <div>
     <h1 class="video-h1"><%= t('videos.dedicace_de_fin.title') %></h1>
     <div class="flex flex-row justify-center w-full">
@@ -309,7 +310,11 @@
 </style>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+function initializeDedicaceRecording() {
+  const recordingRoot = document.getElementById("recordingModal");
+  if (!recordingRoot || recordingRoot.dataset.recordingInitialized === "true") return;
+  recordingRoot.dataset.recordingInitialized = "true";
+
   let mediaRecorder;
   let recordedChunks = [];
   let recordingBlob = null;
@@ -320,6 +325,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let isRecording = false;
   let currentSlot = null;
   let processedVideo = false;
+  let sourceStream = null;
+  let cameraPromise = null;
+  let cameraPromiseSessionId = null;
+  let recordingSessionId = 0;
+  let previewUrl = null;
 
   const messages = {
     cameraRequired: "<%= j t('videos.dedicace_de_fin.camera_required') %>",
@@ -337,46 +347,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const stopButton = document.getElementById("stopRecording");
   const confirmButton = document.getElementById("confirmRecording");
   const cancelButton = document.getElementById("cancelRecording");
-  const recordingModal = document.getElementById("recordingModal");
+  const recordingModal = recordingRoot;
   const videoSlots = document.querySelectorAll(".video-slot");
   const loadingSpinner = document.querySelector(".spinner");
   const videoRecordingPreviewBlock = document.querySelector(".video-recording__preview");
 
-  function openRecordingModal(slotNumber) {
-    stopMediaTracks();
-    currentSlot = slotNumber;
-    recordedChunks = [];
-    recordingBlob = null;
-    processedVideo = false;
-    recordingModal.style.display = 'flex';
-    videoPreview.style.display = 'none';
-    videoRecordingPreviewBlock.style.display = 'block';
-    videoPreview.controls = false;
-    videoPreview.muted = true;
-    loadingSpinner.style.display = 'none';
-    startButton.style.display = 'block';
-    stopButton.style.display = 'none';
-    confirmButton.style.display = 'none';
-    cancelButton.style.display = 'block';
-    recordingTimer.style.display = 'none';
-  }
+  async function ensureCameraPreview(sessionId) {
+    if (sourceStream?.active && videoPreview.srcObject === sourceStream) return sourceStream;
+    if (cameraPromise && cameraPromiseSessionId === sessionId) return cameraPromise;
 
-  function stopMediaTracks() {
-    if (videoPreview.srcObject) {
-      videoPreview.srcObject.getTracks().forEach(track => track.stop());
-    }
-  }
-
-  async function startRecording() {
-    try {
-      isRecording = true;
-      recordedChunks = [];
-      recordingBlob = null;
-      timeLeft = 30;
-      recordingTimer.textContent = `${timeLeft}s`;
-      videoRecordingPreviewBlock.style.display = 'none';
-      videoPreview.style.display = 'block'; 
-
+    const previewPromise = (async () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 720 },
@@ -388,9 +368,88 @@ document.addEventListener("DOMContentLoaded", () => {
         audio: true
       });
 
-      videoPreview.srcObject = stream;
-      await videoPreview.play();
+      if (sessionId !== recordingSessionId) {
+        stream.getTracks().forEach(track => track.stop());
+        return null;
+      }
 
+      sourceStream = stream;
+      videoPreview.removeAttribute('src');
+      videoPreview.srcObject = sourceStream;
+      videoPreview.controls = false;
+      videoPreview.muted = true;
+      videoRecordingPreviewBlock.style.display = 'none';
+      videoPreview.style.display = 'block';
+      await videoPreview.play();
+      return sourceStream;
+    })();
+
+    cameraPromise = previewPromise;
+    cameraPromiseSessionId = sessionId;
+    try {
+      return await previewPromise;
+    } finally {
+      if (cameraPromise === previewPromise) {
+        cameraPromise = null;
+        cameraPromiseSessionId = null;
+      }
+    }
+  }
+
+  function openRecordingModal(slotNumber) {
+    recordingSessionId += 1;
+    const sessionId = recordingSessionId;
+    stopMediaTracks();
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+    currentSlot = slotNumber;
+    recordedChunks = [];
+    recordingBlob = null;
+    processedVideo = false;
+    recordingModal.style.display = 'flex';
+    videoPreview.style.display = 'none';
+    videoRecordingPreviewBlock.style.display = 'block';
+    videoPreview.controls = false;
+    videoPreview.muted = true;
+    loadingSpinner.style.display = 'none';
+    startButton.style.display = 'block';
+    startButton.disabled = true;
+    stopButton.style.display = 'none';
+    confirmButton.style.display = 'none';
+    cancelButton.style.display = 'block';
+    recordingTimer.style.display = 'none';
+
+    ensureCameraPreview(sessionId)
+      .then(stream => {
+        if (stream && sessionId === recordingSessionId) startButton.disabled = false;
+      })
+      .catch(error => {
+        if (sessionId !== recordingSessionId) return;
+        console.error('Error starting camera preview:', error);
+        alert(messages.cameraRequired);
+        closeRecordingModal();
+      });
+  }
+
+  function stopMediaTracks() {
+    const stream = videoPreview.srcObject || sourceStream;
+    stream?.getTracks().forEach(track => track.stop());
+    sourceStream = null;
+  }
+
+  async function startRecording() {
+    const sessionId = recordingSessionId;
+    startButton.disabled = true;
+
+    try {
+      const stream = await ensureCameraPreview(sessionId);
+      if (!stream || sessionId !== recordingSessionId) return;
+
+      isRecording = true;
+      recordedChunks = [];
+      recordingBlob = null;
+      timeLeft = 30;
+      recordingTimer.textContent = `${timeLeft}s`;
       const supportedTypes = [
         'video/webm;codecs=vp8,opus',
         'video/webm;codecs=vp9,opus',
@@ -418,10 +477,10 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        const videoURL = URL.createObjectURL(recordingBlob);
+        previewUrl = URL.createObjectURL(recordingBlob);
         videoPreview.pause();
         videoPreview.srcObject = null;
-        videoPreview.src = videoURL;
+        videoPreview.src = previewUrl;
         videoPreview.controls = true;
         videoPreview.muted = false;
         videoPreview.style.display = 'block';
@@ -438,6 +497,7 @@ document.addEventListener("DOMContentLoaded", () => {
       mediaRecorder.start(1000);
 
       startButton.style.display = 'none';
+      startButton.disabled = false;
       stopButton.style.display = 'block';
       recordingTimer.style.display = 'block';
 
@@ -553,6 +613,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function closeRecordingModal() {
+    recordingSessionId += 1;
     recordingModal.style.display = 'none';
     stopMediaTracks();
     if (recordingInterval) clearInterval(recordingInterval);
@@ -567,6 +628,9 @@ document.addEventListener("DOMContentLoaded", () => {
     isRecording = false;
     currentSlot = null;
     processedVideo = false;
+    startButton.disabled = false;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
   }
 
   videoSlots.forEach(slot => {
@@ -594,5 +658,8 @@ document.addEventListener("DOMContentLoaded", () => {
       stopRecording();
     }
   });
-});
+}
+
+document.addEventListener("DOMContentLoaded", initializeDedicaceRecording);
+document.addEventListener("turbo:load", initializeDedicaceRecording);
 </script>
