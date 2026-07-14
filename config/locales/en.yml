@@ -209,6 +209,21 @@ en:
       projects: "Current projects"
       logout: "Log out"
   projects:
+    role_switch:
+      participant: "I am a participant"
+      creator: "I am a creator"
+    preview_unavailable: "Preview not available yet"
+    creator_dashboard:
+      description: "Here you can edit your film, review each participant's progress, stop the film preparation, or change its completion deadline."
+      current_films: "Current films"
+      share: "Share"
+      title: "Title"
+      project_description: "Description"
+      download: "Download"
+      view_progress: "View progress"
+    collaborator_dashboard:
+      description: "Here you can see all the films you are contributing to."
+      project_details: "Project details"
     participants_progress:
       modify_deadline: "Change deadline"
       modify_deadline_help: "You can change the deadline for the current project"

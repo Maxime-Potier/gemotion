@@ -8,11 +8,11 @@
   <%= render "shared/creator_participant_block", creator: true %>
 
   <div class='mt-8 p-text-16'>
-    Ici, vous pouvez éditer le film, consulter les progrès de tous les participants au film, arrêter la préparation du film ou modifier la date limite pour le film terminé.
+    <%= t('projects.creator_dashboard.description') %>
   </div>
   <hr class='hr-divider-gray mt-8 mb-8'/>
 
-  <p class="p-text-18-bold mb-4">Films en cours</p>
+  <p class="p-text-18-bold mb-4"><%= t('projects.creator_dashboard.current_films') %></p>
 
   <div class="projects-grid">
     <% @creator_projects.each do |video| %>
@@ -25,7 +25,7 @@
                   <div class="w-full h-full flex flex-col justify-start items-center">
                     <div class="flex justify-between items-cente w-80 mt-6">
                       <div class="flex justify-between items-center"><span><%= video&.end_date&.strftime("%d/%m/%Y") %></span></div>
-                      <button class="black-link">Partager</button>
+                      <button class="black-link"><%= t('projects.creator_dashboard.share') %></button>
                     </div>
                     <% if video.final_video.attached? && video.final_video_with_watermark.attached? %>
 
@@ -35,26 +35,22 @@
                         </video>
                       </div>
                     <% else %>
-                      <div class="flex relative items-center gap-[61px]">
-                        <%= video_tag asset_path('about.mp4'), id: 'about-video-element', controls: false, width: 982, height: 425, poster: asset_path('gemotion-about-video-poster.svg') %>
-                        <div id="play-button" class="absolute inset-0 flex items-center justify-center cursor-pointer">
-                            <%= image_tag 'icons/about-video-play.svg', alt: 'Play Button' %>
-                            <%= image_tag 'icons/video-bottom.png', alt: 'Play Button Icon', class: 'absolute video-bottom-icon' %>
-                        </div>
+                      <div class="flex items-center justify-center bg-[#F2FCFF] rounded-[20px]" style="width: 84%; min-height: 320px;">
+                        <p class="p-text-18-bold"><%= t('projects.preview_unavailable') %></p>
                       </div>
                     <% end %>
                     <div class="flex flex-row justify-between items-center w-80 mt-6">
-                      <div class="flex justify-between items-center"><span>Titre</span></div>
+                      <div class="flex justify-between items-center"><span><%= t('projects.creator_dashboard.title') %></span></div>
                       <input type="text" value="<%= video.title %>" class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-600 disabled-input border-gray-300" disabled>
                     </div>
                     <div class="flex flex-row justify-between items-center w-80 mt-6">
-                      <div class="flex justify-between items-center"><span>Description</span></div>
+                      <div class="flex justify-between items-center"><span><%= t('projects.creator_dashboard.project_description') %></span></div>
                       <input type="text" value="<%= video.description %>" class="w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-600 disabled-input border-gray-300" disabled>
                     </div>
                     <div class="flex flex-row justify-end items-center w-80 mt-6">
                       <% if video.final_video.attached? %>
                         <a href="<%= url_for(video.final_video) %>" class="transparent-link" download>
-                          Télécharger
+                          <%= t('projects.creator_dashboard.download') %>
                           <%= image_tag "icons/mdi_download-outline.png", alt: "Download Icon", class: "inline-block", style: "height: 16px; width: 16px;" %>
                         </a>
                       <% end %>
@@ -78,7 +74,7 @@
             <%end%>
           <%end%>
         </div>
-        <%= link_to "Voir la progression", participants_progress_path(video_id: video.id), class: "cta-button mt-2", data: {turbo: false} %>
+        <%= link_to t('projects.creator_dashboard.view_progress'), participants_progress_path(video_id: video.id), class: "cta-button mt-2", data: {turbo: false} %>
       </div>
     <%end%>
   </div>

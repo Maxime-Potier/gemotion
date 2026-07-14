@@ -9,7 +9,7 @@
   <%= render "shared/creator_participant_block", creator: false %>
 
    <div class='mt-8 p-text-16'>
-    Ici vous pouvez voir tous les films dans lesquels vous êtes collaborateur.
+    <%= t('projects.collaborator_dashboard.description') %>
   </div>
   <hr class='hr-divider-gray mt-8 '/>
 
@@ -32,7 +32,7 @@
             <%end%>
           <%end%>
         </div>
-        <a href="<%= collaborator_video_details_path(video.id) %>" class="cta-button mt-2" data-turbo="false">Détails du projet</a>
+        <a href="<%= collaborator_video_details_path(video.id) %>" class="cta-button mt-2" data-turbo="false"><%= t('projects.collaborator_dashboard.project_details') %></a>
       </div>
     <%end%>
   </div>

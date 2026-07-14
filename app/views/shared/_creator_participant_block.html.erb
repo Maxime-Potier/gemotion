@@ -1,4 +1,4 @@
   <div class="flex flex-row items-start">
-    <div class='<%= creator ? "link-projects" : "active-link-projects" %>'><%= link_to "Je suis un participant", as_collaborator_projects_path, class: 'block w-full h-full' %></div>
-    <div class='<%= creator ? "active-link-projects" : "link-projects" %> ml-2'><%= link_to 'Je suis un créateur', as_creator_projects_path, class: 'block w-full h-full ' %></div>
+    <div class='<%= creator ? "link-projects" : "active-link-projects" %>'><%= link_to t('projects.role_switch.participant'), as_collaborator_projects_path, class: 'block w-full h-full' %></div>
+    <div class='<%= creator ? "active-link-projects" : "link-projects" %> ml-2'><%= link_to t('projects.role_switch.creator'), as_creator_projects_path, class: 'block w-full h-full ' %></div>
   </div>

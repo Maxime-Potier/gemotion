@@ -185,6 +185,21 @@ fr:
       projects: "Projets en cours"
       logout: "Se déconnecter"
   projects:
+    role_switch:
+      participant: "Je suis un participant"
+      creator: "Je suis un créateur"
+    preview_unavailable: "Aucun aperçu disponible pour le moment"
+    creator_dashboard:
+      description: "Ici, vous pouvez éditer le film, consulter la progression de chaque participant, arrêter la préparation du film ou modifier sa date limite."
+      current_films: "Films en cours"
+      share: "Partager"
+      title: "Titre"
+      project_description: "Description"
+      download: "Télécharger"
+      view_progress: "Voir la progression"
+    collaborator_dashboard:
+      description: "Ici, vous pouvez voir tous les films auxquels vous participez."
+      project_details: "Détails du projet"
     participants_progress:
       modify_deadline: "Modifier la date limite"
       modify_deadline_help: "Vous pouvez modifier la date limite du projet en cours"
