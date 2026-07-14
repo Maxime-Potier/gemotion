@@ -31,7 +31,9 @@
               <%= t('videos.content_dedicace.browser_not_supported') %>
             </video>
           </div>
-          <%= link_to t('videos.content_dedicace.refresh_video'), content_dedicace_path(refresh: true), class: "transparent-link", data: { disable_with: "Refreshing..." } %>
+          <%= button_to t('videos.content_dedicace.refresh_video'), refresh_content_dedicace_path,
+                method: :post, class: "transparent-link", form: { class: "inline-block" },
+                data: { disable_with: t('videos.content_dedicace.refreshing') } %>
         <% elsif @video.processing? %>
           <p><%= t('videos.content_dedicace.processing_message') %></p>
         <% else %>

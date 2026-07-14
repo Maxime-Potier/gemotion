@@ -262,6 +262,7 @@ en:
       dedicace_invalid: "The selected dedication does not exist."
       complete_current_step: "Please complete this step before moving to the next one."
       music_unavailable: "No music track is available. Please try again later."
+      processing_restarted: "Video processing has been restarted in the background."
     start:
       title: "Choose the video creation method"
       video_choices: "Multiple video choices:"
@@ -454,6 +455,7 @@ en:
       theme: "Theme:"
       browser_not_supported: "Your browser does not support the video element."
       refresh_video: "Refresh video"
+      refreshing: "Refreshing..."
       processing_message: "Your video is being processed. This page will be refreshed once ready."
       no_final_video: "No final video generated."
     shared:

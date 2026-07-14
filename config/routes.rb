@@ -62,6 +62,7 @@ Rails.application.routes.draw do
     get "videos/skip_content", to: "videos#skip_content", as: "skip_content"
 
     get "videos/content_dedicace", to: "videos#content_dedicace", as: "content_dedicace"
+    post "videos/refresh_content_dedicace", to: "videos#refresh_content_dedicace", as: "refresh_content_dedicace"
     get "videos/:id/stream", to: "videos#stream_video", as: "stream_video"
     post "videos/content_dedicace", to: "videos#content_dedicace_post", as: "content_dedicace_post"
     get "videos/skip_content_dedicace", to: "videos#skip_content_dedicace", as: "skip_content_dedicace"

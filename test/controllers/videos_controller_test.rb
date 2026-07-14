@@ -162,6 +162,148 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_select "#video-processing-state"
   end
 
+  test "saving an unchanged video preserves the completed preview" do
+    user = User.create!(
+      email: "unchanged-preview-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456788"
+    )
+    video = user.videos.create!(
+      video_type: :solo,
+      stop_at: "deadline",
+      concat_status: :completed,
+      processing_progress: 100
+    )
+    chapter_type = ChapterType.create!(name: "Passions")
+    chapter = video.video_chapters.create!(chapter_type:, text: "Existing text", order: 1)
+    video.final_video_with_watermark.attach(
+      io: StringIO.new("completed preview"),
+      filename: "preview.mp4",
+      content_type: "video/mp4"
+    )
+    preview_blob_id = video.final_video_with_watermark.blob.id
+    sign_in user
+
+    assert_no_enqueued_jobs only: ContentDedicaceJob do
+      post edit_video_post_url(locale: :en), params: {
+        chapter_order: "",
+        chapters: {
+          chapter.id.to_s => {
+            text: chapter.text,
+            videos_order: "",
+            videos: [""],
+            photos_order: "",
+            photos: [""]
+          }
+        }
+      }
+    end
+
+    assert_redirected_to skip_edit_video_url(locale: :en)
+    assert video.reload.completed?
+    assert_equal 100, video.processing_progress
+    assert_equal preview_blob_id, video.final_video_with_watermark.blob.id
+
+    assert_no_enqueued_jobs only: ContentDedicaceJob do
+      follow_redirect!
+      assert_redirected_to content_dedicace_url(locale: :en)
+      follow_redirect!
+    end
+    assert_response :success
+    assert_select "video source[src]"
+  end
+
+  test "saving a changed video invalidates the completed preview" do
+    user = User.create!(
+      email: "changed-preview-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456789"
+    )
+    video = user.videos.create!(
+      video_type: :solo,
+      stop_at: "deadline",
+      concat_status: :completed,
+      processing_progress: 100
+    )
+    chapter_type = ChapterType.create!(name: "Challenges")
+    chapter = video.video_chapters.create!(chapter_type:, text: "Old text", order: 1)
+    video.final_video_with_watermark.attach(
+      io: StringIO.new("stale preview"),
+      filename: "preview.mp4",
+      content_type: "video/mp4"
+    )
+    sign_in user
+
+    post edit_video_post_url(locale: :en), params: {
+      chapter_order: chapter.id.to_s,
+      chapters: {
+        chapter.id.to_s => {
+          text: "New text",
+          videos_order: "",
+          videos: [""],
+          photos_order: "",
+          photos: [""]
+        }
+      }
+    }
+
+    assert_redirected_to skip_edit_video_url(locale: :en)
+    assert_equal "New text", chapter.reload.text
+    assert video.reload.pending?
+    assert_equal 0, video.processing_progress
+    assert_not video.final_video_with_watermark.attached?
+  end
+
+  test "only an explicit post request refreshes a completed preview" do
+    user = User.create!(
+      email: "manual-preview-refresh-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456790"
+    )
+    video = user.videos.create!(
+      video_type: :solo,
+      stop_at: "edit_video",
+      concat_status: :completed,
+      processing_progress: 100
+    )
+    music = Music.create!(name: "Manual refresh soundtrack")
+    music.music.attach(
+      io: File.open(Rails.root.join("app/assets/musiques/voyage-1.mp3")),
+      filename: "voyage-1.mp3",
+      content_type: "audio/mpeg"
+    )
+    video.update!(music:)
+    video.final_video_with_watermark.attach(
+      io: StringIO.new("completed preview"),
+      filename: "preview.mp4",
+      content_type: "video/mp4"
+    )
+    sign_in user
+
+    assert_no_enqueued_jobs only: ContentDedicaceJob do
+      get content_dedicace_url(locale: :en, refresh: true)
+    end
+    assert_response :success
+    assert video.reload.completed?
+    assert video.final_video_with_watermark.attached?
+    assert_select "form[action='#{refresh_content_dedicace_path(locale: :en)}'][method='post'] button",
+                  text: "Refresh video"
+
+    assert_enqueued_with(job: ContentDedicaceJob, args: [video.id]) do
+      post refresh_content_dedicace_url(locale: :en)
+    end
+    assert_redirected_to content_dedicace_url(locale: :en)
+    assert video.reload.processing?
+    assert_equal 0, video.processing_progress
+    assert_not video.final_video_with_watermark.attached?
+  end
+
   test "music step assigns an available track when the optional selection is empty" do
     user = User.create!(
       email: "optional-music-test@example.com",

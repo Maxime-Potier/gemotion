@@ -689,24 +689,7 @@ class VideosController < ApplicationController
 
   def content_dedicace
     authorize @video, :content_dedicace?, policy_class: VideoPolicy
-    # ContentDedicaceJob.perform_later(@video.id)
 
-    # Check if a refresh has been requested
-    if params[:refresh]
-      # Update the status to processing
-      @video.update!(concat_status: :processing, processing_progress: 0)
-
-      # Purge existing final video attachments
-      @video.final_video.purge if @video.final_video.attached?
-      @video.final_video_xml.purge if @video.final_video_xml.attached?
-
-      # Enqueue the job to process the video again
-      ContentDedicaceJob.perform_later(@video.id)
-      flash[:notice] = "Le traitement de la vidéo a été relancé en arrière-plan."
-
-      # Redirect to the same action without the refresh parameter
-      redirect_to content_dedicace_path and return
-    end
     # Check if the final video is already attached
     if @video.final_video_with_watermark.attached?
       @final_video_url = url_for(@video.final_video_with_watermark)
@@ -718,6 +701,15 @@ class VideosController < ApplicationController
       ContentDedicaceJob.perform_later(@video.id)
       flash[:notice] = "Le traitement de la vidéo a été lancé en arrière-plan."
     end
+  end
+
+  def refresh_content_dedicace
+    authorize @video, :content_dedicace?, policy_class: VideoPolicy
+
+    @video.invalidate_generated_outputs!
+    enqueue_preview_generation_if_needed
+
+    redirect_to content_dedicace_path, notice: I18n.t("videos.messages.processing_restarted")
   end
 
   def stream_video
@@ -836,13 +828,18 @@ class VideosController < ApplicationController
 
   def edit_video_post
     authorize @video, :edit_video_post?, policy_class: VideoPolicy
+    preview_changed = false
 
     # Update the order of chapters
     if params[:chapter_order].present?
       chapter_ids = params[:chapter_order].split(",").map(&:to_i)
       chapter_ids.each_with_index do |id, index|
         chapter = @video.video_chapters.find_by(id:)
-        chapter.update(order: index + 1) if chapter
+        next unless chapter
+        next if chapter.order == index + 1
+
+        chapter.update!(order: index + 1)
+        preview_changed = true
       end
     end
 
@@ -852,10 +849,16 @@ class VideosController < ApplicationController
       next unless chapter
 
       # Update text
-      chapter.update(text: chapter_data[:text]) if chapter_data[:text].present?
+      if chapter_data[:text].present? && chapter.text != chapter_data[:text]
+        chapter.update!(text: chapter_data[:text])
+        preview_changed = true
+      end
 
       # Update videos order
-      chapter.update(videos_order: chapter_data[:videos_order]) if chapter_data[:videos_order].present?
+      if chapter_data[:videos_order].present? && chapter.videos_order != chapter_data[:videos_order]
+        chapter.update!(videos_order: chapter_data[:videos_order])
+        preview_changed = true
+      end
 
       # Attach new videos
       if chapter_data[:videos].present?
@@ -869,11 +872,15 @@ class VideosController < ApplicationController
           chapter.videos.first.purge if chapter.videos.count >= 2
 
           chapter.videos.attach(video)
+          preview_changed = true
         end
       end
 
       # Update photos order
-      chapter.update(photos_order: chapter_data[:photos_order]) if chapter_data[:photos_order].present?
+      if chapter_data[:photos_order].present? && chapter.photos_order != chapter_data[:photos_order]
+        chapter.update!(photos_order: chapter_data[:photos_order])
+        preview_changed = true
+      end
 
       # Attach new photos
       next unless chapter_data[:photos].present?
@@ -888,6 +895,7 @@ class VideosController < ApplicationController
         chapter.photos.first.purge if chapter.photos.count >= 2
 
         chapter.photos.attach(photo)
+        preview_changed = true
       end
     end
 
@@ -903,9 +911,12 @@ class VideosController < ApplicationController
           # Check if a predefined music exists
           music = Music.find_by(id: music_id)
           if music
-            # Replace existing music association
-            video_chapter.video_music&.destroy
-            VideoMusic.create!(music:, video_chapter:)
+            # Replace the association only when the selected music changed.
+            if video_chapter.video_music&.music_id != music.id
+              video_chapter.video_music&.destroy
+              VideoMusic.create!(music:, video_chapter:)
+              preview_changed = true
+            end
           elsif video_chapter.custom_music.attached? || params["custom_music_#{video_chapter.id}"].present?
             # Skip if custom music is already attached or provided in params
             next
@@ -935,6 +946,7 @@ class VideosController < ApplicationController
           # Attach the file to the video chapter and enqueue the job
           video_chapter.custom_music.attach(io: File.open(music_path), filename: music_file.original_filename)
           MusicProcessingJob.perform_later("VideoChapter", video_chapter.id, music_path.to_s)
+          preview_changed = true
         else
           flash[:alert] ||= []
           flash[:alert] << "Fichier de musique personnalisé manquant ou chapitre introuvable pour l'ID #{chapter_id}."
@@ -942,9 +954,9 @@ class VideosController < ApplicationController
       end
     end
 
-    # Chapter, media, order, or music changes make the existing preview stale.
-    # The next step will enqueue a fresh preview from the updated content.
-    @video.invalidate_generated_outputs!
+    # Keep the completed preview when the form was submitted without changes.
+    # Actual chapter, media, order, or music changes require a fresh render.
+    @video.invalidate_generated_outputs! if preview_changed
 
     redirect_to skip_edit_video_path
     # redirect_to edit_video_path, notice: 'Video chapters updated successfully'
@@ -1020,8 +1032,10 @@ class VideosController < ApplicationController
 
   def delete_video_chapter
     video_chapter = VideoChapter.find(params[:id]) # Use the appropriate ID from the params
-    authorize video_chapter.video, :delete_video_chapter?, policy_class: VideoPolicy
+    video = video_chapter.video
+    authorize video, :delete_video_chapter?, policy_class: VideoPolicy
     if video_chapter.destroy
+      video.invalidate_generated_outputs!
       respond_to do |format|
         format.html { redirect_to edit_video_path, notice: "Chapitre supprim\u00E9 avec succ\u00E8s." }
         format.json { render json: { message: "Chapitre supprim\u00E9 avec succ\u00E8s." }, status: :ok }
@@ -1043,8 +1057,10 @@ class VideosController < ApplicationController
         format.json { render json: { error: "Attachment not found" }, status: :not_found }
       end
     end
-    authorize attachment.record.video, :purge_chapter_attachment?, policy_class: VideoPolicy
+    video = attachment.record.video
+    authorize video, :purge_chapter_attachment?, policy_class: VideoPolicy
     attachment.purge
+    video.invalidate_generated_outputs!
     respond_to do |format|
       format.json { render json: { message: "Attachment deleted successfully" }, status: :ok }
     end
@@ -1229,7 +1245,7 @@ class VideosController < ApplicationController
     elsif @video.current_step == "start"
       nil
     elsif ![@video.next_step.downcase, "#{@video.next_step.downcase}_post",
-            "skip_#{@video.next_step.downcase}"].include?(params[:action].downcase)
+            "skip_#{@video.next_step.downcase}", "refresh_content_dedicace"].include?(params[:action].downcase)
       if params[:continue].present? && params[:continue]
         redirect_to send("#{@video.next_step}_path"), turbo: false
       else

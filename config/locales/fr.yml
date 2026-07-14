@@ -238,6 +238,7 @@ fr:
       dedicace_invalid: "La dédicace sélectionnée n'existe pas."
       complete_current_step: "Vous devez finaliser cette étape avant de passer à la suivante."
       music_unavailable: "Aucune piste musicale n'est disponible. Veuillez réessayer plus tard."
+      processing_restarted: "Le traitement de la vidéo a été relancé en arrière-plan."
     start:
       title: "Choisissez la méthode de création vidéo"
       video_choices: "Plusieurs choix de vidéos :"
@@ -430,6 +431,7 @@ fr:
       theme: "Thème:"
       browser_not_supported: "Votre navigateur ne prend pas en charge l'élément vidéo."
       refresh_video: "Actualiser la vidéo"
+      refreshing: "Actualisation..."
       processing_message: "Votre vidéo est en cours de traitement. Cette page sera actualisée une fois prête."
       no_final_video: "Aucune vidéo finale générée."
     shared:
