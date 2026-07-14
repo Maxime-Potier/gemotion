@@ -38,7 +38,7 @@
                     <%= image_tag preview.image, class: "preview-photo-intro-image" %>
                     <div class="delete-preview-icon-btn"
                         data-url="<%= drop_preview_path(preview, video_id: @video.id) %>">
-                      <<%= image_tag "icons/delete_icon.png", alt: "Delete Icon", class: "purge-chap-icon" %>
+                      <%= image_tag "icons/delete_icon.png", alt: "Delete Icon", class: "purge-chap-icon" %>
                     </div>
                     <div class="edit-text-overlay-btn" data-preview-id="<%= preview.id %>">
                       <%= image_tag "icons/text-editor-font.svg", alt: "Edit Text", class: "edit-text-icon" %>
@@ -70,7 +70,7 @@
                     </label>
                     <img id="preview_<%= @ordered_previews.size + i + 1 %>" src="" alt="Preview Image" class="preview-photo-intro-image hidden" />
                     <div class="delete-preview-icon-btn hidden" data-url="">
-                      <<%= image_tag "icons/delete_icon.png", alt: "Delete Icon", class: "purge-chap-icon" %>
+                      <%= image_tag "icons/delete_icon.png", alt: "Delete Icon", class: "purge-chap-icon" %>
                     </div>
                     <div class="edit-text-overlay-btn hidden" data-position="<%= @ordered_previews.size + i + 1 %>">
                       <%= image_tag "icons/text-editor-font.svg", alt: "Edit Text", class: "edit-text-icon" %>
@@ -118,8 +118,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+const initializePhotoIntro = () => {
   const sortableContainer = document.getElementById("sortable-container");
+  if (!sortableContainer || sortableContainer.dataset.photoIntroInitialized === "true") return;
+
+  sortableContainer.dataset.photoIntroInitialized = "true";
   const imageOrderInput = document.getElementById("image_order");
   const bigImageBlock = document.querySelector(".preview-big-image-block");
   const textOverlayModal = document.getElementById("text-overlay-modal");
@@ -168,11 +171,17 @@ document.addEventListener("DOMContentLoaded", () => {
     bigImageBlock.appendChild(bigImage);
   };
 
+  const refreshBigPreview = () => {
+    const firstRemainingImage = sortableContainer.querySelector(".preview-photo-intro-image:not(.hidden)");
+    if (firstRemainingImage?.src) {
+      displayInBigPreview(firstRemainingImage.src);
+    } else {
+      bigImageBlock.innerHTML = "";
+    }
+  };
+
   // Add drag-and-drop functionality for each preview-small-image-block
   document.querySelectorAll(".preview-small-image-block").forEach((block) => {
-    const position = block.dataset.position;
-    const fileInput = block.querySelector(".image-input");
-
     // Highlight block on dragover
     block.addEventListener("dragover", (event) => {
       event.preventDefault();
@@ -190,7 +199,8 @@ document.addEventListener("DOMContentLoaded", () => {
       block.classList.remove("drag-over");
 
       const file = event.dataTransfer.files[0]; // Get the first dropped file
-      if (file) {
+      const fileInput = block.querySelector(".image-input");
+      if (file && fileInput) {
         // Use DataTransfer API to assign the file to the input
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
@@ -215,8 +225,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Handle file uploads and previews via input click
-  document.querySelectorAll(".image-input").forEach((input) => {
-    input.addEventListener("change", (event) => {
+  sortableContainer.addEventListener("change", (event) => {
+    if (event.target.matches(".image-input")) {
       const position = event.target.dataset.position;
       const previewImg = document.getElementById(`preview_${position}`);
       const parentBlock = event.target.closest(".preview-small-image-block");
@@ -244,7 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         reader.readAsDataURL(file);
       }
-    });
+    }
   });
 
   // Change the big preview image when clicking on any child of the sortable container
@@ -260,19 +270,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // Handle image deletion for existing and new images
-  document.addEventListener("click", (event) => {
+  sortableContainer.addEventListener("click", (event) => {
     const deleteButton = event.target.closest(".delete-preview-icon-btn");
     if (deleteButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (deleteButton.dataset.deleting === "true") return;
+
       const parentBlock = deleteButton.closest(".preview-small-image-block");
-      const fileName = parentBlock.dataset.filename;
       const position = parentBlock.dataset.position; // Retrieve position from the block
       const url = deleteButton.dataset.url;
 
-      handleImageDeletion(url, parentBlock, position);
+      deleteButton.dataset.deleting = "true";
+      handleImageDeletion(url, parentBlock, position, deleteButton);
     }
   });
 
-  const handleImageDeletion = async (url, parentBlock, position) => {
+  const handleImageDeletion = async (url, parentBlock, position, deleteButton) => {
     try {
       if (url) {
         // Handle deletion for existing previews (server-side)
@@ -294,6 +308,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.message) {
           resetPreviewBlock(parentBlock, position);
           updateOrder(); // Update the order after deletion
+          refreshBigPreview();
         } else {
           console.warn("Server did not confirm deletion.");
         }
@@ -301,17 +316,17 @@ document.addEventListener("DOMContentLoaded", () => {
         // Handle deletion for newly uploaded images
         resetPreviewBlock(parentBlock, position);
         updateOrder();
+        refreshBigPreview();
       }
     } catch (error) {
       console.error("Error during image deletion:", error);
-    } finally {
-      // Reload the page after ensuring all operations are complete
-      location.reload();
+      deleteButton.dataset.deleting = "false";
     }
   };
 
   const resetPreviewBlock = (block, position) => {
     block.dataset.filename = ""; // Reset the filename
+    delete block.dataset.previewId;
     block.setAttribute("draggable", "false"); // Ensure the block is not draggable
     block.innerHTML = `
       <label for="file_${position}" class="add-more-preview-circle flex justify-center items-center">
@@ -325,6 +340,12 @@ document.addEventListener("DOMContentLoaded", () => {
       <img id="preview_${position}" src="" alt="Preview Image" class="preview-photo-intro-image hidden">
       <div class="delete-preview-icon-btn hidden" data-url="">
         <img alt="Delete Icon" class="purge-chap-icon" src="<%= asset_path('icons/delete_icon.png') %>">
+      </div>
+      <div class="edit-text-overlay-btn hidden" data-position="${position}">
+        <img alt="Edit Text" class="edit-text-icon" src="<%= asset_path('icons/text-editor-font.svg') %>">
+      </div>
+      <div class="edit-transition-btn hidden" data-position="${position}">
+        <img alt="Edit Transition" class="edit-text-icon" src="<%= asset_path('icons/transition-right.svg') %>">
       </div>
     `;
   };
@@ -520,7 +541,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // Always update the order before proceeding
     updateOrder();
   });
-});
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializePhotoIntro, { once: true });
+} else {
+  initializePhotoIntro();
+}
+document.addEventListener("turbo:load", initializePhotoIntro);
 </script>
 
 <style>

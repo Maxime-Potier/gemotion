@@ -352,23 +352,20 @@ class VideosController < ApplicationController
   end
 
   def drop_preview
-    preview = Preview.find(params[:id])
     video = Video.find(params[:video_id])
     authorize video, :drop_preview?, policy_class: VideoPolicy
-    if preview.destroy
-      respond_to do |format|
-        format.json do
-          render json: { message: "L'image d'introduction de la photo a été supprimée avec succès" }, status: :ok
-        end
-      end
-    else
-      respond_to do |format|
-        format.json do
-          render json: { error: "Échec de la suppression de l'image d'introduction de la photo" },
-                 status: :unprocessable_entity
-        end
-      end
+    video_preview = video.video_previews.includes(preview: { image_attachment: :blob }).find_by!(preview_id: params[:id])
+    preview = video_preview.preview
+    filename = preview.image.filename.to_s if preview.image.attached?
+
+    VideoPreview.transaction do
+      video_preview.destroy!
+      preview.destroy! unless preview.video_previews.exists?
+      video.update!(previews_order: video.previews_order - [filename].compact)
+      video.invalidate_generated_outputs!
     end
+
+    render json: { message: "L'image d'introduction de la photo a été supprimée avec succès" }, status: :ok
   end
 
   def select_chapters

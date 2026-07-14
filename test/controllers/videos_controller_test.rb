@@ -131,6 +131,61 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Modifier la date limite|Clôturer le projet|Gérer les chapitres/, response.body)
   end
 
+  test "deleting an introduction preview keeps the other previews" do
+    user = User.create!(
+      email: "preview-delete-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456776"
+    )
+    video = user.videos.create!(
+      video_type: :solo,
+      stop_at: "photo_intro",
+      previews_order: %w[first.jpg second.jpg third.jpg]
+    )
+    previews = %w[first.jpg second.jpg third.jpg].each_with_index.map do |filename, index|
+      preview = Preview.create!
+      preview.image.attach(io: StringIO.new("image-#{index}"), filename:, content_type: "image/jpeg")
+      video.video_previews.create!(preview:, order: index)
+      preview
+    end
+    sign_in user
+
+    assert_difference("video.reload.video_previews.count", -1) do
+      delete drop_preview_url(previews.second, locale: :en, video_id: video.id), as: :json
+    end
+
+    assert_response :success
+    assert_equal [previews.first.id, previews.third.id], video.reload.previews.order(:id).pluck(:id)
+    assert_equal %w[first.jpg third.jpg], video.previews_order
+    assert_not Preview.exists?(previews.second.id)
+  end
+
+  test "deleting a shared introduction preview only removes it from the selected video" do
+    user = User.create!(
+      email: "shared-preview-delete-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456775"
+    )
+    video = user.videos.create!(video_type: :solo, stop_at: "photo_intro", previews_order: ["shared.jpg"])
+    other_video = user.videos.create!(video_type: :solo, stop_at: "photo_intro", previews_order: ["shared.jpg"])
+    preview = Preview.create!
+    preview.image.attach(io: StringIO.new("shared-image"), filename: "shared.jpg", content_type: "image/jpeg")
+    video.video_previews.create!(preview:, order: 0)
+    other_video.video_previews.create!(preview:, order: 0)
+    sign_in user
+
+    delete drop_preview_url(preview, locale: :en, video_id: video.id), as: :json
+
+    assert_response :success
+    assert_not video.reload.previews.exists?(preview.id)
+    assert other_video.reload.previews.exists?(preview.id)
+    assert Preview.exists?(preview.id)
+  end
+
   test "edit video shows processing state and polls until the preview is ready" do
     user = User.create!(
       email: "processing-preview-test@example.com",
