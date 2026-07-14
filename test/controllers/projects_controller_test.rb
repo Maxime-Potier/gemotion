@@ -21,6 +21,8 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     get participants_progress_url(locale: :en, video_id: video.id)
 
     assert_response :success
+    assert_select ".participants-progress-content[style*='width: 100%']"
+    assert_select ".video-processing-state-wrapper[style*='justify-content: center']"
     assert_select "#video-processing-state[data-controller='video-processing-progress']"
     assert_select "#video-processing-state[data-video-processing-progress-status-url-value='#{video_concat_status_path(video, locale: :en)}']"
     assert_select "[data-video-processing-progress-target='bar'][style='width: 42%']"

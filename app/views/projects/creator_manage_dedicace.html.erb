@@ -3,10 +3,6 @@
   <%= render "shared/profile_tabs", page_count: 1 %>
 </div>
 
-<!-- Add TensorFlow.js and BodyPix dependencies -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0"></script>
-
 <div class=''>
   <%= form_with url: creator_dedicace_de_fin_post_path(video_id: @video.id), method: :post, multipart: true, html: {data: { turbo: false }} do |f| %>
   <div class="frame-no-border">
@@ -98,7 +94,6 @@
         <div class="modal-content">
           <div class="video-recording-block flex justify-center items-center relative">
             <video id="videoPreview" class="absolute inset-0 w-full h-full object-cover" style="display: none;" playsinline muted></video>
-            <canvas id="outputCanvas" class="absolute inset-0 w-full h-full"></canvas>
             
             <div id="recordingTimer" class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded" style="display: none;">
               30s
@@ -197,11 +192,14 @@
     border-radius: 15px;
     width: 90%;
     max-width: 800px;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   .modal-buttons {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
     gap: 20px;
     margin-top: 20px;
   }
@@ -216,8 +214,35 @@
     aspect-ratio: 16/9;
     background: #f5f5f5;
     border-radius: 15px;
+    box-sizing: border-box;
+    height: auto;
     overflow: hidden;
     position: relative;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .video-recording-block video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 640px) {
+    .modal-content {
+      padding: 12px;
+      width: calc(100% - 24px);
+    }
+
+    .modal-buttons {
+      gap: 12px;
+    }
+
+    .modal-buttons button {
+      flex: 1 1 140px;
+      min-width: 0;
+    }
   }
 </style>
 
@@ -233,14 +258,12 @@ document.addEventListener("DOMContentLoaded", () => {
     unknownError: <%= raw t("videos.dedicace_de_fin.unknown_error").to_json %>,
     replaceRecording: <%= raw t("videos.dedicace_de_fin.replace_recording").to_json %>
   };
-  let bodyPixNet;
   let mediaRecorder;
   let recordedChunks = [];
   let recordingInterval;
   let timeLeft = 30;
   let isRecording = false;
   let currentSlot = null;
-  let firstFrameData = null;
   let sourceStream = null;
   let recordStream = null;
   let recordingBlob = null;
@@ -255,7 +278,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let cameraPromiseSessionId = null;
 
   const videoPreview = document.getElementById("videoPreview");
-  const outputCanvas = document.getElementById("outputCanvas");
   const recordingTimer = document.getElementById("recordingTimer");
   const startButton = document.getElementById("startRecording");
   const stopButton = document.getElementById("stopRecording");
@@ -266,32 +288,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const updateSlotUrl = <%= raw update_video_slot_path(@video, locale: I18n.locale).to_json %>;
   const slotStatusUrl = <%= raw get_video_slot_status_path(@video, locale: I18n.locale).to_json %>;
 
-  // Initialize BodyPix
-  async function initBodyPix() {
-    if (bodyPixNet) return true;
-
-    try {
-      if (!window.bodyPix) throw new Error('BodyPix is unavailable');
-
-      bodyPixNet = await bodyPix.load({
-        architecture: 'MobileNetV1',
-        outputStride: 16,
-        multiplier: 0.5,
-        quantBytes: 2
-      });
-      console.log('BodyPix model loaded successfully');
-      return true;
-    } catch (error) {
-      console.error('Error loading BodyPix:', error);
-      return false;
-    }
-  }
-
   async function ensureCameraPreview(sessionId) {
     if (sourceStream?.active && videoPreview.srcObject === sourceStream) return sourceStream;
     if (cameraPromise && cameraPromiseSessionId === sessionId) return cameraPromise;
 
-    initBodyPix();
     const previewPromise = (async () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -314,7 +314,6 @@ document.addEventListener("DOMContentLoaded", () => {
       await videoPreview.play();
 
       isPreviewing = true;
-      processFrame(sessionId);
       return sourceStream;
     })();
     cameraPromise = previewPromise;
@@ -330,63 +329,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Process video frame
-  async function processFrame(sessionId) {
-    if (!isPreviewing || sessionId !== recordingSessionId) return;
-    if (!videoPreview.videoWidth || !videoPreview.videoHeight) {
-      requestAnimationFrame(() => processFrame(sessionId));
-      return;
-    }
-
-    try {
-      if (outputCanvas.width !== videoPreview.videoWidth || outputCanvas.height !== videoPreview.videoHeight) {
-        outputCanvas.width = videoPreview.videoWidth;
-        outputCanvas.height = videoPreview.videoHeight;
-      }
-
-      const ctx = outputCanvas.getContext('2d');
-      ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-      ctx.drawImage(videoPreview, 0, 0);
-
-      // Background removal is optional. If the external model cannot be loaded,
-      // keep recording the unprocessed camera stream instead of blocking the user.
-      if (bodyPixNet) {
-        const segmentation = await bodyPixNet.segmentPerson(videoPreview, {
-          flipHorizontal: false,
-          internalResolution: 'medium',
-          segmentationThreshold: 0.5
-        });
-
-        const maskCanvas = document.createElement('canvas');
-        maskCanvas.width = outputCanvas.width;
-        maskCanvas.height = outputCanvas.height;
-        const maskCtx = maskCanvas.getContext('2d');
-        const imageData = maskCtx.createImageData(maskCanvas.width, maskCanvas.height);
-        const data = imageData.data;
-
-        for (let i = 0; i < segmentation.data.length; i++) {
-          // destination-in uses the mask alpha. Previously foreground pixels were
-          // also left transparent, which made both the preview and recording blank.
-          data[(i * 4) + 3] = segmentation.data[i] ? 255 : 0;
-        }
-        maskCtx.putImageData(imageData, 0, 0);
-
-        ctx.globalCompositeOperation = 'destination-in';
-        ctx.drawImage(maskCanvas, 0, 0);
-        ctx.globalCompositeOperation = 'source-over';
-      }
-
-      if (isPreviewing && sessionId === recordingSessionId) {
-        requestAnimationFrame(() => processFrame(sessionId));
-      }
-    } catch (error) {
-      console.error('Error processing frame:', error);
-      if (isPreviewing && sessionId === recordingSessionId) {
-        requestAnimationFrame(() => processFrame(sessionId));
-      }
-    }
-  }
-
   // Open recording modal
   function openRecordingModal(slotNumber) {
     recordingSessionId += 1;
@@ -394,7 +336,6 @@ document.addEventListener("DOMContentLoaded", () => {
     discardRecording = false;
     recordingBlob = null;
     processedVideo = false;
-    firstFrameData = null;
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     previewUrl = null;
     videoPreview.removeAttribute('src');
@@ -402,7 +343,6 @@ document.addEventListener("DOMContentLoaded", () => {
     videoPreview.controls = false;
     videoPreview.muted = true;
     videoPreview.style.display = 'none';
-    outputCanvas.style.display = 'block';
     recordingModal.style.display = 'flex';
     startButton.style.display = 'block';
     startButton.disabled = true;
@@ -446,7 +386,6 @@ document.addEventListener("DOMContentLoaded", () => {
     confirmButton.disabled = false;
     confirmButton.textContent = 'OK';
     currentSlot = null;
-    firstFrameData = null;
     processedVideo = false;
   }
 
@@ -466,15 +405,9 @@ document.addEventListener("DOMContentLoaded", () => {
       timeLeft = 30;
       recordingTimer.textContent = `${timeLeft}s`;
 
-      // Initialize canvas with correct dimensions
-      outputCanvas.width = videoPreview.videoWidth || 1280;
-      outputCanvas.height = videoPreview.videoHeight || 720;
-
-      const canvasStream = outputCanvas.captureStream(30);
-      recordStream = new MediaStream([
-        ...canvasStream.getVideoTracks(),
-        ...sourceStream.getAudioTracks()
-      ]);
+      // Record the original camera stream. Background removal runs once, on the
+      // server, avoiding transparent frames that flash white during playback.
+      recordStream = new MediaStream(sourceStream.getTracks());
       const sessionRecordStream = recordStream;
 
       const supportedTypes = [
@@ -506,14 +439,12 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        firstFrameData = outputCanvas.toDataURL('image/png');
         previewUrl = URL.createObjectURL(recordingBlob);
         videoPreview.srcObject = null;
         videoPreview.src = previewUrl;
         videoPreview.controls = true;
         videoPreview.muted = false;
         videoPreview.style.display = 'block';
-        outputCanvas.style.display = 'none';
         videoPreview.play().catch(() => {});
         confirmButton.style.display = 'block';
       };
@@ -575,7 +506,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const formData = new FormData();
     const extension = recordingMimeType.includes('mp4') ? 'mp4' : 'webm';
     formData.append('video_file', recordingBlob, `recorded_video.${extension}`);
-    formData.append('preview_data', firstFrameData);
     formData.append('slot_number', slotNumber);
     
     // Add CSRF token

@@ -58,7 +58,7 @@
 
   <br>
 
-  <div class="">
+  <div class="participants-progress-content w-full" style="width: 100%;">
     <% if @video.completed? %>
       <div>
         <% if @video.paid %>
@@ -95,7 +95,10 @@
         <%= button_to t('.refresh_video'), creator_refresh_video_path(video_id: @video.id), method: :post, class: "black-link", data: { disable_with: t('.refreshing'), turbo: false } %>
       </div>
     <% elsif @video.processing? %>
-      <%= render "shared/video_processing_state", video: @video %>
+      <div class="video-processing-state-wrapper w-full flex justify-center"
+           style="width: 100%; display: flex; justify-content: center;">
+        <%= render "shared/video_processing_state", video: @video %>
+      </div>
     <% else %>
       <div class="flex relative items-center gap-[61px]">
         <%= video_tag asset_path('about.mp4'), id: 'about-video-element', controls: false, width: 982, height: 425, poster: asset_path('gemotion-about-video-poster.svg') %>
