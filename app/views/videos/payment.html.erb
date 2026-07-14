@@ -1,91 +1,94 @@
-<h1 class="video-h1"><%= t('videos.payment.title') %></h1>
+<main class="payment-page">
+  <header class="payment-page-header">
+    <p class="payment-eyebrow"><%= t("videos.payment.secure_checkout") %></p>
+    <h1><%= t("videos.payment.title") %></h1>
+    <p><%= t("videos.payment.description") %></p>
+  </header>
 
-<div class='big-spaces-on-sides'>
   <div class="payment-container">
-    <div>
-      <div class="payment-block payment-block-1 flex flex-row justify-start">
-        <% if @video.completed? %>
-          <div class="edit-video-container mt-8">
-            <%= video_tag url_for(@video.final_video_with_watermark), controls: true, autobuffer: true %>
+    <section class="payment-card payment-order-card" aria-labelledby="order-summary-title">
+      <h2 id="order-summary-title"><%= t("videos.payment.order_summary") %></h2>
+
+      <div class="payment-product">
+        <div class="payment-product-media">
+          <% if @video.final_video_with_watermark.attached? %>
+            <%= video_tag url_for(@video.final_video_with_watermark),
+                          controls: true,
+                          preload: "metadata" %>
+          <% else %>
+            <div class="payment-product-placeholder">
+              <%= image_tag "Vector.png", alt: "" %>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="payment-product-copy">
+          <h3><%= t("videos.payment.film") %></h3>
+          <p><%= t("videos.payment.duration", duration: format_time(@video.final_video_duration)) %></p>
+          <span class="payment-quantity"><%= t("videos.payment.quantity_value", quantity: 1) %></span>
+        </div>
+
+        <strong class="payment-product-price">€<%= @amount %></strong>
+      </div>
+    </section>
+
+    <aside class="payment-card payment-summary-card" aria-labelledby="payment-summary-title">
+      <% payment_data = @payment_bypass_enabled ? {} : {
+        controller: "payment",
+        payment_target: "form",
+        payment_stripe_publishable_key_value: @stripe_publishable_key,
+        payment_processing_text_value: t("videos.payment.processing"),
+        payment_load_error_text_value: t("videos.payment.load_error"),
+        action: "submit->payment#submit"
+      } %>
+
+      <%= form_with url: payment_post_path,
+                    method: :post,
+                    id: "payment-form",
+                    data: payment_data,
+                    local: true do %>
+        <h2 id="payment-summary-title"><%= t("videos.payment.payment_summary") %></h2>
+
+        <div class="payment-total-row">
+          <span><%= t("videos.payment.total") %></span>
+          <strong>€<%= @amount %></strong>
+        </div>
+
+        <% if @payment_bypass_enabled %>
+          <div class="payment-demo-notice" role="status">
+            <%= t("videos.payment.demo_mode") %>
           </div>
         <% else %>
-          <div class="vector-block flex justify-center items-center mt-8">
-            <%= image_tag 'Vector.png', class: "" %>
-          </div>
-        <% end %>
-        <div class="flex flex-col justify-start items-center ml-50">
-          <div class="font-bold"><%= t('videos.payment.product') %></div>
-          <div class="mt-6"><%= "Film, #{format_time(@video.final_video_duration)} min." %></div>
-        </div>
-        <div class="flex flex-col justify-start items-center ml-50">
-          <div class="font-bold"><%= t('videos.payment.price') %></div>
-          <div class="flex justify-start items-center mt-6">
-            €<%= @amount %>
-          </div>
-        </div>
-        <div class="flex flex-col justify-start items-center ml-50">
-          <div class="font-bold"><%= t('videos.payment.quantity') %></div>
-          <div class="mt-6 div-input">1</div>
-        </div>
+          <input type="hidden" name="stripeToken" id="stripeToken" data-payment-target="stripeToken">
 
-        <div class="flex flex-col justify-start items-center ml-50">
-          <div class="font-bold"><%= t('videos.payment.subtotal') %></div>
-          <div class="mt-6">€<%= @amount %></div>
-        </div>
-      </div>
-
-      <div class="payment-block payment-block-bottom flex flex-row justify-between items-center mt-6">
-        <div class="p-text-18"><%= t('videos.payment.add_album') %></div>
-        <div class="div-rect"></div>
-      </div>
-    </div>
-    <div class="payment-block payment-block-2">
-      <div>
-        <% payment_data = @payment_bypass_enabled ? {} : {
-          controller: "payment",
-          payment_target: "form",
-          payment_stripe_publishable_key_value: @stripe_publishable_key,
-          action: "submit->payment#submit"
-        } %>
-        <%= form_with url: payment_post_path, method: :post, id: "payment-form", data: payment_data, local: true do %>
-          <% unless @payment_bypass_enabled %>
-            <input type="hidden" name="stripeToken" id="stripeToken" data-payment-target="stripeToken">
-          <% end %>
-          <div class="flex flex-col justify-between">
-            <div class="mb-[48px]">
-              <div class="total-price mb-4"><%= t('videos.payment.cart_total') %></div>
-
-              <div class="flex justify-between items-center mb-4">
-                <span class="p-text-18"><%= t('videos.payment.subtotal') %></span>
-                <span>€<%= @amount %></span>
-              </div>
-
-              <% if @payment_bypass_enabled %>
-                <div class="mb-[16px] rounded-lg bg-yellow-50 p-4 text-sm text-yellow-900" role="status">
-                  <%= t('videos.payment.demo_mode') %>
-                </div>
-              <% else %>
-                <div class="mb-[16px]"><%= t('videos.payment.credit_card') %></div>
-                <div id="card-element" data-payment-target="cardElement"></div>
-                <div class="payment-error mt-2" data-payment-target="cardErrors" role="alert">
-                  <% if @stripe_publishable_key.blank? %>
-                    <%= t('videos.payment.unavailable') %>
-                  <% end %>
-                </div>
-              <% end %>
-
-              <div class="flex justify-between items-center mt-8">
-                <span class="font-bold"><%= t('videos.payment.bag_total') %></span>
-                <span>€<%= @amount %></span>
-              </div>
+          <div class="payment-card-field">
+            <div class="payment-card-label">
+              <span><%= t("videos.payment.credit_card") %></span>
+              <span class="payment-test-mode"><%= t("videos.payment.test_mode") %></span>
             </div>
-            <%= button_tag t('videos.payment.pay'),
-                           type: "submit",
-                           class: "black-link w-full",
-                           data: (@payment_bypass_enabled ? {} : { payment_target: "submitButton" }) %>
+            <div id="card-element" data-payment-target="cardElement"></div>
+            <div class="payment-error"
+                 data-payment-target="cardErrors"
+                 role="alert"
+                 aria-live="polite">
+              <% if @stripe_publishable_key.blank? %>
+                <%= t("videos.payment.unavailable") %>
+              <% end %>
+            </div>
           </div>
         <% end %>
-      </div>
-    </div>
+
+        <%= button_tag t("videos.payment.pay_amount", amount: @amount),
+                       type: "submit",
+                       class: "payment-submit-button",
+                       disabled: !@payment_bypass_enabled,
+                       data: (@payment_bypass_enabled ? {} : { payment_target: "submitButton" }) %>
+
+        <p class="payment-security-note">
+          <span aria-hidden="true">✓</span>
+          <%= t("videos.payment.secured_by_stripe") %>
+        </p>
+      <% end %>
+    </aside>
   </div>
-</div>
+</main>

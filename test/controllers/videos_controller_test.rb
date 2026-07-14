@@ -102,7 +102,9 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     Dir[Rails.root.join("tmp/temp_video_*_1_*.webm")].each { |path| File.delete(path) }
   end
 
-  test "demo payment is always available and completes the project without a Stripe token" do
+  test "demo payment completes the project when the bypass is explicitly enabled" do
+    previous_bypass = ENV["PAYMENT_BYPASS_ENABLED"]
+    ENV["PAYMENT_BYPASS_ENABLED"] = "true"
     user = User.create!(
       email: "demo-payment-test@example.com",
       password: "Password123!",
@@ -116,7 +118,7 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     get payment_url(locale: :en)
 
     assert_response :success
-    assert_select "#payment-form button[type='submit']:not([disabled])", text: "Pay"
+    assert_select "#payment-form button[type='submit']:not([disabled])", text: /Pay €/
     assert_select "[role='status']", text: /Temporary demo mode/
 
     post payment_post_url(locale: :en)
@@ -133,6 +135,32 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_select "button", text: "Close project"
     assert_select "a", text: "Manage chapters"
     assert_no_match(/Modifier la date limite|Clôturer le projet|Gérer les chapitres/, response.body)
+  ensure
+    ENV["PAYMENT_BYPASS_ENABLED"] = previous_bypass
+  end
+
+  test "payment page shows the secure Stripe card form by default" do
+    previous_bypass = ENV["PAYMENT_BYPASS_ENABLED"]
+    ENV["PAYMENT_BYPASS_ENABLED"] = "false"
+    user = User.create!(
+      email: "stripe-payment-form-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456784"
+    )
+    user.videos.create!(video_type: :solo, stop_at: "content_dedicace")
+    sign_in user
+
+    get payment_url(locale: :en)
+
+    assert_response :success
+    assert_select "#payment-form[data-controller='payment']"
+    assert_select "#card-element[data-payment-target='cardElement']"
+    assert_select "#payment-form button[type='submit'][disabled]", text: /Pay €/
+    assert_select "[role='status']", count: 0
+  ensure
+    ENV["PAYMENT_BYPASS_ENABLED"] = previous_bypass
   end
 
   test "deleting an introduction preview keeps the other previews" do

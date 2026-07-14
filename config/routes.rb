@@ -2,6 +2,9 @@ require "sidekiq/web"
 Rails.application.routes.draw do
   mount Sidekiq::Web => "/sidekiq"
 
+  # Stripe must reach this endpoint without a locale or browser session.
+  post "stripe/webhook", to: "stripe_webhooks#create", as: :stripe_webhook
+
   scope "(:locale)", locale: /#{I18n.available_locales.join('|')}/ do
     devise_for :users
     resources :users, only: %i[show edit update] # Add other actions if needed

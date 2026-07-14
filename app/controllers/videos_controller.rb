@@ -997,7 +997,7 @@ class VideosController < ApplicationController
 
       # Save payment record and update video status
       @video.update!(paid: true, project_status: :finished) # Ensure `paid` is a boolean in the Video model
-      redirect_to participants_progress_path(video_id: @video.id), notice: "Paiement r\u00E9ussi!"
+      redirect_to participants_progress_path(video_id: @video.id), notice: I18n.t("videos.payment.success")
     rescue Stripe::StripeError => e
       flash[:alert] = e.message
       redirect_to payment_path
@@ -1201,7 +1201,7 @@ class VideosController < ApplicationController
   end
 
   def payment_bypass_enabled?
-    Rails.env.development? || Rails.env.test? || ActiveModel::Type::Boolean.new.cast(ENV["PAYMENT_BYPASS_ENABLED"])
+    ActiveModel::Type::Boolean.new.cast(ENV["PAYMENT_BYPASS_ENABLED"])
   end
 
   def prepare_dedicace_de_fin
