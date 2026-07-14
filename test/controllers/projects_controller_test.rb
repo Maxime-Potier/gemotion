@@ -3,6 +3,27 @@ require "test_helper"
 class ProjectsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 
+  test "closing a project uses the requested locale" do
+    user = User.create!(
+      email: "close-project-locale-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456800"
+    )
+    video = user.videos.create!(video_type: :solo)
+    sign_in user
+
+    patch close_project_url(video, locale: :en)
+
+    assert_redirected_to as_creator_projects_url(locale: :en)
+    assert video.reload.closed?
+    follow_redirect!
+    assert_response :success
+    assert_select ".notice", text: "Your project has been closed. We will always be happy to see you again!"
+    assert_no_match(/Vous avez clôturé/, response.body)
+  end
+
   test "participants progress shows staged render progress" do
     user = User.create!(
       email: "project-progress-test@example.com",

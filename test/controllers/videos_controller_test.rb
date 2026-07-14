@@ -46,11 +46,15 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
       favorite_quotes: "A quote"
     }
 
-    assert_redirected_to info_destinataire_url(locale: :en)
-    follow_redirect!
-    assert_response :success
+    assert_response :unprocessable_entity
     assert_select ".alert", text: "Please fill in all required fields."
     assert_no_match(/Veuillez remplir/, response.body)
+    assert_select "input[name='age_destinataire'][value='10']"
+    assert_select "input[name='name_destinataire'][value='']"
+    assert_select "textarea[name='more_info_destinataire']", text: "Some details"
+    assert_select "textarea[name='passions_and_hobbies']", text: "Music"
+    assert_select "textarea[name='personality_description']", text: "Kind"
+    assert_select "textarea[name='favorite_quotes']", text: "A quote"
   end
 
   test "final dedication step requires at least one processed recording" do

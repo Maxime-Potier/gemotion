@@ -215,6 +215,9 @@ en:
       projects: "Current projects"
       logout: "Log out"
   projects:
+    notices:
+      project_closed: "Your project has been closed. We will always be happy to see you again!"
+      update_failed: "Something went wrong. Please try again."
     role_switch:
       participant: "I am a participant"
       creator: "I am a creator"

@@ -148,13 +148,13 @@ class VideosController < ApplicationController
           redirect_to info_destinataire_path
         end
       else
-        redirect_to info_destinataire_path, alert: t("videos.info_destinataire.required_fields")
+        render_info_destinataire_validation
       end
     elsif is_empty_params && @video.video_destinataires.count > 0
       @video.update(stop_at: @video.current_step)
       redirect_to destinataire_details_path, turbo: false
     else
-      redirect_to info_destinataire_path, alert: t("videos.info_destinataire.required_fields")
+      render_info_destinataire_validation
     end
 
     nil if params[:special_request_destinataire].nil?
@@ -1193,6 +1193,12 @@ class VideosController < ApplicationController
   end
 
   private
+
+  def render_info_destinataire_validation
+    @video_destinataires = @video.video_destinataires.order(created_at: :asc)
+    flash.now[:alert] = t("videos.info_destinataire.required_fields")
+    render :info_destinataire, status: :unprocessable_entity
+  end
 
   def payment_bypass_enabled?
     Rails.env.development? || Rails.env.test? || ActiveModel::Type::Boolean.new.cast(ENV["PAYMENT_BYPASS_ENABLED"])

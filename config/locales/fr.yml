@@ -191,6 +191,9 @@ fr:
       projects: "Projets en cours"
       logout: "Se déconnecter"
   projects:
+    notices:
+      project_closed: "Vous avez clôturé votre projet. Mais nous serons toujours ravis de vous revoir !"
+      update_failed: "Une erreur est survenue. Veuillez réessayer."
     role_switch:
       participant: "Je suis un participant"
       creator: "Je suis un créateur"

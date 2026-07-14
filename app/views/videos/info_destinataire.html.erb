@@ -67,34 +67,34 @@
           <div class="destinataire flex flex-col justify-center mb-[48px] relative inline-block w-full">
             <div class="form step-1 row-1 flex gap-[23px] mb-[26px]">
               <%= f.label :age_destinataire, "1", class: "text-white font-red-hat-display text-[16px] font-normal leading-[25px] flex w-[53px] h-[53px] p-[10px] flex-col justify-center items-center gap-[10px] rounded-[50px] bg-black" %>
-              <%= f.number_field :age_destinataire, placeholder: t('videos.destinataire_details.form_placeholders.age'), class: "flex w-[677px] h-[60px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
+              <%= f.number_field :age_destinataire, value: @vd&.age, placeholder: t('videos.destinataire_details.form_placeholders.age'), class: "flex w-[677px] h-[60px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
             </div>
 
             <div class="form step-1 row-2 flex gap-[23px] mb-[26px]">
               <%= f.label :name_destinataire, "2", class: "text-white font-red-hat-display text-[16px] font-normal leading-[25px] flex w-[53px] h-[53px] p-[10px] flex-col justify-center items-center gap-[10px] rounded-[50px] bg-black" %>
-              <%= f.text_field :name_destinataire, placeholder: t('videos.destinataire_details.form_placeholders.name'), class: "flex w-[677px] h-[60px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
+              <%= f.text_field :name_destinataire, value: @vd&.name, placeholder: t('videos.destinataire_details.form_placeholders.name'), class: "flex w-[677px] h-[60px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
             </div>
 
             <div class="form step-1 row-3 flex gap-[23px] mb-[26px]">
               <%= f.label :more_info_destinataire, "3", class: "text-white font-red-hat-display text-[16px] font-normal leading-[25px] flex w-[53px] h-[53px] p-[10px] flex-col justify-center items-center gap-[10px] rounded-[50px] bg-black" %>
-              <%= f.text_area :more_info_destinataire, placeholder: t('videos.destinataire_details.form_placeholders.more_info'),rows: 2,  class: "flex w-[677px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
+              <%= f.text_area :more_info_destinataire, value: @vd&.more_info, placeholder: t('videos.destinataire_details.form_placeholders.more_info'),rows: 2,  class: "flex w-[677px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
             </div>
           </div>
 
           <div class="bigger-destinataire mb-[48px] relative inline-block w-full">
             <div class="form step-1 row-1 flex gap-[23px] mb-[26px]">
               <%= f.label :passions_and_hobbies, "4", class: "text-white font-red-hat-display text-[16px] font-normal leading-[25px] flex w-[53px] h-[53px] p-[10px] flex-col justify-center items-center gap-[10px] rounded-[50px] bg-black" %>
-              <%= f.text_area :passions_and_hobbies, placeholder: t('videos.destinataire_details.form_placeholders.passions'),rows: 2,  class: "flex w-[677px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
+              <%= f.text_area :passions_and_hobbies, value: @vd&.passions_and_hobbies, placeholder: t('videos.destinataire_details.form_placeholders.passions'),rows: 2,  class: "flex w-[677px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
             </div>
 
             <div class="form step-1 row-2 flex gap-[23px] mb-[26px]">
               <%= f.label :personality_description, "5", class: "text-white font-red-hat-display text-[16px] font-normal leading-[25px] flex w-[53px] h-[53px] p-[10px] flex-col justify-center items-center gap-[10px] rounded-[50px] bg-black" %>
-              <%= f.text_area :personality_description, placeholder: t('videos.destinataire_details.form_placeholders.personality'),rows: 2,  class: "flex w-[677px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
+              <%= f.text_area :personality_description, value: @vd&.personality_description, placeholder: t('videos.destinataire_details.form_placeholders.personality'),rows: 2,  class: "flex w-[677px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
             </div>
 
             <div class="form step-1 row-3 flex gap-[23px] mb-[26px]">
               <%= f.label :favorite_quotes, "6", class: "text-white font-red-hat-display text-[16px] font-normal leading-[25px] flex w-[53px] h-[53px] p-[10px] flex-col justify-center items-center gap-[10px] rounded-[50px] bg-black" %>
-              <%= f.text_area :favorite_quotes, placeholder: t('videos.destinataire_details.form_placeholders.quotes'),rows: 2,  class: "flex w-[677px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
+              <%= f.text_area :favorite_quotes, value: @vd&.favorite_quotes, placeholder: t('videos.destinataire_details.form_placeholders.quotes'),rows: 2,  class: "flex w-[677px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(32,31,31,0.50)] bg-white text-black font-red-hat-display text-[16px] font-normal leading-[25px]" %>
             </div>
           </div>
 

@@ -84,9 +84,9 @@ class ProjectsController < ApplicationController
     authorize @video, :close_project?, policy_class: ProjectPolicy
     if @video.update!(project_status: :closed)
       redirect_to as_creator_projects_path,
-                  notice: "Vous avez clôturé votre projet. Mais nous serons toujours ravis de vous revoir !"
+                  notice: t("projects.notices.project_closed")
     else
-      flash.now[:alert] = "Une erreur est survenue. Veuillez réessayer."
+      flash.now[:alert] = t("projects.notices.update_failed")
       render :show
     end
   end
