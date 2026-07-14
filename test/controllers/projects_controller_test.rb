@@ -51,6 +51,9 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".dedication-name", text: "Song"
     assert_select ".p-text-16", text: "A musical final dedication built around a song."
     assert_select "input[type='submit'][value='Save changes']"
+    assert_includes response.body, update_video_slot_path(video, locale: :en).to_json
+    assert_includes response.body, get_video_slot_status_path(video, locale: :en).to_json
+    assert_no_match(%r{http://localhost:5000/videos/}, response.body)
     assert_no_match(/Ajoutez|Pas de vidéo|Vos médias|Thème|Sauvegarder/, response.body)
   end
 

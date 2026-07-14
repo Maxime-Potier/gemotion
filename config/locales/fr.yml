@@ -1,4 +1,10 @@
 fr:
+  invitation_mailer:
+    subject: "Invitation à participer à une vidéo GeMotion"
+    heading: "Vous êtes invité à participer à une vidéo GeMotion"
+    instructions: "Utilisez le lien suivant pour rejoindre le projet vidéo :"
+    join: "Participer au projet"
+    signature: "L'équipe GeMotion"
   hello: "Bonjour le monde"
   text: "Texte"
   enter_your_text_here: "Saisissez votre texte ici"

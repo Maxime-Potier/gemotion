@@ -48,6 +48,16 @@ GE.motion is a web application that enables users to create personalized videos 
    bin/dev
    ```
 
+### Gmail invitation emails
+
+Development continues to use `letter_opener` unless Gmail credentials are provided. Copy `.env.example` to the ignored `.env` file and configure these values before starting Rails and Sidekiq:
+
+```sh
+cp .env.example .env
+```
+
+`GMAIL_APP_PASSWORD` must be a Google App Password, not the normal account password. The Google account must have two-step verification enabled. For a local server exposed through a temporary tunnel, set `APP_HOST` to the tunnel hostname without `https://` and restart both Rails and Sidekiq whenever the hostname changes.
+
 ### 2. Making Contributions
 
 #### Creating an Issue

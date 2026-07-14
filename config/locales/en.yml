@@ -28,6 +28,12 @@
 #       enabled: "ON"
 
 en:
+  invitation_mailer:
+    subject: "You are invited to participate in a GeMotion video"
+    heading: "You are invited to participate in a GeMotion video"
+    instructions: "Use the following link to join the video project:"
+    join: "Join the project"
+    signature: "The GeMotion team"
   hello: "Hello world"
   text: "Text"
   enter_your_text_here: "Enter your text here"

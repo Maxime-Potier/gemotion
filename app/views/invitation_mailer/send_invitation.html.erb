@@ -4,10 +4,10 @@
     <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
   </head>
   <body>
-    <h1><%= @email %>, on vous invite à participer à une vidéo GeMotion</h1>
-    <p>Cliquer sur le lien suivant pour particper à la video</p>
-    <%= link_to "Participer", @url %>
+    <h1><%= t("invitation_mailer.heading") %></h1>
+    <p><%= t("invitation_mailer.instructions") %></p>
+    <%= link_to t("invitation_mailer.join"), @url %>
 
-    <p>L'équipe GeMotion</p>
+    <p><%= t("invitation_mailer.signature") %></p>
   </body>
 </html>

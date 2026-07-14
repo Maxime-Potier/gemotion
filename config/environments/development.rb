@@ -76,8 +76,35 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
   config.action_controller.raise_on_missing_callback_actions = true
-  config.action_mailer.delivery_method = :letter_opener
+  gmail_username = ENV["GMAIL_USERNAME"].presence
+  gmail_app_password = ENV["GMAIL_APP_PASSWORD"].presence
+
+  if gmail_username || gmail_app_password
+    raise "GMAIL_USERNAME and GMAIL_APP_PASSWORD must both be configured" unless gmail_username && gmail_app_password
+
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address: "smtp.gmail.com",
+      port: 587,
+      domain: "gmail.com",
+      user_name: gmail_username,
+      password: gmail_app_password.delete(" "),
+      authentication: :plain,
+      enable_starttls_auto: true,
+      openssl_verify_mode: "peer"
+    }
+    config.action_mailer.raise_delivery_errors = true
+  else
+    config.action_mailer.delivery_method = :letter_opener
+  end
+
   config.action_mailer.perform_deliveries = true
-  config.action_mailer.default_url_options = { host: "localhost", port: 5002 }
-  Rails.application.routes.default_url_options = { host: "localhost", port: 5002 }
+
+  public_url_options = {
+    host: ENV.fetch("APP_HOST", "localhost"),
+    protocol: ENV.fetch("APP_PROTOCOL", "http")
+  }
+  public_url_options[:port] = ENV.fetch("APP_PORT", 3000).to_i if ENV.fetch("APP_HOST", "localhost") == "localhost"
+  config.action_mailer.default_url_options = public_url_options
+  Rails.application.routes.default_url_options = public_url_options
 end

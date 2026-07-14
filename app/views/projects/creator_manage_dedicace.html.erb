@@ -226,6 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const messages = {
     processingInitFailed: <%= raw t("videos.dedicace_de_fin.processing_init_failed").to_json %>,
     cameraRequired: <%= raw t("videos.dedicace_de_fin.camera_required").to_json %>,
+    processingFailed: <%= raw t("videos.dedicace_de_fin.processing_failed").to_json %>,
+    processingVideo: <%= raw t("videos.dedicace_de_fin.processing_video").to_json %>,
     rerecord: <%= raw t("videos.dedicace_de_fin.rerecord").to_json %>,
     saveFailed: <%= raw t("videos.dedicace_de_fin.save_failed").to_json %>,
     unknownError: <%= raw t("videos.dedicace_de_fin.unknown_error").to_json %>,
@@ -239,6 +241,18 @@ document.addEventListener("DOMContentLoaded", () => {
   let isRecording = false;
   let currentSlot = null;
   let firstFrameData = null;
+  let sourceStream = null;
+  let recordStream = null;
+  let recordingBlob = null;
+  let recordingMimeType = 'video/webm';
+  let previewUrl = null;
+  let discardRecording = false;
+  let recordingSessionId = 0;
+  let statusInterval = null;
+  let processedVideo = false;
+  let isPreviewing = false;
+  let cameraPromise = null;
+  let cameraPromiseSessionId = null;
 
   const videoPreview = document.getElementById("videoPreview");
   const outputCanvas = document.getElementById("outputCanvas");
@@ -249,10 +263,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const cancelButton = document.getElementById("cancelRecording");
   const recordingModal = document.getElementById("recordingModal");
   const videoSlots = document.querySelectorAll(".video-slot");
+  const updateSlotUrl = <%= raw update_video_slot_path(@video, locale: I18n.locale).to_json %>;
+  const slotStatusUrl = <%= raw get_video_slot_status_path(@video, locale: I18n.locale).to_json %>;
 
   // Initialize BodyPix
   async function initBodyPix() {
+    if (bodyPixNet) return true;
+
     try {
+      if (!window.bodyPix) throw new Error('BodyPix is unavailable');
+
       bodyPixNet = await bodyPix.load({
         architecture: 'MobileNetV1',
         outputStride: 16,
@@ -263,94 +283,16 @@ document.addEventListener("DOMContentLoaded", () => {
       return true;
     } catch (error) {
       console.error('Error loading BodyPix:', error);
-      alert(messages.processingInitFailed);
       return false;
     }
   }
 
-  // Process video frame
-  async function processFrame() {
-    if (!isRecording || !videoPreview.videoWidth) return;
+  async function ensureCameraPreview(sessionId) {
+    if (sourceStream?.active && videoPreview.srcObject === sourceStream) return sourceStream;
+    if (cameraPromise && cameraPromiseSessionId === sessionId) return cameraPromise;
 
-    try {
-      if (outputCanvas.width !== videoPreview.videoWidth || outputCanvas.height !== videoPreview.videoHeight) {
-        outputCanvas.width = videoPreview.videoWidth;
-        outputCanvas.height = videoPreview.videoHeight;
-      }
-
-      const ctx = outputCanvas.getContext('2d');
-      const segmentation = await bodyPixNet.segmentPerson(videoPreview, {
-        flipHorizontal: false,
-        internalResolution: 'medium',
-        segmentationThreshold: 0.5
-      });
-
-      // Draw original video frame first
-      ctx.drawImage(videoPreview, 0, 0);
-
-      // Create a temporary canvas for the mask
-      const maskCanvas = document.createElement('canvas');
-      maskCanvas.width = outputCanvas.width;
-      maskCanvas.height = outputCanvas.height;
-      const maskCtx = maskCanvas.getContext('2d');
-
-      // Create the mask
-      const imageData = maskCtx.createImageData(maskCanvas.width, maskCanvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < segmentation.data.length; i++) {
-        const pixelIndex = i * 4;
-        if (segmentation.data[i] === 0) { // If it's background
-          data[pixelIndex + 3] = 0; // Set alpha to 0
-        }
-      }
-      maskCtx.putImageData(imageData, 0, 0);
-
-      // Apply the mask to the original frame
-      ctx.globalCompositeOperation = 'destination-in';
-      ctx.drawImage(maskCanvas, 0, 0);
-      ctx.globalCompositeOperation = 'source-over';
-
-      if (isRecording) {
-        requestAnimationFrame(processFrame);
-      }
-    } catch (error) {
-      console.error('Error processing frame:', error);
-      if (isRecording) {
-        requestAnimationFrame(processFrame);
-      }
-    }
-  }
-
-  // Open recording modal
-  function openRecordingModal(slotNumber) {
-    currentSlot = slotNumber;
-    recordingModal.style.display = 'flex';
-    startButton.style.display = 'block';
-    stopButton.style.display = 'none';
-    confirmButton.style.display = 'none';
-    recordingTimer.style.display = 'none';
-  }
-
-  // Close recording modal
-  function closeRecordingModal() {
-    recordingModal.style.display = 'none';
-    if (videoPreview.srcObject) {
-      videoPreview.srcObject.getTracks().forEach(track => track.stop());
-    }
-    currentSlot = null;
-    firstFrameData = null;
-  }
-
-  // Start recording
-  async function startRecording() {
-    try {
-      isRecording = true;
-      recordedChunks = [];
-      timeLeft = 30;
-
-      const modelLoaded = await initBodyPix();
-      if (!modelLoaded) throw new Error('Failed to load BodyPix model');
-
+    initBodyPix();
+    const previewPromise = (async () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -360,24 +302,192 @@ document.addEventListener("DOMContentLoaded", () => {
         audio: true
       });
 
-      videoPreview.srcObject = stream;
+      if (sessionId !== recordingSessionId) {
+        stream.getTracks().forEach(track => track.stop());
+        return null;
+      }
+
+      sourceStream = stream;
+      videoPreview.srcObject = sourceStream;
       videoPreview.muted = true;
+      videoPreview.style.display = 'block';
       await videoPreview.play();
+
+      isPreviewing = true;
+      processFrame(sessionId);
+      return sourceStream;
+    })();
+    cameraPromise = previewPromise;
+    cameraPromiseSessionId = sessionId;
+
+    try {
+      return await previewPromise;
+    } finally {
+      if (cameraPromise === previewPromise) {
+        cameraPromise = null;
+        cameraPromiseSessionId = null;
+      }
+    }
+  }
+
+  // Process video frame
+  async function processFrame(sessionId) {
+    if (!isPreviewing || sessionId !== recordingSessionId) return;
+    if (!videoPreview.videoWidth || !videoPreview.videoHeight) {
+      requestAnimationFrame(() => processFrame(sessionId));
+      return;
+    }
+
+    try {
+      if (outputCanvas.width !== videoPreview.videoWidth || outputCanvas.height !== videoPreview.videoHeight) {
+        outputCanvas.width = videoPreview.videoWidth;
+        outputCanvas.height = videoPreview.videoHeight;
+      }
+
+      const ctx = outputCanvas.getContext('2d');
+      ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+      ctx.drawImage(videoPreview, 0, 0);
+
+      // Background removal is optional. If the external model cannot be loaded,
+      // keep recording the unprocessed camera stream instead of blocking the user.
+      if (bodyPixNet) {
+        const segmentation = await bodyPixNet.segmentPerson(videoPreview, {
+          flipHorizontal: false,
+          internalResolution: 'medium',
+          segmentationThreshold: 0.5
+        });
+
+        const maskCanvas = document.createElement('canvas');
+        maskCanvas.width = outputCanvas.width;
+        maskCanvas.height = outputCanvas.height;
+        const maskCtx = maskCanvas.getContext('2d');
+        const imageData = maskCtx.createImageData(maskCanvas.width, maskCanvas.height);
+        const data = imageData.data;
+
+        for (let i = 0; i < segmentation.data.length; i++) {
+          // destination-in uses the mask alpha. Previously foreground pixels were
+          // also left transparent, which made both the preview and recording blank.
+          data[(i * 4) + 3] = segmentation.data[i] ? 255 : 0;
+        }
+        maskCtx.putImageData(imageData, 0, 0);
+
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.drawImage(maskCanvas, 0, 0);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      if (isPreviewing && sessionId === recordingSessionId) {
+        requestAnimationFrame(() => processFrame(sessionId));
+      }
+    } catch (error) {
+      console.error('Error processing frame:', error);
+      if (isPreviewing && sessionId === recordingSessionId) {
+        requestAnimationFrame(() => processFrame(sessionId));
+      }
+    }
+  }
+
+  // Open recording modal
+  function openRecordingModal(slotNumber) {
+    recordingSessionId += 1;
+    currentSlot = slotNumber;
+    discardRecording = false;
+    recordingBlob = null;
+    processedVideo = false;
+    firstFrameData = null;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+    videoPreview.removeAttribute('src');
+    videoPreview.srcObject = null;
+    videoPreview.controls = false;
+    videoPreview.muted = true;
+    videoPreview.style.display = 'none';
+    outputCanvas.style.display = 'block';
+    recordingModal.style.display = 'flex';
+    startButton.style.display = 'block';
+    startButton.disabled = true;
+    stopButton.style.display = 'none';
+    confirmButton.style.display = 'none';
+    recordingTimer.style.display = 'none';
+
+    const sessionId = recordingSessionId;
+    ensureCameraPreview(sessionId)
+      .then(stream => {
+        if (stream && sessionId === recordingSessionId) startButton.disabled = false;
+      })
+      .catch(error => {
+        if (sessionId !== recordingSessionId) return;
+        console.error('Error starting camera preview:', error);
+        alert(messages.cameraRequired);
+        closeRecordingModal();
+      });
+  }
+
+  // Close recording modal
+  function closeRecordingModal() {
+    recordingSessionId += 1;
+    discardRecording = true;
+    isRecording = false;
+    isPreviewing = false;
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    recordingModal.style.display = 'none';
+    if (recordingInterval) clearInterval(recordingInterval);
+    if (statusInterval) clearInterval(statusInterval);
+    sourceStream?.getTracks().forEach(track => track.stop());
+    recordStream?.getTracks().forEach(track => track.stop());
+    videoPreview.pause();
+    videoPreview.srcObject = null;
+    videoPreview.removeAttribute('src');
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+    startButton.disabled = false;
+    confirmButton.disabled = false;
+    confirmButton.textContent = 'OK';
+    currentSlot = null;
+    firstFrameData = null;
+    processedVideo = false;
+  }
+
+  // Start recording
+  async function startRecording() {
+    const sessionId = recordingSessionId;
+    startButton.disabled = true;
+
+    try {
+      const stream = await ensureCameraPreview(sessionId);
+      if (!stream || sessionId !== recordingSessionId) return;
+
+      isRecording = true;
+      discardRecording = false;
+      recordedChunks = [];
+      recordingBlob = null;
+      timeLeft = 30;
+      recordingTimer.textContent = `${timeLeft}s`;
 
       // Initialize canvas with correct dimensions
       outputCanvas.width = videoPreview.videoWidth || 1280;
       outputCanvas.height = videoPreview.videoHeight || 720;
 
-      processFrame();
-
       const canvasStream = outputCanvas.captureStream(30);
-      const audioTrack = stream.getAudioTracks()[0];
-      const recordStream = new MediaStream([...canvasStream.getTracks(), audioTrack]);
+      recordStream = new MediaStream([
+        ...canvasStream.getVideoTracks(),
+        ...sourceStream.getAudioTracks()
+      ]);
+      const sessionRecordStream = recordStream;
 
-      mediaRecorder = new MediaRecorder(recordStream, {
-        mimeType: 'video/webm;codecs=vp8,opus',
-        videoBitsPerSecond: 2500000
-      });
+      const supportedTypes = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm',
+        'video/mp4'
+      ];
+      recordingMimeType = supportedTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
+      const recorderOptions = { videoBitsPerSecond: 2500000 };
+      if (recordingMimeType) recorderOptions.mimeType = recordingMimeType;
+      mediaRecorder = new MediaRecorder(recordStream, recorderOptions);
+      recordingMimeType = mediaRecorder.mimeType || recordingMimeType || 'video/webm';
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -385,15 +495,33 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       };
 
-      mediaRecorder.onstop = async () => {
-        // Ensure we capture a proper frame for preview
-        await processFrame(); // Process one more frame
+      mediaRecorder.onstop = () => {
+        sessionRecordStream.getTracks().forEach(track => track.stop());
+        if (discardRecording || sessionId !== recordingSessionId) return;
+
+        recordingBlob = new Blob(recordedChunks, { type: recordingMimeType });
+        if (!recordingBlob.size) {
+          alert(messages.cameraRequired);
+          closeRecordingModal();
+          return;
+        }
+
         firstFrameData = outputCanvas.toDataURL('image/png');
+        previewUrl = URL.createObjectURL(recordingBlob);
+        videoPreview.srcObject = null;
+        videoPreview.src = previewUrl;
+        videoPreview.controls = true;
+        videoPreview.muted = false;
+        videoPreview.style.display = 'block';
+        outputCanvas.style.display = 'none';
+        videoPreview.play().catch(() => {});
+        confirmButton.style.display = 'block';
       };
 
       mediaRecorder.start(1000);
 
       startButton.style.display = 'none';
+      startButton.disabled = false;
       stopButton.style.display = 'block';
       recordingTimer.style.display = 'block';
 
@@ -415,6 +543,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Stop recording
   function stopRecording() {
     isRecording = false;
+    isPreviewing = false;
     
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
@@ -430,40 +559,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
     recordingTimer.style.display = 'none';
     stopButton.style.display = 'none';
-    confirmButton.style.display = 'block';
-
-    // Show the last frame in the preview
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-    const videoURL = URL.createObjectURL(blob);
-    videoPreview.src = videoURL;
-    videoPreview.style.display = 'block';
-    videoPreview.play();
+    confirmButton.style.display = 'none';
   }
 
   // Confirm recording
   async function confirmRecording() {
-    if (!recordedChunks.length) return;
+    if (processedVideo) {
+      closeRecordingModal();
+      return;
+    }
+    if (!recordingBlob || !recordingBlob.size) return;
+    const sessionId = recordingSessionId;
+    const slotNumber = currentSlot;
 
     const formData = new FormData();
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-    formData.append('video_file', blob, 'recorded_video.webm');
-    
-    // Take a snapshot of the current video frame for preview
-    outputCanvas.width = videoPreview.videoWidth;
-    outputCanvas.height = videoPreview.videoHeight;
-    const ctx = outputCanvas.getContext('2d');
-    ctx.drawImage(videoPreview, 0, 0);
-    const previewData = outputCanvas.toDataURL('image/png');
-    
-    formData.append('preview_data', previewData);
-    formData.append('slot_number', currentSlot);
+    const extension = recordingMimeType.includes('mp4') ? 'mp4' : 'webm';
+    formData.append('video_file', recordingBlob, `recorded_video.${extension}`);
+    formData.append('preview_data', firstFrameData);
+    formData.append('slot_number', slotNumber);
     
     // Add CSRF token
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     try {
-      const url = `http://localhost:5000/videos/${<%= @video.id %>}/update_video_slot`; 
-      const response = await fetch(url, {
+      confirmButton.disabled = true;
+      confirmButton.textContent = messages.processingVideo;
+
+      const response = await fetch(updateSlotUrl, {
         method: 'PATCH',
         headers: {
           'X-CSRF-Token': token
@@ -472,28 +594,57 @@ document.addEventListener("DOMContentLoaded", () => {
         credentials: 'same-origin'
       });
 
+      const data = await response.json();
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(data.message || (data.errors && data.errors.join(', ')) || messages.processingFailed);
       }
 
-      const data = await response.json();
-      if (data.success) {
-        const slot = document.querySelector(`.video-slot[data-slot-number="${currentSlot}"]`);
-        slot.innerHTML = `
-          <img src="${data.preview}" class="video-preview" alt="Video Preview">
-          <div class="re-record-overlay">
-            <span>${messages.rerecord}</span>
-          </div>
-        `;
-      } else {
-        alert(`${messages.saveFailed}: ${data.errors ? data.errors.join(', ') : messages.unknownError}`);
-      }
+      if (data.status !== 'processing') throw new Error(messages.processingFailed);
+
+      statusInterval = setInterval(async () => {
+        try {
+          const url = `${slotStatusUrl}?${new URLSearchParams({ slot_number: slotNumber })}`;
+          const checkResponse = await fetch(url, {
+            method: 'GET',
+            headers: { 'X-CSRF-Token': token },
+            credentials: 'same-origin'
+          });
+          const checkData = await checkResponse.json();
+          if (sessionId !== recordingSessionId) return;
+
+          if (!checkResponse.ok || checkData.status === 'error') {
+            throw new Error(checkData.message || messages.processingFailed);
+          }
+          if (checkData.status !== 'done') return;
+
+          clearInterval(statusInterval);
+          statusInterval = null;
+          processedVideo = true;
+          const slot = document.querySelector(`.video-slot[data-slot-number="${slotNumber}"]`);
+          slot.innerHTML = `
+            <img src="${checkData.preview_url}" class="video-preview" alt="Video Preview">
+            <div class="re-record-overlay">
+              <span>${messages.rerecord}</span>
+            </div>
+          `;
+          videoPreview.src = checkData.video_url;
+          videoPreview.currentTime = 0;
+          confirmButton.disabled = false;
+          confirmButton.textContent = 'OK';
+        } catch (error) {
+          clearInterval(statusInterval);
+          statusInterval = null;
+          confirmButton.disabled = false;
+          confirmButton.textContent = 'OK';
+          alert(`${messages.processingFailed}: ${error.message}`);
+        }
+      }, 2000);
     } catch (error) {
       console.error('Error saving video:', error);
-      alert(messages.saveFailed);
+      confirmButton.disabled = false;
+      confirmButton.textContent = 'OK';
+      alert(`${messages.saveFailed}: ${error.message}`);
     }
-
-    closeRecordingModal();
   }
 
   // Event listeners

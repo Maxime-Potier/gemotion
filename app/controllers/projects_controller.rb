@@ -660,7 +660,7 @@ class ProjectsController < ApplicationController
       invited_user: collab_user # may be nil if user doesn't exist yet
     )
 
-    InvitationMailer.with(url: join_url(@video.token), email:).send_invitation.deliver_later
+    InvitationMailer.with(url: join_url(@video.token), email:, locale: I18n.locale).send_invitation.deliver_later
     flash[:notice] = "Invitation envoyé."
     redirect_to invite_collaborators_path(video_id: @video.id)
   end

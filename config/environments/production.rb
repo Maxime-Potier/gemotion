@@ -76,6 +76,20 @@ config.logger = ActiveSupport::Logger.new("log/production.log")
 
   config.action_mailer.perform_caching = false
 
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.smtp_settings = {
+    address: "smtp.gmail.com",
+    port: 587,
+    domain: "gmail.com",
+    user_name: ENV.fetch("GMAIL_USERNAME"),
+    password: ENV.fetch("GMAIL_APP_PASSWORD").delete(" "),
+    authentication: :plain,
+    enable_starttls_auto: true,
+    openssl_verify_mode: "peer"
+  }
+
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
@@ -98,6 +112,10 @@ config.logger = ActiveSupport::Logger.new("log/production.log")
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
-  config.action_mailer.default_url_options = { host: 'your-production-domain.com' }
-  Rails.application.routes.default_url_options = { host: 'your-production-domain.com' }
+  public_url_options = {
+    host: ENV.fetch("APP_HOST"),
+    protocol: ENV.fetch("APP_PROTOCOL", "https")
+  }
+  config.action_mailer.default_url_options = public_url_options
+  Rails.application.routes.default_url_options = public_url_options
 end
