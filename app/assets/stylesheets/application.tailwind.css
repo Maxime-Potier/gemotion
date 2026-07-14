@@ -54,6 +54,70 @@
 main{
   background:  rgba(250, 254, 255, 1);
 }
+.video-processing-state {
+  width: min(982px, 100%);
+  min-height: 425px;
+  margin-top: 40px;
+  padding: 48px 24px;
+  border-radius: 20px;
+  background: #f2fcff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.video-processing-state h2 {
+  margin: 24px 0 12px;
+  color: #0d6783;
+  font-size: 28px;
+  font-weight: 700;
+}
+.video-processing-state p {
+  max-width: 620px;
+  font-size: 18px;
+}
+.video-processing-state .video-processing-hint {
+  margin-top: 8px;
+  color: #667085;
+  font-size: 15px;
+}
+.video-processing-progress {
+  width: min(520px, 90%);
+  height: 14px;
+  margin-top: 24px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #ccecf5;
+}
+.video-processing-progress__bar {
+  height: 100%;
+  border-radius: inherit;
+  background: #0d6783;
+  transition: width 0.3s ease;
+}
+.video-processing-progress-value {
+  margin-top: 8px;
+  color: #0d6783;
+  font-size: 20px;
+}
+.video-processing-state--failed {
+  background: #fff4f4;
+}
+.video-processing-state--failed h2 {
+  color: #b42318;
+}
+.video-processing-spinner {
+  width: 64px;
+  height: 64px;
+  border: 7px solid #ccecf5;
+  border-top-color: #0d6783;
+  border-radius: 50%;
+  animation: video-processing-spin 0.9s linear infinite;
+}
+@keyframes video-processing-spin {
+  to { transform: rotate(360deg); }
+}
 .instagram-icon{
   width: 32px;
   height: 32px;

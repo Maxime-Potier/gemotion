@@ -256,6 +256,8 @@ en:
       no_image: "No image"
       close: "Close"
       save_approvals: "Save approvals"
+    creator_manage_dedicace:
+      dedicace_missing: "Please select a final dedication before managing its recordings."
   videos:
     messages:
       dedicace_required: "Please select a dedication."

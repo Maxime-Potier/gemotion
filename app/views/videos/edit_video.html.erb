@@ -44,28 +44,7 @@
               </div>
             </div>
           <% elsif preview_processing %>
-            <div id="video-processing-state"
-                 class="video-processing-state"
-                 role="status"
-                 aria-live="polite"
-                 data-status-url="<%= video_concat_status_path(@video) %>"
-                 data-progress="<%= @video.processing_progress %>"
-                 data-failure-message="<%= t('videos.edit_video.processing_failed') %>">
-              <div class="video-processing-spinner" aria-hidden="true"></div>
-              <h2 id="video-processing-title"><%= t('videos.edit_video.processing_title') %></h2>
-              <p id="video-processing-message"><%= t('videos.edit_video.processing_message') %></p>
-              <div class="video-processing-progress" aria-label="<%= t('videos.edit_video.processing_progress') %>">
-                <div id="video-processing-progress-bar"
-                     class="video-processing-progress__bar"
-                     role="progressbar"
-                     aria-valuemin="0"
-                     aria-valuemax="100"
-                     aria-valuenow="<%= @video.processing_progress %>"
-                     style="width: <%= @video.processing_progress %>%"></div>
-              </div>
-              <strong id="video-processing-progress-value"><%= @video.processing_progress %>%</strong>
-              <p class="video-processing-hint"><%= t('videos.edit_video.processing_hint') %></p>
-            </div>
+            <%= render "shared/video_processing_state", video: @video %>
           <% else %>
             <div class="video-processing-state video-processing-state--failed" role="alert">
               <h2><%= t('videos.edit_video.processing_failed_title') %></h2>
@@ -94,70 +73,6 @@
   </div>
   <%= image_tag 'right-with-bottom-star.png', class: 'image-sides right-image' %>
 </div>
-
-<% if preview_processing %>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const processingState = document.getElementById("video-processing-state");
-      if (!processingState) return;
-
-      let requestInProgress = false;
-      let pollingStopped = false;
-      let pollingInterval = null;
-      const progressBar = document.getElementById("video-processing-progress-bar");
-      const progressValue = document.getElementById("video-processing-progress-value");
-
-      const updateProgress = (value) => {
-        const progress = Math.max(0, Math.min(100, Number(value) || 0));
-        progressBar.style.width = `${progress}%`;
-        progressBar.setAttribute("aria-valuenow", progress);
-        progressValue.textContent = `${progress}%`;
-      };
-
-      const stopWithError = () => {
-        pollingStopped = true;
-        if (pollingInterval) window.clearInterval(pollingInterval);
-        processingState.classList.add("video-processing-state--failed");
-        const spinner = processingState.querySelector(".video-processing-spinner");
-        if (spinner) spinner.remove();
-        document.getElementById("video-processing-title").textContent = processingState.dataset.failureMessage;
-        document.getElementById("video-processing-message").textContent = "";
-      };
-
-      const checkProcessingStatus = async () => {
-        if (requestInProgress || pollingStopped) return;
-        requestInProgress = true;
-
-        try {
-          const response = await fetch(processingState.dataset.statusUrl, {
-            headers: { Accept: "application/json" },
-            credentials: "same-origin"
-          });
-
-          if (!response.ok) throw new Error(`Status request failed: ${response.status}`);
-
-          const data = await response.json();
-          updateProgress(data.processing_progress);
-          if (data.concat_status === "completed") {
-            pollingStopped = true;
-            if (pollingInterval) window.clearInterval(pollingInterval);
-            window.location.reload();
-          } else if (data.concat_status === "failed") {
-            stopWithError();
-          }
-        } catch (error) {
-          console.error("Unable to check video processing status", error);
-        } finally {
-          requestInProgress = false;
-        }
-      };
-
-      checkProcessingStatus();
-      pollingInterval = window.setInterval(checkProcessingStatus, 3000);
-      window.addEventListener("beforeunload", () => window.clearInterval(pollingInterval));
-    });
-  </script>
-<% end %>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -314,70 +229,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <style>
-.video-processing-state {
-  width: min(982px, 100%);
-  min-height: 425px;
-  margin-top: 40px;
-  padding: 48px 24px;
-  border-radius: 20px;
-  background: #f2fcff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-.video-processing-state h2 {
-  margin: 24px 0 12px;
-  color: #0d6783;
-  font-size: 28px;
-  font-weight: 700;
-}
-.video-processing-state p {
-  max-width: 620px;
-  font-size: 18px;
-}
-.video-processing-state .video-processing-hint {
-  margin-top: 8px;
-  color: #667085;
-  font-size: 15px;
-}
-.video-processing-progress {
-  width: min(520px, 90%);
-  height: 14px;
-  margin-top: 24px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #ccecf5;
-}
-.video-processing-progress__bar {
-  height: 100%;
-  border-radius: inherit;
-  background: #0d6783;
-  transition: width 0.3s ease;
-}
-#video-processing-progress-value {
-  margin-top: 8px;
-  color: #0d6783;
-  font-size: 20px;
-}
-.video-processing-state--failed {
-  background: #fff4f4;
-}
-.video-processing-state--failed h2 {
-  color: #b42318;
-}
-.video-processing-spinner {
-  width: 64px;
-  height: 64px;
-  border: 7px solid #ccecf5;
-  border-top-color: #0d6783;
-  border-radius: 50%;
-  animation: video-processing-spin 0.9s linear infinite;
-}
-@keyframes video-processing-spin {
-  to { transform: rotate(360deg); }
-}
 .delete-music-icon-btn{
   position: absolute;
   width: 40px;

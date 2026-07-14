@@ -1,0 +1,22 @@
+<div id="video-processing-state"
+     class="video-processing-state"
+     role="status"
+     aria-live="polite"
+     data-controller="video-processing-progress"
+     data-video-processing-progress-status-url-value="<%= video_concat_status_path(video) %>"
+     data-video-processing-progress-failure-message-value="<%= t('videos.edit_video.processing_failed') %>">
+  <div class="video-processing-spinner" data-video-processing-progress-target="spinner" aria-hidden="true"></div>
+  <h2 data-video-processing-progress-target="title"><%= t('videos.edit_video.processing_title') %></h2>
+  <p data-video-processing-progress-target="message"><%= t('videos.edit_video.processing_message') %></p>
+  <div class="video-processing-progress" aria-label="<%= t('videos.edit_video.processing_progress') %>">
+    <div class="video-processing-progress__bar"
+         data-video-processing-progress-target="bar"
+         role="progressbar"
+         aria-valuemin="0"
+         aria-valuemax="100"
+         aria-valuenow="<%= video.processing_progress %>"
+         style="width: <%= video.processing_progress %>%"></div>
+  </div>
+  <strong class="video-processing-progress-value" data-video-processing-progress-target="value"><%= video.processing_progress %>%</strong>
+  <p class="video-processing-hint"><%= t('videos.edit_video.processing_hint') %></p>
+</div>

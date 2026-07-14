@@ -581,7 +581,12 @@ class ProjectsController < ApplicationController
     authorize @video, :creator_manage_dedicace?, policy_class: ProjectPolicy
     @dedicaces = Dedicace.all
     @dedicace = @video.dedicace
-    @video_dedicace = VideoDedicace.find_by(video_id: @video.id)
+    unless @dedicace
+      redirect_to participants_progress_path(video_id: @video.id), alert: I18n.t("projects.creator_manage_dedicace.dedicace_missing")
+      return
+    end
+
+    @video_dedicace = @video.video_dedicace || @video.create_video_dedicace!(dedicace: @dedicace)
   end
 
   def creator_refresh_video

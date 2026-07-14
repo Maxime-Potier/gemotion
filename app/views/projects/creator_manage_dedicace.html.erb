@@ -38,7 +38,6 @@
             <span class="dedication-name"><%= dedicace.name %></span>
           </div>
           <p class="p-text-16 mt-4"><%= dedicace.description %></p>
-          <p class="p-text-16-bold mt-2 text-decoration-underline">Lire plus</p>
         </div>
       </div>
       <% end %>
@@ -74,10 +73,12 @@
 
           <!-- Video slots -->
           <div class="video-slots absolute inset-0 flex justify-around items-center">
+            <% slots_by_number = @video_dedicace.video_dedicace_slots.index_by(&:slot) %>
             <% (1..3).each do |slot_number| %>
+              <% video_dedicace_slot = slots_by_number[slot_number] %>
               <div class="video-slot" data-slot-number="<%= slot_number %>">
-                <% if @video_dedicace.has_video_in_slot?(slot_number) %>
-                  <img src="<%= @video_dedicace.get_video_preview(slot_number) %>" class="video-preview" alt="Video Preview">
+                <% if video_dedicace_slot&.preview&.attached? %>
+                  <img src="<%= url_for(video_dedicace_slot.preview) %>" class="video-preview" alt="Video Preview">
                   <div class="re-record-overlay">
                     <span>Re-record?</span>
                   </div>

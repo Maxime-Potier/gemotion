@@ -232,6 +232,8 @@ fr:
       no_image: "Pas d'image"
       close: "Fermer"
       save_approvals: "Enregistrer les approbations"
+    creator_manage_dedicace:
+      dedicace_missing: "Veuillez sélectionner une dédicace finale avant de gérer ses enregistrements."
   videos:
     messages:
       dedicace_required: "Veuillez sélectionner une dédicace."

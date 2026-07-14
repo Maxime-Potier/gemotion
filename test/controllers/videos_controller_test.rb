@@ -120,13 +120,13 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     get edit_video_url(locale: :en)
 
     assert_response :success
-    assert_select "#video-processing-state[data-status-url='#{video_concat_status_path(video, locale: :en)}']"
-    assert_select "#video-processing-title", text: "Your video is being prepared"
-    assert_select "#video-processing-progress-bar[style='width: 42%']"
-    assert_select "#video-processing-progress-value", text: "42%"
+    assert_select "#video-processing-state[data-controller='video-processing-progress']"
+    assert_select "#video-processing-state[data-video-processing-progress-status-url-value='#{video_concat_status_path(video, locale: :en)}']"
+    assert_select "[data-video-processing-progress-target='title']", text: "Your video is being prepared"
+    assert_select "[data-video-processing-progress-target='bar'][style='width: 42%']"
+    assert_select "[data-video-processing-progress-target='value']", text: "42%"
     assert_select "video", count: 0
     assert_select "input[type='submit'][value='Save and pay']", count: 0
-    assert_includes response.body, "window.location.reload()"
 
     get video_concat_status_url(video, locale: :en)
 
