@@ -441,6 +441,24 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_select "label[for='chapter_select_#{chapter_type.id}']", text: "Select chapter"
   end
 
+  test "photo upload validation message uses the requested locale" do
+    user = User.create!(
+      email: "photo-upload-locale-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456785"
+    )
+    user.videos.create!(video_type: :solo, stop_at: "introduction")
+    sign_in user
+
+    get photo_intro_url(locale: :en)
+
+    assert_response :success
+    assert_includes response.body, "Please upload at least one image."
+    assert_no_match(/Veuillez télécharger au moins une image/, response.body)
+  end
+
   test "solo share page is fully translated in English" do
     user = User.create!(
       email: "share-translation-test@example.com",

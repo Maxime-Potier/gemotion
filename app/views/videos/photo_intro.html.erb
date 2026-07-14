@@ -533,7 +533,7 @@ const initializePhotoIntro = () => {
 
     if (filledInputs.length === 0 && existingPreviews.length === 0) {
       // Block submission if no new files are uploaded and no existing previews are present
-      alert("Veuillez télécharger au moins une image.");
+      alert(<%= raw t("photo_intro.upload_required").to_json %>);
       event.preventDefault();
       return;
     }

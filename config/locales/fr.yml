@@ -184,6 +184,7 @@ fr:
     the_introduction_of_your_video: "L'introduction de votre vidéo dépendra de l'option que vous avez sélectionné"
     click_and_drag: "Cliquez et faites glisser pour modifier l'ordre"
     child_photo: "Photo de l'enfant"
+    upload_required: "Veuillez télécharger au moins une image."
   profile:
     hello: "Bonjour, %{name} !"
     tabs:
