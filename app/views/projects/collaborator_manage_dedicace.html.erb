@@ -1,5 +1,5 @@
 <div class="flex flex-col items-center mb-45">
-  <h1 class="video-h1 pb-40">Ajoutez votre partie vidéo à  la dédicace finale</h1>
+  <h1 class="video-h1 pb-40"><%= t("videos.dedicace_de_fin.title") %></h1>
   <%= render "shared/profile_tabs", page_count: 1 %>
 </div>
 
@@ -8,6 +8,7 @@
     <div class="frame-no-border">
       <div class="dedications">
         <% @dedicaces.each do |dedicace| %>
+          <% theme_key = dedicace.name.parameterize(separator: "_") %>
           <div class="dedication">
             <%= f.radio_button "collaborator_dedicace", dedicace.id, {checked: dedicace == @collaborator_dedicace&.dedicace}%>
             <div class="dedication-wrapper">
@@ -29,11 +30,11 @@
                     </div>
                   </div>
                 <% else %>
-                  <p>Pas de vidéo</p>
+                  <p><%= t("videos.dedicace.no_video") %></p>
                 <% end %>
-                <span class="dedication-name"><%= dedicace.name %></span>
+                <span class="dedication-name"><%= t("videos.dedicace.themes.#{theme_key}.name", default: dedicace.name) %></span>
               </div>
-              <p class="p-text-16 mt-4"><%= dedicace.description %></p>
+              <p class="p-text-16 mt-4"><%= t("videos.dedicace.themes.#{theme_key}.description", default: dedicace.description) %></p>
             </div>
           </div>
         <% end %>
@@ -43,21 +44,22 @@
     <div class="flex flex-col justify-start items-center mt-65">
       <div class="dedicace-de-fin-frame mt-6 flex flex-col  justify-start items-start">
         <div class="flex justify-start items-center">
-          <div class="mr-2 p-text-16">Vos médias</div>
+          <div class="mr-2 p-text-16"><%= t("videos.dedicace_de_fin.your_media") %></div>
           <div class="flex justify-start items-center p-text-16">
             <%= image_tag 'icons/mingcute_time-line.png', alt: 'Time Icon', class: 'inline-block ml-15 mr-2', style: 'height: 24px; width: 24px;' %>
               <% if @collaborator_dedicace.present? && @collaborator_dedicace.creator_end_dedication_video.attached? %>
                 <%= @collaborator_dedicace.video_duration%>
             <% else %>
-              Duration: N/A
+              <%= t("videos.dedicace_de_fin.duration_unavailable") %>
             <% end %>
           </div>
         </div>
 
         <div class="flex justify-start items-center mt-8">
-          <div class="mr-2 font-bold p-text-bold-16">Thème:</div>
+          <div class="mr-2 font-bold p-text-bold-16"><%= t("videos.dedicace_de_fin.theme") %></div>
           <div class="flex justify-start items-center p-text-16">
-            <%=@dedicace.name%>
+            <% selected_theme_key = @dedicace.name.parameterize(separator: "_") %>
+            <%= t("videos.dedicace.themes.#{selected_theme_key}.name", default: @dedicace.name) %>
           </div>
         </div>
         <div class = "w-full flex justify-center items-center mt-8">
@@ -65,7 +67,7 @@
             <%if @collaborator_dedicace.present? && @collaborator_dedicace.creator_end_dedication_video.attached?%>
               <%= video_tag @collaborator_dedicace.creator_end_dedication_video, controls: true, autobuffer: true, style: "width: 100%; height:100%; border-radius:15px;", id: "videoUploaded" %>
             <%end%>
-            <span id="videoPreviewText" style="<%=@collaborator_dedicace.present? && @collaborator_dedicace.creator_end_dedication_video.attached? ? 'display: none;' : ''%>" class="p-text-16">La vue depuis la caméra frontale s'ouvre ici</span>
+            <span id="videoPreviewText" style="<%=@collaborator_dedicace.present? && @collaborator_dedicace.creator_end_dedication_video.attached? ? 'display: none;' : ''%>" class="p-text-16"><%= t("videos.dedicace_de_fin.camera_view") %></span>
             <%= image_tag 'f7_person-alt.png', class: "#{@collaborator_dedicace.present? && @collaborator_dedicace.creator_end_dedication_video.attached? ? 'd-none' : ''} video-recording-block-img", id: 'videoPreviewImg' %>
             <video id="videoPreview" controls style="display: none;width: 100%; height:100%; border-radius:15px;"></video>
           </div>
@@ -73,25 +75,25 @@
         </div>
         <div class="flex justify-center items-center mt-4 w-full">
           <button type="button" id="startRecording" class="record-transparent w-370i">
-            <%= image_tag "icons/fluent_record-24-regular.png", alt: "Download Icon", class: "inline-block", style: "height: 16px; width: 16px;" %>
-            Commencer l'enregistrement vidéo
+            <%= image_tag "icons/fluent_record-24-regular.png", alt: t("videos.dedicace_de_fin.start_recording"), class: "inline-block", style: "height: 16px; width: 16px;" %>
+            <%= t("videos.dedicace_de_fin.start_recording") %>
           </button>
 
           <button type="button" id="stopRecording" class="record-transparent w-370i" style="display: none;">
-            <%= image_tag "icons/fluent_record-24-regular.png", alt: "Download Icon", class: "inline-block", style: "height: 16px; width: 16px;" %>
-            Arrêter l'enregistrement vidéo
+            <%= image_tag "icons/fluent_record-24-regular.png", alt: t("videos.dedicace_de_fin.stop_recording"), class: "inline-block", style: "height: 16px; width: 16px;" %>
+            <%= t("videos.dedicace_de_fin.stop_recording") %>
           </button>
         </div>
         <input type="file" id="collaboratorRecordedVideoFile" name="creator_end_dedication_video" style="display: none;" />
         <div class="upload-video-block flex flex-col justify-center items-center">
-          <span class="p-text-center-16">Faites glisser ou appuyez pour ajouter vos médias</span>
+          <span class="p-text-center-16"><%= t("videos.dedicace_de_fin.drag_media") %></span>
           <div class="upload-circle mt-2" id="customUploadButton">
             <span class="plus-sign">+</span>
           </div>
           <%= f.file_field "creator_end_dedication_video_uploaded", accept: 'video/*', class: 'form-control', style: 'display: none;', id: 'collaboratorFileUploadInput' %>
         </div>
       </div>
-      <%= f.submit "Sauvegarder les modification", class: "black-link mt-6" %>
+      <%= f.submit t("videos.dedicace_de_fin.save_changes"), class: "black-link mt-6" %>
     </div>
   <% end %>
 </div>

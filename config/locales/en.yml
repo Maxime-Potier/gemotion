@@ -258,6 +258,8 @@ en:
       save_approvals: "Save approvals"
     creator_manage_dedicace:
       dedicace_missing: "Please select a final dedication before managing its recordings."
+    dedicace_saved: "Final dedication video saved successfully."
+    dedicace_save_failed: "Failed to save the final dedication: %{errors}"
   videos:
     messages:
       dedicace_required: "Please select a dedication."
@@ -450,6 +452,10 @@ en:
       combine_failed: "We could not create the final dedication video. Please try again."
       drag_media: "Drag or tap to add your media"
       continue_later: "Continue later"
+      duration_unavailable: "Duration: N/A"
+      save_changes: "Save changes"
+      processing_init_failed: "Failed to initialize video processing. Please refresh the page and try again."
+      unknown_error: "Unknown error"
     content_dedicace:
       preview_available: "A first version of your video is already available"
       your_media: "Your media"

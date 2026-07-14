@@ -35,7 +35,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
       last_name: "User",
       phone: "+33123456802"
     )
-    dedicace = Dedicace.create!(name: "Carpool")
+    dedicace = Dedicace.create!(name: "Chanson", description: "Description française")
     video = user.videos.create!(video_type: :solo, dedicace:)
     sign_in user
 
@@ -47,5 +47,46 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_equal dedicace, video.reload.video_dedicace.dedicace
     assert_select ".video-slot", count: 3
     assert_select ".plus-button", count: 3
+    assert_select "h1", text: "Add your video part to the final dedication"
+    assert_select ".dedication-name", text: "Song"
+    assert_select ".p-text-16", text: "A musical final dedication built around a song."
+    assert_select "input[type='submit'][value='Save changes']"
+    assert_no_match(/Ajoutez|Pas de vidéo|Vos médias|Thème|Sauvegarder/, response.body)
+  end
+
+  test "collaborator final dedication page is localized in English" do
+    owner = User.create!(
+      email: "dedication-owner@example.com",
+      password: "Password123!",
+      first_name: "Owner",
+      last_name: "User",
+      phone: "+33123456803"
+    )
+    collaborator = User.create!(
+      email: "dedication-collaborator@example.com",
+      password: "Password123!",
+      first_name: "Collaborator",
+      last_name: "User",
+      phone: "+33123456804"
+    )
+    dedicace = Dedicace.create!(name: "On danse", description: "Description française")
+    video = owner.videos.create!(video_type: :colab, dedicace:)
+    Collaboration.create!(
+      video:,
+      inviting_user: owner,
+      invited_user: collaborator,
+      invited_email: collaborator.email
+    )
+    sign_in collaborator
+
+    get collaborator_manage_dedicace_url(video, locale: :en)
+
+    assert_response :success
+    assert_select "h1", text: "Add your video part to the final dedication"
+    assert_select ".dedication-name", text: "We dance"
+    assert_select ".p-text-16", text: "An energetic final dedication where everyone joins the dance."
+    assert_select "#videoPreviewText", text: "The view from the front camera opens here"
+    assert_select "input[type='submit'][value='Save changes']"
+    assert_no_match(/Ajoutez|Pas de vidéo|Vos médias|Thème|Sauvegarder/, response.body)
   end
 end

@@ -538,10 +538,9 @@ class ProjectsController < ApplicationController
 
     if collaborator_dedicace.save
       VideoProcessingJob.perform_later(collaborator_dedicace.id, "CollaboratorDedicace")
-      flash[:notice] = "Collaborator Dedicace successfully created!"
+      flash[:notice] = I18n.t("projects.dedicace_saved")
     else
-      flash[:alert] =
-        "Failed to create Collaborator Dedicace: #{collaborator_dedicace.errors.full_messages.to_sentence}"
+      flash[:alert] = I18n.t("projects.dedicace_save_failed", errors: collaborator_dedicace.errors.full_messages.to_sentence)
     end
 
     redirect_to collaborator_manage_dedicace_path(@video.id)
@@ -564,9 +563,9 @@ class ProjectsController < ApplicationController
 
     if video_dedicace.save
       VideoProcessingJob.perform_later(video_dedicace.id, "VideoDedicace")
-      flash[:notice] = "Video Dedicace successfully created!"
+      flash[:notice] = I18n.t("projects.dedicace_saved")
     else
-      flash[:alert] = "Failed to create Collaborator Dedicace: #{video_dedicace.errors.full_messages.to_sentence}"
+      flash[:alert] = I18n.t("projects.dedicace_save_failed", errors: video_dedicace.errors.full_messages.to_sentence)
     end
 
     redirect_to participants_progress_path(video_id: @video.id)
@@ -600,7 +599,7 @@ class ProjectsController < ApplicationController
 
     # Enqueue the job to process the video again
     ContentDedicaceJob.perform_later(@video.id)
-    flash[:notice] = "Le traitement de la vidéo a été relancé en arrière-plan."
+    flash[:notice] = I18n.t("videos.messages.processing_restarted")
 
     # Redirect to the same action without the refresh parameter
     redirect_to participants_progress_path(video_id: @video.id) and return

@@ -1,5 +1,5 @@
 <div class="flex flex-col items-center mb-45">
-  <h1 class="video-h1 pb-40">Ajoutez votre partie vidéo à  la dédicace finale</h1>
+  <h1 class="video-h1 pb-40"><%= t("videos.dedicace_de_fin.title") %></h1>
   <%= render "shared/profile_tabs", page_count: 1 %>
 </div>
 
@@ -12,6 +12,7 @@
   <div class="frame-no-border">
     <div class="dedications">
       <% @dedicaces.each do |dedicace| %>
+      <% theme_key = dedicace.name.parameterize(separator: "_") %>
       <div class="dedication">
         <%= f.radio_button "video_dedicace", dedicace.id, {checked: dedicace == @video_dedicace&.dedicace}%>
         <div class="dedication-wrapper">
@@ -33,11 +34,11 @@
               </div>
             </div>
             <% else %>
-            <p>Pas de vidéo</p>
+            <p><%= t("videos.dedicace.no_video") %></p>
             <% end %>
-            <span class="dedication-name"><%= dedicace.name %></span>
+            <span class="dedication-name"><%= t("videos.dedicace.themes.#{theme_key}.name", default: dedicace.name) %></span>
           </div>
-          <p class="p-text-16 mt-4"><%= dedicace.description %></p>
+          <p class="p-text-16 mt-4"><%= t("videos.dedicace.themes.#{theme_key}.description", default: dedicace.description) %></p>
         </div>
       </div>
       <% end %>
@@ -47,21 +48,22 @@
   <div class="flex flex-col justify-start items-center mt-65">
     <div class="dedicace-de-fin-frame mt-6 flex flex-col justify-start items-start">
       <div class="flex justify-start items-center">
-        <div class="mr-2 p-text-16">Vos médias</div>
+        <div class="mr-2 p-text-16"><%= t("videos.dedicace_de_fin.your_media") %></div>
         <div class="flex justify-start items-center p-text-16">
           <%= image_tag 'icons/mingcute_time-line.png', alt: 'Time Icon', class: 'inline-block ml-15 mr-2', style: 'height: 24px; width: 24px;' %>
           <% if @video_dedicace.present? && @video_dedicace.creator_end_dedication_video.attached? %>
           <%= @video_dedicace.video_duration%>
           <% else %>
-          Duration: N/A
+          <%= t("videos.dedicace_de_fin.duration_unavailable") %>
           <% end %>
         </div>
       </div>
 
       <div class="flex justify-start items-center mt-2">
-        <div class="mr-2 font-bold p-text-bold-16">Thème:</div>
+        <div class="mr-2 font-bold p-text-bold-16"><%= t("videos.dedicace_de_fin.theme") %></div>
         <div class="flex justify-start items-center p-text-16">
-          <%=@dedicace.name%>
+          <% selected_theme_key = @dedicace.name.parameterize(separator: "_") %>
+          <%= t("videos.dedicace.themes.#{selected_theme_key}.name", default: @dedicace.name) %>
         </div>
       </div>
       <div class="w-full flex justify-center items-center">
@@ -80,7 +82,7 @@
                 <% if video_dedicace_slot&.preview&.attached? %>
                   <img src="<%= url_for(video_dedicace_slot.preview) %>" class="video-preview" alt="Video Preview">
                   <div class="re-record-overlay">
-                    <span>Re-record?</span>
+                    <span><%= t("videos.dedicace_de_fin.rerecord") %></span>
                   </div>
                 <% else %>
                   <div class="plus-button">+</div>
@@ -105,13 +107,13 @@
 
           <div class="modal-buttons">
             <button type="button" id="startRecording" class="record-transparent">
-              <%= image_tag "icons/fluent_record-24-regular.png", alt: "Start Recording", class: "inline-block", style: "height: 16px; width: 16px;" %>
-              Commencer l'enregistrement vidéo
+              <%= image_tag "icons/fluent_record-24-regular.png", alt: t("videos.dedicace_de_fin.start_recording"), class: "inline-block", style: "height: 16px; width: 16px;" %>
+              <%= t("videos.dedicace_de_fin.start_recording") %>
             </button>
 
             <button type="button" id="stopRecording" class="record-transparent" style="display: none;">
-              <%= image_tag "icons/fluent_record-24-regular.png", alt: "Stop Recording", class: "inline-block", style: "height: 16px; width: 16px;" %>
-              Arrêter l'enregistrement vidéo
+              <%= image_tag "icons/fluent_record-24-regular.png", alt: t("videos.dedicace_de_fin.stop_recording"), class: "inline-block", style: "height: 16px; width: 16px;" %>
+              <%= t("videos.dedicace_de_fin.stop_recording") %>
             </button>
 
             <button type="button" id="confirmRecording" class="black-link" style="display: none;">
@@ -119,13 +121,13 @@
             </button>
 
             <button type="button" id="cancelRecording" class="black-link">
-              Annuler
+              <%= t("videos.dedicace_de_fin.cancel") %>
             </button>
           </div>
         </div>
       </div>
     </div>
-    <%= f.submit "Sauvegarder les modification", class: "black-link mt-6" %>
+    <%= f.submit t("videos.dedicace_de_fin.save_changes"), class: "black-link mt-6" %>
   </div>
   <% end %>
 </div>
@@ -221,6 +223,14 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+  const messages = {
+    processingInitFailed: <%= raw t("videos.dedicace_de_fin.processing_init_failed").to_json %>,
+    cameraRequired: <%= raw t("videos.dedicace_de_fin.camera_required").to_json %>,
+    rerecord: <%= raw t("videos.dedicace_de_fin.rerecord").to_json %>,
+    saveFailed: <%= raw t("videos.dedicace_de_fin.save_failed").to_json %>,
+    unknownError: <%= raw t("videos.dedicace_de_fin.unknown_error").to_json %>,
+    replaceRecording: <%= raw t("videos.dedicace_de_fin.replace_recording").to_json %>
+  };
   let bodyPixNet;
   let mediaRecorder;
   let recordedChunks = [];
@@ -253,7 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return true;
     } catch (error) {
       console.error('Error loading BodyPix:', error);
-      alert('Failed to initialize video processing. Please refresh the page and try again.');
+      alert(messages.processingInitFailed);
       return false;
     }
   }
@@ -397,7 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (err) {
       console.error('Error in recording process:', err);
-      alert('Camera access and BodyPix support are required.');
+      alert(messages.cameraRequired);
       closeRecordingModal();
     }
   }
@@ -472,15 +482,15 @@ document.addEventListener("DOMContentLoaded", () => {
         slot.innerHTML = `
           <img src="${data.preview}" class="video-preview" alt="Video Preview">
           <div class="re-record-overlay">
-            <span>Re-record?</span>
+            <span>${messages.rerecord}</span>
           </div>
         `;
       } else {
-        alert('Failed to save video: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+        alert(`${messages.saveFailed}: ${data.errors ? data.errors.join(', ') : messages.unknownError}`);
       }
     } catch (error) {
       console.error('Error saving video:', error);
-      alert('Failed to save video. Please try again.');
+      alert(messages.saveFailed);
     }
 
     closeRecordingModal();
@@ -493,7 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const hasVideo = slot.querySelector('.video-preview');
       
       if (hasVideo) {
-        if (confirm('Replace existing video?')) {
+        if (confirm(messages.replaceRecording)) {
           openRecordingModal(slotNumber);
         }
       } else {

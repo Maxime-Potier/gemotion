@@ -234,6 +234,8 @@ fr:
       save_approvals: "Enregistrer les approbations"
     creator_manage_dedicace:
       dedicace_missing: "Veuillez sélectionner une dédicace finale avant de gérer ses enregistrements."
+    dedicace_saved: "La vidéo de dédicace finale a bien été enregistrée."
+    dedicace_save_failed: "Impossible d'enregistrer la dédicace finale : %{errors}"
   videos:
     messages:
       dedicace_required: "Veuillez sélectionner une dédicace."
@@ -426,6 +428,10 @@ fr:
       combine_failed: "Impossible de créer la vidéo de dédicace finale. Veuillez réessayer."
       drag_media: "Faites glisser ou appuyez pour ajouter vos médias"
       continue_later: "Continuer plus tard"
+      duration_unavailable: "Durée : N/D"
+      save_changes: "Enregistrer les modifications"
+      processing_init_failed: "Impossible d'initialiser le traitement vidéo. Actualisez la page et réessayez."
+      unknown_error: "Erreur inconnue"
     content_dedicace:
       preview_available: "Une première version de votre vidéo est déjà disponible"
       your_media: "Vos médias"
