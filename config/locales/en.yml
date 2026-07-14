@@ -133,6 +133,10 @@ en:
   unauthorized: "You are not authorized to perform this action."
   seo:
     home: "Home"
+  about:
+    tutorial:
+      title: "Watch our short tutorial"
+      coming_soon: "Tutorial video coming soon"
   home:
     create_video: "Create a video"
     satisfied:

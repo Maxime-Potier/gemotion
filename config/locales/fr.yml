@@ -106,6 +106,10 @@ fr:
   unauthorized: "Vous n'êtes pas autorisé à effectuer cette action."
   seo:
     home: "Accueil"
+  about:
+    tutorial:
+      title: "Regardez notre court tutoriel"
+      coming_soon: "Vidéo tutorielle bientôt disponible"
   home:
     create_video: "Créer une vidéo"
     satisfied:

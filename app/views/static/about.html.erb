@@ -21,13 +21,10 @@
     </section>
 
     <section id="watch">
-        <h2 class="mb-[48px] index-1">Regardez notre court tutoriel</h2>
-        <div class="flex w-[1062px] p-[40px] relative items-center gap-[61px] rounded-[20px] border border-custom-border bg-custom-white shadow-custom mb-[56px]">
-            <%= video_tag asset_path('about.mp4'), id: 'about-video-element', controls: false, width: 982, height: 425, poster: asset_path('gemotion-about-video-poster.svg') %>
-            <div id="play-button" class="absolute inset-0 flex items-center justify-center cursor-pointer">
-                <%= image_tag 'icons/AboutPlayIcon.png', alt: 'Play Button Icon', class: 'absolute play-button-icon-home' %>
-                <%= image_tag 'icons/about-video-play.svg', alt: 'Play Button' %>
-                <%= image_tag 'icons/video-bottom.png', alt: 'Play Button Icon', class: 'absolute video-bottom-icon' %>
+        <h2 class="mb-[48px] index-1"><%= t('about.tutorial.title') %></h2>
+        <div class="flex w-[1062px] p-[40px] relative items-center justify-center rounded-[20px] border border-custom-border bg-custom-white shadow-custom mb-[56px]">
+            <div class="flex w-full items-center justify-center rounded-[10px] bg-[#F2FCFF]" style="min-height: 425px;">
+                <p class="video-h3"><%= t('about.tutorial.coming_soon') %></p>
             </div>
         </div>
         <%= link_to t('home.create_video'), start_path, class:"black-link" %>
@@ -39,36 +36,6 @@
 </div>
 
 <script>
-function initializeAboutVideo() {
-  const videoElement = document.getElementById('about-video-element');
-  const playButton = document.getElementById('play-button');
-
-  if (!videoElement || !playButton || playButton.dataset.initialized === 'true') return;
-
-  playButton.dataset.initialized = 'true';
-  playButton.addEventListener('click', async function() {
-    videoElement.controls = true;
-
-    try {
-      await videoElement.play();
-      playButton.style.display = 'none';
-    } catch (error) {
-      console.error('Unable to play the tutorial video:', error);
-    }
-  });
-
-  videoElement.addEventListener('play', function() {
-    playButton.style.display = 'none';
-  });
-
-  videoElement.addEventListener('ended', function() {
-    playButton.style.display = 'flex';
-  });
-}
-
-initializeAboutVideo();
-document.addEventListener('turbo:load', initializeAboutVideo);
-
 /*
 document.addEventListener("DOMContentLoaded", function() {
   const steps = document.querySelectorAll('.step');
