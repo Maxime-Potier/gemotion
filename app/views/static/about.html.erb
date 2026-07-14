@@ -39,23 +39,38 @@
 </div>
 
 <script>
-/*
-document.addEventListener("DOMContentLoaded", function() {
+function initializeAboutVideo() {
   const videoElement = document.getElementById('about-video-element');
   const playButton = document.getElementById('play-button');
 
-  if (videoElement && playButton) {
-    playButton.addEventListener('click', function() {
-      videoElement.setAttribute('controls', true);
-      videoElement.play();
+  if (!videoElement || !playButton || playButton.dataset.initialized === 'true') return;
+
+  playButton.dataset.initialized = 'true';
+  playButton.addEventListener('click', async function() {
+    videoElement.controls = true;
+
+    try {
+      await videoElement.play();
       playButton.style.display = 'none';
-    });
+    } catch (error) {
+      console.error('Unable to play the tutorial video:', error);
+    }
+  });
 
-    videoElement.addEventListener('pause', function() {
-      playButton.style.display = 'flex';
-    });
-  }
+  videoElement.addEventListener('play', function() {
+    playButton.style.display = 'none';
+  });
 
+  videoElement.addEventListener('ended', function() {
+    playButton.style.display = 'flex';
+  });
+}
+
+initializeAboutVideo();
+document.addEventListener('turbo:load', initializeAboutVideo);
+
+/*
+document.addEventListener("DOMContentLoaded", function() {
   const steps = document.querySelectorAll('.step');
   const options = {
     threshold: 0.5
