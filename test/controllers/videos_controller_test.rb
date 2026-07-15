@@ -497,6 +497,16 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert video.reload.processing?
     assert_equal 0, video.processing_progress
     assert_not video.final_video_with_watermark.attached?
+
+    get content_dedicace_url(locale: :en)
+    assert_response :success
+    assert_select "#video-processing-state[data-controller='video-processing-progress']"
+    assert_select "#video-processing-state[data-video-processing-progress-status-url-value='#{video_concat_status_path(video, locale: :en)}']"
+    assert_select "[data-video-processing-progress-target='bar'][style='width: 0%']"
+    assert_select "[data-video-processing-progress-target='value']", text: "0%"
+    assert_select ".black-link.is-click-disabled[aria-disabled='true']", text: "Pay"
+    assert_select "a.black-link[href='#{skip_content_dedicace_path(locale: :en)}']", count: 0
+    assert_no_match(/setInterval/, response.body)
   end
 
   test "music step assigns an available track when the optional selection is empty" do

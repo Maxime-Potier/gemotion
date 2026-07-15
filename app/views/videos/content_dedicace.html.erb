@@ -1,3 +1,5 @@
+<% preview_processing = @video.pending? || @video.processing? %>
+
 <div>
   <h1 class="video-h1"><%= t('videos.content_dedicace.preview_available') %></h1>
   <div class="flex flex-row justify-center w-full">
@@ -34,8 +36,8 @@
           <%= button_to t('videos.content_dedicace.refresh_video'), refresh_content_dedicace_path,
                 method: :post, class: "transparent-link", form: { class: "inline-block" },
                 data: { disable_with: t('videos.content_dedicace.refreshing') } %>
-        <% elsif @video.processing? %>
-          <p><%= t('videos.content_dedicace.processing_message') %></p>
+        <% elsif preview_processing %>
+          <%= render "shared/video_processing_state", video: @video %>
         <% else %>
           <p><%= t('videos.content_dedicace.no_final_video') %></p>
         <% end %>
@@ -43,63 +45,13 @@
 
       <div class="video-steps w-full">
         <%= link_to t('modify'), step_back_path, class: "transparent-link", data: {turbo: false} %>
-        <%= link_to t('pay'), skip_content_dedicace_path, data: { turbo: false }, class: "black-link" %>
+        <% if preview_processing %>
+          <span class="black-link is-click-disabled" aria-disabled="true"><%= t('pay') %></span>
+        <% else %>
+          <%= link_to t('pay'), skip_content_dedicace_path, data: { turbo: false }, class: "black-link" %>
+        <% end %>
       </div>
     </div>
     <%= image_tag 'right-no-star.png', class: 'image-sides right-image' %>
   </div>
 </div>
-
-
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const video = document.getElementById('video-player');
-    const playPauseButton = document.getElementById('play-pause');
-    if(playPauseButton){
-      playPauseButton.addEventListener('click', () => {
-        if (video.paused) {
-          video.play();
-          playPauseButton.textContent = 'Pause';
-          playPauseButton.classList.remove('with-play-icon');
-          playPauseButton.classList.add('with-stop-icon');
-        } else {
-          video.pause();
-          playPauseButton.textContent = 'Play';
-          playPauseButton.classList.remove('with-stop-icon');
-          playPauseButton.classList.add('with-play-icon');
-        }
-      });
-    }
-
-    const videoId = "<%= @video.id %>";
-
-    // Check the initial status of the video
-    fetch(`/videos/${videoId}/concat_status`)
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-
-        // Only start polling if the video is processing
-        if (data.concat_status !== "completed") {
-          const intervalId = setInterval(() => {
-            checkStatus(intervalId); // Pass the interval ID to clear it later
-          }, 10000); // Poll every 10 seconds
-        }
-      });
-
-    function checkStatus(intervalId) {
-      fetch(`/videos/${videoId}/concat_status`)
-        .then(response => response.json())
-        .then(data => {
-          console.log(data);
-          if (data.concat_status === "completed") {
-            clearInterval(intervalId); // Stop polling
-            window.location.reload(); // Reloads the page to show the final video
-          }
-        })
-        .catch(error => {
-          console.error("Error checking status:", error);
-        });
-    }
-  });
-</script>
