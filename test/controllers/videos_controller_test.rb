@@ -4,6 +4,29 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include ActiveJob::TestHelper
 
+  test "deadline calendar renders its initial date in a browser-safe ISO format" do
+    user = User.create!(
+      email: "deadline-calendar-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456790"
+    )
+    user.videos.create!(
+      video_type: :solo,
+      stop_at: "content",
+      end_date: Time.zone.local(2026, 7, 22, 14, 30)
+    )
+    sign_in user
+
+    get deadline_url(locale: :en)
+
+    assert_response :success
+    assert_select "[data-controller='custom-calendar'][data-custom-calendar-locale-value='en']"
+    assert_select "input[name='end_date'][value='2026-07-22']"
+    assert_no_match(/2026-07-22 14:30:00/, response.body)
+  end
+
   test "should get start" do
     get start_url
     assert_redirected_to new_user_session_url

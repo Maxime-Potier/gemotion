@@ -2,25 +2,25 @@ import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
   static targets = ["calendarContainer", "hiddenField"];
-  static values = { endDate: String };
+  static values = { endDate: String, locale: String };
 
   connect() {
     const rawDate = this.hiddenFieldTarget.value; // Get the raw value from the hidden field
     let initialDate;
 
-    if (rawDate) {
-      // Format the raw date to YYYY-MM-DD and set it as the hidden field value
-      const formattedDate = this.formatDateToLocalISO(new Date(rawDate));
-      this.hiddenFieldTarget.value = formattedDate;
-      initialDate = new Date(formattedDate);
-    } else {
-      // Default to today's date if the hidden field is empty
-      initialDate = new Date();
-      this.hiddenFieldTarget.value = this.formatDateToLocalISO(initialDate);
-    }
+    initialDate = this.parseDate(rawDate) || new Date();
+    this.hiddenFieldTarget.value = this.formatDateToLocalISO(initialDate);
 
     this.selectedDate = new Date(initialDate);
     this.renderCalendar(this.selectedDate);
+  }
+
+  parseDate(value) {
+    const match = value && value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return Number.isNaN(date.getTime()) ? null : date;
   }
 
   formatDateToLocalISO(date) {
@@ -40,11 +40,12 @@ export default class extends Controller {
     // Create calendar header
     const header = document.createElement("div");
     header.className = "calendar-header";
-    const monthName = date.toLocaleString("default", { month: "long" });
+    const locale = this.hasLocaleValue ? this.localeValue : document.documentElement.lang || "en";
+    const monthName = date.toLocaleString(locale, { month: "long" });
     header.innerHTML = `
-      <button class="prev-month">&lt;</button>
+      <button type="button" class="prev-month" aria-label="Previous month">&lt;</button>
       <span class="month-year">${monthName} ${year}</span>
-      <button class="next-month">&gt;</button>
+      <button type="button" class="next-month" aria-label="Next month">&gt;</button>
     `;
     calendarContainer.appendChild(header);
 
@@ -59,7 +60,9 @@ export default class extends Controller {
     // Create days of the week row
     const daysRow = document.createElement("div");
     daysRow.className = "calendar-days";
-    ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach((day) => {
+    Array.from({ length: 7 }, (_, index) =>
+      new Date(2021, 7, index + 1).toLocaleDateString(locale, { weekday: "short" })
+    ).forEach((day) => {
       const dayElement = document.createElement("div");
       dayElement.className = "day-name";
       dayElement.textContent = day;

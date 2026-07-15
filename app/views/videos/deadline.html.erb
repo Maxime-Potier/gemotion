@@ -5,8 +5,9 @@
     <div class="film-yourself-block flex flex-col justify-center items-center mt-65 pt-40 pb-40">
       <h4 class="mt-8 video-h4"><%= t('videos.deadline.subtitle') %></h4>
       <%= image_tag 'icons/eight.png', class: 'image-from-image-text-block' %>
-      <div class="custom-calendar-container mt-65" data-controller="custom-calendar" data-custom-calendar-end-date="<%= @video.end_date %>">
-        <%= hidden_field_tag 'end_date', @video.end_date, id: 'customDateField', data: { custom_calendar_target: "hiddenField" } %>
+      <% calendar_date = @video.end_date&.to_date&.iso8601 %>
+      <div class="custom-calendar-container mt-65" data-controller="custom-calendar" data-custom-calendar-end-date-value="<%= calendar_date %>" data-custom-calendar-locale-value="<%= I18n.locale %>">
+        <%= hidden_field_tag 'end_date', calendar_date, id: 'customDateField', data: { custom_calendar_target: "hiddenField" } %>
         <div id="customCalendar" class="custom-calendar" data-custom-calendar-target="calendarContainer">
           <!-- The custom calendar will be rendered here by the controller -->
         </div>
