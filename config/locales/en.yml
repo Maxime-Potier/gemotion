@@ -358,6 +358,7 @@ en:
     join:
       invitation_accepted: "Your invitation to collaborate on a video has been accepted"
       login_required: "Please log in or create an account to continue the collaboration process on this project video"
+      owner_cannot_join: "You are already the owner of this project."
     payment:
       title: "Your project"
       secure_checkout: "Secure checkout"

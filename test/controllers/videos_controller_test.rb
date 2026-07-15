@@ -4,6 +4,52 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include ActiveJob::TestHelper
 
+  test "join redirects a guest to sign in and remembers the invited video" do
+    owner = create_join_user("join-owner@example.com")
+    video = owner.videos.create!(video_type: :solo, token: "guest-join-token")
+
+    get join_url(video.token, locale: :en)
+
+    assert_redirected_to new_user_session_url(locale: :en)
+    assert_equal video.id, session[:collab_video_id]
+  end
+
+  test "join does not redirect a signed-in project owner back to sign in" do
+    owner = create_join_user("join-signed-in-owner@example.com")
+    video = owner.videos.create!(video_type: :solo, token: "owner-join-token")
+    sign_in owner
+
+    get join_url(video.token, locale: :en)
+
+    assert_redirected_to participants_progress_url(video_id: video.id, locale: :en)
+    assert_equal "You are already the owner of this project.", flash[:alert]
+    assert_nil session[:collab_video_id]
+    follow_redirect!
+    assert_response :success
+  end
+
+  test "join claims an emailed invitation without creating a duplicate collaboration" do
+    owner = create_join_user("join-collaboration-owner@example.com")
+    invitee = create_join_user("join-invitee@example.com")
+    video = owner.videos.create!(video_type: :solo, token: "invited-user-token")
+    collaboration = Collaboration.create!(
+      video:,
+      inviting_user: owner,
+      invited_email: invitee.email,
+      invited_user: nil
+    )
+    sign_in invitee
+
+    assert_no_difference "Collaboration.count" do
+      get join_url(video.token, locale: :en)
+    end
+
+    assert_response :success
+    assert_select "h1", text: "Your invitation to collaborate on a video has been accepted"
+    assert_equal invitee, collaboration.reload.invited_user
+    assert_equal "colab", video.reload.video_type
+  end
+
   test "deadline calendar renders its initial date in a browser-safe ISO format" do
     user = User.create!(
       email: "deadline-calendar-test@example.com",
@@ -692,5 +738,17 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_select ".notice", text: "Invitation sent."
     assert_no_match(/Invitation envoyée?\./, response.body)
+  end
+
+  private
+
+  def create_join_user(email)
+    User.create!(
+      email:,
+      password: "Password123!",
+      first_name: "Join",
+      last_name: "Tester",
+      phone: "+33123456789"
+    )
   end
 end

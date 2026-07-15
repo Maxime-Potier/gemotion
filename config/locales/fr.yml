@@ -337,6 +337,7 @@ fr:
     join:
       invitation_accepted: "Votre invitation à collaborer sur une vidéo est acceptée"
       login_required: "Veuillez vous connecter ou créer un compte pour poursuivre le processus de collaboration sur cette vidéo de projet"
+      owner_cannot_join: "Vous êtes déjà propriétaire de ce projet."
     payment:
       title: "Votre projet"
       secure_checkout: "Paiement sécurisé"

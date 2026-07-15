@@ -598,23 +598,33 @@ class VideosController < ApplicationController
   end
 
   def join
-    if current_user.present? && @video.user != current_user
-      @video.update(video_type: :colab) # update to collab if was solo before
-      @existing_collaboration = Collaboration.find_by(
+    if current_user.blank?
+      session[:collab_video_id] = @video.id
+      return redirect_to new_user_session_path
+    end
+
+    if @video.user == current_user
+      return redirect_to participants_progress_path(video_id: @video.id),
+                         alert: I18n.t("videos.join.owner_cannot_join")
+    end
+
+    @video.update!(video_type: :colab)
+    @existing_collaboration = Collaboration.find_by(video: @video, invited_user: current_user) ||
+                              Collaboration.find_by(
+                                video: @video,
+                                invited_user: nil,
+                                invited_email: current_user.email
+                              )
+
+    if @existing_collaboration.present?
+      @existing_collaboration.update!(invited_user: current_user)
+    else
+      @existing_collaboration = Collaboration.create!(
         video: @video,
+        inviting_user: @video.user,
+        invited_email: current_user.email,
         invited_user: current_user
       )
-      if @existing_collaboration.nil?
-        collaboration = Collaboration.create!(
-          video: @video,
-          inviting_user: @video.user,
-          invited_email: current_user.email,
-          invited_user: current_user
-        )
-      end
-    else
-      session[:collab_video_id] = @video.id # Store the video ID for later redirection
-      redirect_to new_user_session_path
     end
   end
 
