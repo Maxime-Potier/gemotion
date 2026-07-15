@@ -3,35 +3,35 @@
     <div class="project-main-block flex flex-col justify-between items-center chapter-item" data-id="<%= chapter.id %>">
       <div class="project-block">
 
-        <div class="delete-chap-icon-btn" data-url="<%= delete_video_chapter_path(chapter.id) %>" data-confirm="Are you sure you want to delete this chapter?" data-action="click->chapter-management#deleteChapter">
-          <%= image_tag "icons/delete-icon.png", alt: "Delete Icon", class: "delete-chap-icon" %>
+        <div class="delete-chap-icon-btn" data-url="<%= delete_video_chapter_path(chapter.id) %>" data-confirm="<%= t('videos.edit_video.delete_chapter_confirmation') %>" data-action="click->chapter-management#deleteChapter">
+          <%= image_tag "icons/delete-icon.png", alt: t('videos.edit_video.delete_icon'), class: "delete-chap-icon" %>
         </div>
         <div class="project-block-bottom-white">
           <div class="text-left-important p-text-18"><%= chapter.chapter_type.name %></div>
           <div class="p-text-16"><%= chapter.text %></div>
         </div>
         <div data-controller="dialog" data-action="click->dialog#clickOutside">
-          <%= image_tag "icons/tdesign_more_white.png", alt: "Edit Icon", class: "edit-video-icon", data: { action: "click->dialog#open" } %>
+          <%= image_tag "icons/tdesign_more_white.png", alt: t('videos.edit_video.edit_icon'), class: "edit-video-icon", data: { action: "click->dialog#open" } %>
           <dialog data-dialog-target="modal" class="backdrop:bg-slate-400 backdrop:opacity-80 w-full lg:w-2/3 edit-chap-modal">
             <div class="w-full h-full flex flex-col justify-start items-center">
-              <h3 class="video-h3 tt-uppercase mt-8">Modifier un chapitre</h3>
+              <h3 class="video-h3 tt-uppercase mt-8"><%= t('videos.edit_video.edit_chapter') %></h3>
               <div class="video-memory-edit-video mb-8">
                 <div class="video-memory-thumb-wrapper">
                   <% if chapter.chapter_type.image.attached? %>
                     <%= image_tag chapter.chapter_type.image, class: "h-[150px] w-[200px] object-cover rounded" %>
                   <% else %>
-                    <p>Pas d'image</p>
+                    <p><%= t('videos.edit_video.no_image') %></p>
                   <% end %>
                 </div>
                 <div class="w-full video-popup-input-block">
-                  <%= f.text_field "chapters[#{chapter.id}][text]", value: chapter.text, placeholder: "Quel texte doit contenir ce chapitre ...", class: "w-full br-10" %>
+                  <%= f.text_field "chapters[#{chapter.id}][text]", value: chapter.text, placeholder: t('videos.edit_video.chapter_text_placeholder'), class: "w-full br-10" %>
                 </div>
                 <div id="edit-video-gallery-<%= chapter.id %>" class="edit-video-gallery flex flex-row items-center space-x-8">
                   <% chapter.ordered_videos.each do |video| %>
                     <div class="edit-video-container old-video-container" data-file-name="<%= video.filename.to_s %>">
                       <%= video_tag video, controls: true, autobuffer: true %>
                       <div class="purge-attachment-icon-btn" data-url="<%= purge_chapter_attachment_path(video.id) %>" data-action="click->chapter-management#deleteAttachment">
-                        <%= image_tag "icons/delete-icon.png", alt: "Delete Icon", class: "purge-chap-icon" %>
+                        <%= image_tag "icons/delete-icon.png", alt: t('videos.edit_video.delete_icon'), class: "purge-chap-icon" %>
                       </div>
                     </div>
                   <% end %>
@@ -39,7 +39,7 @@
                 <%= f.hidden_field "chapters[#{chapter.id}][videos_order]", id: "videos_order_#{chapter.id}" %>
 
                 <div class="upload-attachment-block flex flex-col justify-center items-center">
-                  <span class="text-center">Faites glisser ou appuyez pour ajouter vos vidéos</span>
+                  <span class="text-center"><%= t('videos.edit_video.add_videos') %></span>
                   <div class="add-more-circle mt-6" data-chapter-management-target="customUploadButtonVideos" data-action="click->chapter-management#triggerVideoUpload" data-id="<%= chapter.id %>">
                     <span class="plus-sign">+</span>
                   </div>
@@ -51,7 +51,7 @@
                     <div class="edit-image-container old-image-container" data-file-name="<%= photo.filename.to_s %>">
                       <%= image_tag photo.variant(resize_to_fill: [200, 200]).processed, class: "prev-image" %>
                       <div class="purge-attachment-icon-btn" data-url="<%= purge_chapter_attachment_path(photo.id) %>" data-action="click->chapter-management#deleteAttachment">
-                        <%= image_tag "icons/delete-icon.png", alt: "Delete Icon", class: "purge-chap-icon" %>
+                        <%= image_tag "icons/delete-icon.png", alt: t('videos.edit_video.delete_icon'), class: "purge-chap-icon" %>
                       </div>
                     </div>
                   <% end %>
@@ -59,7 +59,7 @@
                 <%= f.hidden_field "chapters[#{chapter.id}][photos_order]", id: "images_order_#{chapter.id}" %>
 
                 <div class="upload-attachment-block flex flex-col justify-center items-center">
-                  <span class="text-center">Faites glisser ou appuyez pour ajouter vos photos</span>
+                  <span class="text-center"><%= t('videos.edit_video.add_photos') %></span>
                   <div class="add-more-circle mt-6" data-chapter-management-target="customUploadButtonPhotos" data-action="click->chapter-management#triggerPhotoUpload" data-id="<%= chapter.id %>">
                     <span class="plus-sign">+</span>
                   </div>
@@ -78,7 +78,7 @@
                     <%end%>
                     <div class="w-100i text-center h-170i upload-music-block flex flex-col justify-center items-center">
                       <label for="custom_music_<%= chapter.id %>" class="cursor-pointer flex flex-col justify-center items-center w-full">
-                        <span>Ajoutez votre piste de musique (lien youtube, mp3)</span>
+                        <span><%= t('videos.music.add_music_track') %></span>
                         <div class="add-more-circle mt-6">
                           <span class="plus-sign">+</span>
                         </div>
@@ -92,7 +92,7 @@
 
 
 
-                    <div class="w-full flex justify-center items-center p-text-center-bold-16">ou</div>
+                    <div class="w-full flex justify-center items-center p-text-center-bold-16"><%= t('videos.edit_video.or') %></div>
                     <div class="w-full">
                       <%if collab%>
                         <% selected_music_id = chapter.collaborator_music&.music_id %>
@@ -108,7 +108,7 @@
                               <span><%= chapter.video_music&.music&.name %></span>
                             <%end%>
                           <% else %>
-                            <span>Choisissez la musique dans la liste ci-dessous</span>
+                            <span><%= t('videos.music.choose_from_list') %></span>
                           <% end %>
                           <div class="dropdown-arrow">&#9662;</div>
                         </div>
@@ -140,7 +140,7 @@
 
               </div>
               <%= button_tag type: 'button', formmethod: 'dialog', class: 'black-link mb-15', data: { action: 'click->dialog#close' } do %>
-                Sauvegarder les modification
+                <%= t('videos.edit_video.save_changes') %>
               <% end %>
             </div>
           </dialog>

@@ -81,7 +81,7 @@
                   <div class="video-recording__preview">
                     <%= image_tag 'dedicace-camera-preview.png', class: 'w-full h-full object-cover' %>
                   </div>
-                  <video id="videoPreview" class="absolute inset-0 w-full h-full object-cover" play playsinline muted></video>
+                  <video id="videoPreview" class="camera-preview-video absolute inset-0 w-full h-full" play playsinline muted></video>
                   
                   <div class="spinner" role="status">
                     <div class="spinner-animation">
@@ -257,6 +257,11 @@
     overflow: hidden;
   }
 
+  .camera-preview-video {
+    background: #101010;
+    object-fit: contain;
+  }
+
   .modal-buttons {
     display: flex;
     justify-content: center;
@@ -359,11 +364,10 @@ function initializeDedicaceRecording() {
     const previewPromise = (async () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
           frameRate: { ideal: 30 },
-          facingMode: "user",
-          aspectRatio: { ideal: 0.5625 }
+          facingMode: { ideal: "user" }
         },
         audio: true
       });
@@ -377,6 +381,8 @@ function initializeDedicaceRecording() {
       videoPreview.removeAttribute('src');
       videoPreview.srcObject = sourceStream;
       videoPreview.controls = false;
+      videoPreview.setAttribute('muted', '');
+      videoPreview.defaultMuted = true;
       videoPreview.muted = true;
       videoRecordingPreviewBlock.style.display = 'none';
       videoPreview.style.display = 'block';
@@ -445,6 +451,10 @@ function initializeDedicaceRecording() {
       const stream = await ensureCameraPreview(sessionId);
       if (!stream || sessionId !== recordingSessionId) return;
 
+      const audioTracks = stream.getAudioTracks();
+      if (!audioTracks.length) throw new Error('Microphone audio track is unavailable');
+      audioTracks.forEach(track => { track.enabled = true; });
+
       isRecording = true;
       recordedChunks = [];
       recordingBlob = null;
@@ -457,7 +467,7 @@ function initializeDedicaceRecording() {
         'video/mp4'
       ];
       recordingMimeType = supportedTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
-      const options = { videoBitsPerSecond: 1500000 };
+      const options = { videoBitsPerSecond: 1500000, audioBitsPerSecond: 128000 };
       if (recordingMimeType) options.mimeType = recordingMimeType;
       mediaRecorder = new MediaRecorder(stream, options);
       recordingMimeType = mediaRecorder.mimeType || recordingMimeType || 'video/webm';
@@ -482,7 +492,10 @@ function initializeDedicaceRecording() {
         videoPreview.srcObject = null;
         videoPreview.src = previewUrl;
         videoPreview.controls = true;
+        videoPreview.removeAttribute('muted');
+        videoPreview.defaultMuted = false;
         videoPreview.muted = false;
+        videoPreview.volume = 1;
         videoPreview.style.display = 'block';
         videoPreview.onloadedmetadata = () => {
           videoPreview.currentTime = 0;

@@ -98,6 +98,15 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_select ".alert", text: "Please record and process at least one dedication video before continuing."
     assert_select "#dedicace-recording-form[data-turbo='false']"
     assert_select ".video-slot[data-slot-number]", count: 3
+    assert_select "#videoPreview.camera-preview-video"
+    assert_includes response.body, "object-fit: contain"
+    assert_includes response.body, 'width: { ideal: 1280 }'
+    assert_includes response.body, 'height: { ideal: 720 }'
+    assert_no_match(/aspectRatio:\s*\{\s*ideal:\s*0\.5625\s*\}/, response.body)
+    assert_includes response.body, "stream.getAudioTracks()"
+    assert_includes response.body, "videoPreview.removeAttribute('muted')"
+    assert_includes response.body, "videoPreview.defaultMuted = false"
+    assert_includes response.body, "videoPreview.volume = 1"
     assert_includes response.body, 'document.addEventListener("turbo:load", initializeDedicaceRecording)'
     assert_equal dedicace, video.reload.video_dedicace.dedicace
   end

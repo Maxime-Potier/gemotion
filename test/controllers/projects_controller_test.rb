@@ -106,6 +106,8 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
       concat_status: :processing,
       processing_progress: 42
     )
+    chapter_type = ChapterType.create!(name: "Memories")
+    video.video_chapters.create!(chapter_type:, text: "Our memories", order: 1)
     sign_in user
 
     get participants_progress_url(locale: :en, video_id: video.id)
@@ -117,6 +119,12 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#video-processing-state[data-video-processing-progress-status-url-value='#{video_concat_status_path(video, locale: :en)}']"
     assert_select "[data-video-processing-progress-target='bar'][style='width: 42%']"
     assert_select "[data-video-processing-progress-target='value']", text: "42%"
+    assert_select ".edit-chap-modal h3", text: "Edit a chapter"
+    assert_select "input[placeholder='What text should this chapter contain?']"
+    assert_select ".upload-attachment-block", text: /Drag or click to add your videos/
+    assert_select ".upload-attachment-block", text: /Drag or click to add your photos/
+    assert_select ".edit-chap-modal button", text: "Save changes"
+    assert_no_match(/Modifier un chapitre|Faites glisser ou appuyez|Sauvegarder les modification/, response.body)
   end
 
   test "creator can manage a final dedication before recording any slots" do
