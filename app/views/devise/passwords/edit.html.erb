@@ -5,10 +5,10 @@
   <div class="w-full h-full devise-bg pt-[72px]">
     <div class='mb-45'>
       <div class="devise-header font-montserrat">
-        <span class="gradient-text">Changez votre mot de passe</span>
+        <span class="gradient-text"><%= t("devise.passwords.change_title") %></span>
       </div>
       <p class="mt-4 text-center p-text-18">
-        Sur cette page, vous pouvez modifier votre mot de passe
+        <%= t("devise.passwords.change_subtitle") %>
       </p>
     </div>
     <div class="w-full flex items-center justify-center mt-65">
@@ -20,26 +20,26 @@
               <div class="flex flex-col items-center justify-between w-full mt-0">
                 <div class='mb-2 w-full'>
                   <% if @minimum_password_length %>
-                    <em class="small-text">(<%= @minimum_password_length %> caractères minimum)</em><br />
+                    <em class="small-text"><%= t("devise.passwords.minimum_length", count: @minimum_password_length) %></em><br />
                   <% end %>
-                  <%= f.password_field :password, autofocus: true, autocomplete: "new-password", class: "flex w-full h-[53px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(0,0,0,0.50)] bg-white text-black font-red-hat-display text-[14px] font-normal leading-[25px] background-color-transparent placeholder-text-grey", placeholder: "Mot de passe*" %>
+                  <%= f.password_field :password, autofocus: true, autocomplete: "new-password", class: "flex w-full h-[53px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(0,0,0,0.50)] bg-white text-black font-red-hat-display text-[14px] font-normal leading-[25px] background-color-transparent placeholder-text-grey", placeholder: t("devise.passwords.password") %>
                 </div>
                 <div class="mt-2 w-full">
-                  <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "flex w-full h-[53px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(0,0,0,0.50)] bg-white text-black font-red-hat-display text-[14px] font-normal leading-[25px] background-color-transparent placeholder-text-grey", placeholder: "Confirmer le mot de passe*" %>
+                  <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "flex w-full h-[53px] px-[27px] py-[15px] items-start gap-[10px] rounded-[8px] border border-[rgba(0,0,0,0.50)] bg-white text-black font-red-hat-display text-[14px] font-normal leading-[25px] background-color-transparent placeholder-text-grey", placeholder: t("devise.passwords.password_confirmation") %>
                 </div>
               </div>
 
               <div class='w-full flex items-center justify-center mt-8'>
-                <%= f.submit "Changer mon mot de passe", class: "black-link" %>
+                <%= f.submit t("devise.passwords.change_button"), class: "black-link" %>
               </div>
               <hr class='hr-divider-gray mt-4 '/>
 
               <div class='w-full flex items-center justify-center mt-8'>
                 <a href="<%= new_user_session_path %>" class="transparent-link mr-6">
-                  Se connecter
+                  <%= t("devise.passwords.sign_in") %>
                 </a>
                 <a href="<%= new_user_registration_path %>" class="transparent-link">
-                  Créer un compte
+                  <%= t("devise.passwords.create_account") %>
                 </a>
               </div>
             <% end %>

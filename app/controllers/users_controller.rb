@@ -6,11 +6,11 @@ class UsersController < ApplicationController
   end
 
   def update
-    @user = User.find(params[:id])
+    @user = current_user
     if @user.update(user_params_withput_password)
-      redirect_to user_path(@user), notice: 'Profile updated successfully.'
+      redirect_to user_path(@user), notice: t("profile.updated")
     else
-      render :edit
+      render :show, status: :unprocessable_entity
     end
   end
 

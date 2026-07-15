@@ -30,10 +30,14 @@
       </div>
 
       <div class="flex flex-row items-center justify-center mt-8">
-        <%= f.submit "Edit", class: "transparent-link" %>
+        <%= f.submit t("profile.save"), class: "transparent-link" %>
       </div>
 
     <% end %>
+
+    <div class="flex flex-row items-center justify-center mt-5">
+      <%= link_to t("profile.change_password"), edit_user_registration_path, class: "transparent-link" %>
+    </div>
   </div>
 </div>
 

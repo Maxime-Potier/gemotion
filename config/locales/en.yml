@@ -193,6 +193,15 @@ en:
       password_confirmation: "Confirm password*"
       sign_up_button: "Sign up"
       already_have_account: "Already have an account? Sign in"
+      edit:
+        title: "Change your password"
+        subtitle: "Enter your current password, then choose a new one."
+        email: "Email"
+        current_password: "Current password*"
+        new_password: "New password*"
+        password_confirmation: "Confirm new password*"
+        submit: "Change password"
+        back: "Back to profile"
     sessions:
       sign_in_first: "Sign"
       sign_in_second: " in"
@@ -202,6 +211,24 @@ en:
       forgot_password: "Forgot password?"
       sign_in_button: "Sign in"
       create_account: "Create an account"
+    passwords:
+      forgot_title: "Forgot your password?"
+      forgot_subtitle: "Enter your email address to receive password reset instructions."
+      send_reset_instructions: "Send me password reset instructions"
+      change_title: "Change your password"
+      change_subtitle: "Enter and confirm your new password below."
+      minimum_length: "(%{count} characters minimum)"
+      password: "New password*"
+      password_confirmation: "Confirm new password*"
+      change_button: "Change my password"
+      sign_in: "Sign in"
+      create_account: "Create an account"
+      email:
+        greeting: "Hello %{email}!"
+        instructions: "Someone requested a link to change your password. Use the link below to choose a new password."
+        change_password: "Change my password"
+        ignore: "If you did not request this, you can ignore this email."
+        unchanged: "Your password will not change until you open the link and set a new one."
   photo_intro:
     add_3_photos_and_text: "Add 3 photos of the recipient for your video introduction and personalize them with text."
     watch_the_preview: "Watch the preview"
@@ -211,6 +238,9 @@ en:
     upload_required: "Please upload at least one image."
   profile:
     hello: "Hello, %{name}!"
+    save: "Save changes"
+    updated: "Profile updated successfully."
+    change_password: "Change password"
     tabs:
       details: "Profile details"
       projects: "Current projects"

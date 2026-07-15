@@ -156,6 +156,9 @@ fr:
   devise:
     failure:
       unauthenticated: "Veuillez vous connecter ou créer un compte avant de continuer."
+    mailer:
+      reset_password_instructions:
+        subject: "Instructions de réinitialisation du mot de passe"
     registrations:
       signed_up: "Bienvenue ! Votre inscription a bien été enregistrée."
       sign_up_first: "Inscrivez"
@@ -169,6 +172,15 @@ fr:
       password_confirmation: "Confirmer le mot de passe*"
       sign_up_button: "S'inscrire"
       already_have_account: "Vous avez déjà un compte ? Connectez-vous"
+      edit:
+        title: "Changez votre mot de passe"
+        subtitle: "Saisissez votre mot de passe actuel, puis choisissez-en un nouveau."
+        email: "E-mail"
+        current_password: "Mot de passe actuel*"
+        new_password: "Nouveau mot de passe*"
+        password_confirmation: "Confirmer le nouveau mot de passe*"
+        submit: "Changer le mot de passe"
+        back: "Retour au profil"
     sessions:
       sign_in_first: "Connectez"
       sign_in_second: "-vous"
@@ -178,6 +190,24 @@ fr:
       forgot_password: "Mot de passe oublié ?"
       sign_in_button: "Se connecter"
       create_account: "Créer un compte"
+    passwords:
+      forgot_title: "Vous avez oublié votre mot de passe ?"
+      forgot_subtitle: "Saisissez votre adresse e-mail pour recevoir les instructions de réinitialisation."
+      send_reset_instructions: "Envoyez-moi les instructions de réinitialisation"
+      change_title: "Changez votre mot de passe"
+      change_subtitle: "Saisissez et confirmez votre nouveau mot de passe ci-dessous."
+      minimum_length: "(%{count} caractères minimum)"
+      password: "Nouveau mot de passe*"
+      password_confirmation: "Confirmer le nouveau mot de passe*"
+      change_button: "Changer mon mot de passe"
+      sign_in: "Se connecter"
+      create_account: "Créer un compte"
+      email:
+        greeting: "Bonjour %{email} !"
+        instructions: "Une demande de modification de votre mot de passe a été effectuée. Utilisez le lien ci-dessous pour choisir un nouveau mot de passe."
+        change_password: "Changer mon mot de passe"
+        ignore: "Si vous n'avez pas effectué cette demande, vous pouvez ignorer cet e-mail."
+        unchanged: "Votre mot de passe ne changera pas tant que vous n'aurez pas ouvert le lien et défini un nouveau mot de passe."
   photo_intro:
     add_3_photos_and_text: "Ajoutez 3 photos du destinataire pour l'introduction de votre vidéo et personnalisez-les avec du texte."
     watch_the_preview: "Regardez l'aperçu"
@@ -187,6 +217,9 @@ fr:
     upload_required: "Veuillez télécharger au moins une image."
   profile:
     hello: "Bonjour, %{name} !"
+    save: "Enregistrer les modifications"
+    updated: "Profil mis à jour avec succès."
+    change_password: "Changer le mot de passe"
     tabs:
       details: "Détails du profil"
       projects: "Projets en cours"
