@@ -480,6 +480,8 @@ fr:
       email_required: "Indiquez une adresse e-mail pour envoyer l'invitation."
       owner_email: "Vous ne pouvez pas inviter le créateur du projet. Veuillez utiliser une autre adresse e-mail."
     music:
+      invalid_selection: "La piste musicale sélectionnée n'existe pas."
+      chapter_music_not_found: "La musique sélectionnée pour le chapitre %{chapter_id} est introuvable."
       play: "Lire la musique"
       play_track: "Lire %{name}"
       title: "Optionnel: Choisissez les musiques pour chacun des chapitres de votre film"

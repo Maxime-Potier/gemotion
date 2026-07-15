@@ -464,10 +464,10 @@ class VideosController < ApplicationController
     @video.special_request_music = params[:special_request_music] if params[:special_request_music]
 
     # Handle the "whole video" case
-    if params[:music]
+    if params[:music].present?
       music = Music.find_by(id: params[:music])
       if music.nil?
-        flash[:alert] = "Sélection incorrecte. La musique n'existe pas."
+        flash[:alert] = t("videos.music.invalid_selection")
         return render :music, status: :unprocessable_entity
       end
       @video.music = music
@@ -477,6 +477,8 @@ class VideosController < ApplicationController
     params.each do |key, value|
       if key.start_with?("music_")
         chapter_id = key.split("_").last.to_i
+        next if value.blank?
+
         music_id = value.to_i
 
         video_chapter = @video.video_chapters.find_by(id: chapter_id)
@@ -485,13 +487,13 @@ class VideosController < ApplicationController
           if video_chapter.custom_music.attached? || (params["custom_music_#{video_chapter.id}"].is_a?(ActionDispatch::Http::UploadedFile) && params["custom_music_#{video_chapter.id}"].present?)
           elsif music
             video_chapter.video_music&.destroy
-            VideoMusic.create(music:, video_chapter:)
+            VideoMusic.create!(music:, video_chapter:)
           else
-            flash[:alert] = "Musique non trouvée pour le chapitre #{chapter_id}."
+            flash[:alert] = t("videos.music.chapter_music_not_found", chapter_id:)
             return render :music, status: :unprocessable_entity
           end
         end
-      elsif key.start_with?("custom_music_")
+      elsif key.start_with?("custom_music_") && value.is_a?(ActionDispatch::Http::UploadedFile)
         chapter_id = key.split("_").last.to_i
         music_file = value
         video_chapter = @video.video_chapters.find_by(id: chapter_id)

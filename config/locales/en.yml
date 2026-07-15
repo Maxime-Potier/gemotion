@@ -501,6 +501,8 @@ en:
       email_required: "Enter an email address to send the invitation."
       owner_email: "You cannot invite the project creator. Please use a different email address."
     music:
+      invalid_selection: "The selected music track does not exist."
+      chapter_music_not_found: "The selected music for chapter %{chapter_id} was not found."
       play: "Play music"
       play_track: "Play %{name}"
       title: "Optional: Choose music for each chapter of your film"

@@ -473,6 +473,60 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_equal "music", video.stop_at
   end
 
+  test "chapter music step assigns an available track when optional chapter selections are empty" do
+    user = User.create!(
+      email: "optional-chapter-music-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456784"
+    )
+    video = user.videos.create!(
+      video_type: :solo,
+      stop_at: "select_chapters",
+      music_type: :by_chapters
+    )
+    chapter_type = ChapterType.create!(name: "Memories")
+    chapter = video.video_chapters.create!(chapter_type:, text: "Our memories")
+    music = Music.create!(name: "Automatic chapter soundtrack")
+    music.music.attach(
+      io: File.open(Rails.root.join("app/assets/musiques/voyage-1.mp3")),
+      filename: "voyage-1.mp3",
+      content_type: "audio/mpeg"
+    )
+    sign_in user
+
+    post music_post_url(locale: :en), params: { "music_#{chapter.id}" => "" }
+
+    assert_redirected_to dedicace_url(locale: :en)
+    assert_equal music, chapter.reload.video_music.music
+    assert_equal "music", video.reload.stop_at
+  end
+
+  test "invalid chapter music selection uses the requested locale" do
+    user = User.create!(
+      email: "invalid-chapter-music-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456783"
+    )
+    video = user.videos.create!(
+      video_type: :solo,
+      stop_at: "select_chapters",
+      music_type: :by_chapters
+    )
+    chapter_type = ChapterType.create!(name: "Memories")
+    chapter = video.video_chapters.create!(chapter_type:, text: "Our memories")
+    sign_in user
+
+    post music_post_url(locale: :en), params: { "music_#{chapter.id}" => "999999" }
+
+    assert_response :unprocessable_entity
+    assert_select ".alert", text: "The selected music for chapter #{chapter.id} was not found."
+    assert_no_match(/Musique non trouvée/, response.body)
+  end
+
   test "chapter checkboxes have a visible clickable label" do
     user = User.create!(
       email: "chapter-selection-test@example.com",
