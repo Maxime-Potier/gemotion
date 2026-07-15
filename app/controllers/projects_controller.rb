@@ -12,19 +12,16 @@ class ProjectsController < ApplicationController
   before_action :define_music, only: %i[collaborator_video_details participants_progress]
 
   def as_creator_projects
-    @creator_projects = current_user.videos.left_joins(:video_previews)
-                                    .where.not(project_status: [:closed])
-                                    .where("video_previews.order = 1 OR video_previews.order IS NULL")
-                                    .select("videos.*, COALESCE(video_previews.id, NULL) AS video_preview_id, COALESCE(video_previews.preview_id, NULL) AS preview_id")
+    @creator_projects = current_user.videos
+                                    .where.not(project_status: :closed)
+                                    .includes(video_previews: :preview)
   end
 
   def as_collaborator_projects
     @collaborator_projects = Video.joins(:collaborations)
-                                  .left_joins(:video_previews)
                                   .where(collaborations: { invited_user: current_user })
                                   .where.not(project_status: %i[finished closed])
-                                  .where(video_previews: { order: 1 })
-                                  .select("videos.*, video_previews.id AS video_preview_id, video_previews.preview_id AS preview_id")
+                                  .includes(video_previews: :preview)
   end
 
   def participants_progress

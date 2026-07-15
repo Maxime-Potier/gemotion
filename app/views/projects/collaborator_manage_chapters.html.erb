@@ -11,34 +11,35 @@
 
     <%= render "shared/creator_participant_block", creator: false %>
     <div class="w-80 mt-45">
-      <h4 class="text-black font-montserrat font-size-32i font-bold leading-[24px] mb-[24px]">Le projet</h4>
+      <h4 class="text-black font-montserrat font-size-32i font-bold leading-[24px] mb-[24px]"><%= t('projects.manage_chapters.project') %></h4>
     </div>
     <div class="flex flex-col items-start">
-      <span class="p-text-16-bold mr-4">Description</span>
-      <span class="p-text-16 mt-4 mb-4">Lorem ipsum dolor sit amet consectetur. Ipsum ultrices vitae nibh egestas tortor porta aenean eget sagittis. Quis amet fringilla blandit faucibus lobortis vestibulum elit cras quis. Pharetra hendrerit convallis imperdiet ac porta. </span>
+      <span class="p-text-16-bold mr-4"><%= t('projects.manage_chapters.description') %></span>
+      <span class="p-text-16 mt-4 mb-4"><%= @video.description.presence || t('projects.manage_chapters.description_missing') %></span>
     </div>
     <div class="flex flex-row items-start">
-      <span class="p-text-16-bold mr-4">Nom du destinataire (pour qui nous préparons le film) :</span>
+      <span class="p-text-16-bold mr-4"><%= t('projects.manage_chapters.recipient_name') %></span>
       <span class="p-text-16"><%= @destinataires&.map(&:name).join(" | ") %></span>
     </div>
     <div class="flex flex-row items-start mt-4">
-      <span class="p-text-16-bold mr-4">Occasion :</span>
-      <span class="p-text-16"><%= @video.occasion&.humanize %></span>
+      <span class="p-text-16-bold mr-4"><%= t('projects.manage_chapters.occasion') %></span>
+      <span class="p-text-16"><%= @video.occasion ? t("projects.manage_chapters.occasions.#{@video.occasion}", default: @video.occasion.humanize) : '' %></span>
     </div>
     <div class="flex flex-row items-start mt-4">
-      <span class="p-text-16-bold mr-4">Age :</span>
+      <span class="p-text-16-bold mr-4"><%= t('projects.manage_chapters.age') %></span>
       <span class="p-text-16"><%= @destinataires&.map(&:age).join(" | ") %></span>
     </div>
     <div class="flex flex-row items-start mt-4">
-      <span class="p-text-16-bold mr-4">Date de livraison du film :</span>
-      <span class="p-text-16"><%=@video&.end_date&.strftime("%d/%m/%Y") %></span>
+      <span class="p-text-16-bold mr-4"><%= t('projects.manage_chapters.delivery_date') %></span>
+      <span class="p-text-16"><%= l(@video.end_date.to_date, format: :short) if @video.end_date %></span>
     </div>
     <div class="flex flex-row items-start mt-4">
-      <span class="p-text-16-bold mr-4">Thème du film :</span>
-      <span class="p-text-16"><%=@video&.dedicace&.name%></span>
+      <span class="p-text-16-bold mr-4"><%= t('projects.manage_chapters.film_theme') %></span>
+      <% dedication_key = @video.dedicace&.name&.parameterize(separator: '_') %>
+      <span class="p-text-16"><%= dedication_key ? t("videos.dedicace.themes.#{dedication_key}.name", default: @video.dedicace.name) : '' %></span>
     </div>
 
-    <h4 class="text-black font-montserrat text-[20px] font-bold leading-[24px] mb-[24px] mt-8">Choisissez des chapitres</h4>
+    <h4 class="text-black font-montserrat text-[20px] font-bold leading-[24px] mb-[24px] mt-8"><%= t('projects.manage_chapters.choose_chapters') %></h4>
     <div class="">
       <div class="ml-45">
         <div class="video-chapters">
@@ -54,7 +55,7 @@
                     <div data-controller="dialog" data-action="click->dialog#clickOutside">
                       <%= image_tag "icons/akar-icons_edit_white.svg", alt: "Edit Icon", class: "edit-video-icon", data: { action: "click->dialog#open" } %>
                       <dialog data-dialog-target="modal" class="backdrop:bg-slate-400 backdrop:opacity-80 w-full lg:w-2/3 popup-chap-modal">
-                        <h3 class="video-h3 mt-6 mb-[32px] tt-uppercase">Personnalisez votre film! </h3>
+                        <h3 class="video-h3 mt-6 mb-[32px] tt-uppercase"><%= t('projects.manage_chapters.customize_film') %></h3>
                         <div class="w-full flex-im flex-row justify-center items-start">
                           <div class="chapter-popup-block">
                             <div class="video-chapter-thumb-wrapper">
@@ -62,15 +63,15 @@
                                 <% if res[:ct].image.attached? %>
                                   <%= image_tag res[:ct].image, class: "video-chapter-thumb" %>
                                 <% else %>
-                                  <p>Pas d'image</p>
+                                  <p><%= t('projects.manage_chapters.no_image') %></p>
                                 <% end %>
                                 <div class="flex flex-row justify-start items-center video-chapter-thumb-wrapper-text">
-                                  <%= res[:ct].name %>
+                                  <%= t("projects.manage_chapters.chapter_names.#{res[:ct].name.parameterize(separator: '_')}", default: res[:ct].name) %>
                                   <%= image_tag "icons/carbon_edit.png", class: "ml-15"%>
                                 </div>
                               </div>
-                              <p class="mt-2 mb-2 p-text-16">“Description des chapitres lorem ipsum dolor sit amet consectetur. Dictum eu morbi ac elit enim at neque urna. Eleifend condimentum ipsum a lectus tortor est arcu”</p>
-                              <div class="font-bold">Choisissez la couleur du diapositive</div>
+                              <p class="mt-2 mb-2 p-text-16"><%= t('projects.manage_chapters.chapter_description') %></p>
+                              <div class="font-bold"><%= t('projects.manage_chapters.slide_color') %></div>
                               <div class="color-picker flex-im flex-row justify-start items-center mt-4">
                                 <% colors = { white: 'white', red: 'red', orange: 'orange', yellow: 'yellow', green: 'green', lightblue: 'lightblue', dodgerblue: 'dodgerblue', violet: 'violet' } %>
                                 <% default_color = colors.keys.first.to_s %> <!-- Set the default color to the first in the list -->
@@ -81,7 +82,7 @@
                                   <%= f.label "#{color_value}_#{res[:ct].id}", "&nbsp;".html_safe, class: "color-circle #{color_value}" %>
                                 <% end %>
                               </div>
-                              <div class="font-bold mt-4">Text</div>
+                              <div class="font-bold mt-4"><%= t('projects.manage_chapters.text') %></div>
                               <div class="text-options">
                                 <div class="form-group">
                                   <%= f.select "chapters[#{res[:ct].id}][text_family]", options_for_select(['Poppins','Arial', 'Helvetica', 'Times New Roman', 'Verdana', 'Courier New'], res[:text_family]), {}, class: 'custom-select w-full mt-2' %>
@@ -96,9 +97,9 @@
                                 </div>
                               </div>
 
-                              <div class="prev-your-text flex-im justify-start items-center">Aperçu de votre texte</div>
+                              <div class="prev-your-text flex-im justify-start items-center"><%= t('projects.manage_chapters.text_preview') %></div>
                               <%= button_tag type: 'button', formmethod: 'dialog', class: 'black-link w-100i', data: { action: 'click->dialog#close' } do %>
-                                Appliquer les modifications
+                                <%= t('projects.manage_chapters.apply_changes') %>
                                 <%= image_tag 'icons/mdi_magic.png', alt: 'Download Icon', class: 'inline-block', style: 'height: 16px; width: 16px; margin-left: 10px; margin-bottom:3px;' %>
                               <% end %>
                             </div>
@@ -110,13 +111,13 @@
                     <% if res[:ct].image.attached? %>
                       <%= image_tag res[:ct].image, class: "video-chapter-thumb" %>
                     <% else %>
-                      <p>Pas d'image</p>
+                      <p><%= t('projects.manage_chapters.no_image') %></p>
                     <% end %>
-                    <span><%= res[:ct].name %></span>
+                    <span><%= t("projects.manage_chapters.chapter_names.#{res[:ct].name.parameterize(separator: '_')}", default: res[:ct].name) %></span>
 
                   </div>
                   <div class="video-chapter-input-wrapper mt-4">
-                    <%= f.text_field "chapters[#{res[:ct].id}][text]", value: res[:text], placeholder: "Quel texte doit contenir ce chapitre ...", class: 'video-chapter-input', data: {testid: input_test_id} %>
+                    <%= f.text_field "chapters[#{res[:ct].id}][text]", value: res[:text], placeholder: t('projects.manage_chapters.chapter_text_placeholder'), class: 'video-chapter-input', data: {testid: input_test_id} %>
                   </div>
                 </div>
               </div>
@@ -128,7 +129,7 @@
     </div>
   </div>
   <div class="w-full flex justify-center mt-8">
-    <%= f.submit "Sauvegarder les modification", class:"black-link" %>
+    <%= f.submit t('projects.manage_chapters.save_changes'), class:"black-link" %>
   </div>
 
 <% end %>

@@ -3,6 +3,62 @@ require "test_helper"
 class ProjectsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 
+  test "creator dashboard includes projects with only the first preview" do
+    user = User.create!(
+      email: "creator-project-preview-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456799"
+    )
+    visible_video = user.videos.create!(video_type: :solo, project_status: :finished)
+    closed_video = user.videos.create!(video_type: :solo, project_status: :closed)
+    preview = Preview.create!
+    visible_video.video_previews.create!(preview:, order: 0)
+    sign_in user
+
+    get as_creator_projects_url(locale: :en)
+
+    assert_response :success
+    assert_select "a[href='#{participants_progress_path(locale: :en, video_id: visible_video.id)}']", text: "View progress"
+    assert_select "a[href='#{participants_progress_path(locale: :en, video_id: closed_video.id)}']", count: 0
+  end
+
+  test "collaborator dashboard includes projects with only the first preview" do
+    owner = User.create!(email: "collaborator-list-owner@example.com", password: "Password123!", first_name: "Owner", last_name: "User", phone: "+33123456797")
+    collaborator = User.create!(email: "collaborator-list-user@example.com", password: "Password123!", first_name: "Guest", last_name: "User", phone: "+33123456798")
+    video = owner.videos.create!(video_type: :colab, project_status: :started)
+    video.video_previews.create!(preview: Preview.create!, order: 0)
+    Collaboration.create!(video:, inviting_user: owner, invited_user: collaborator, invited_email: collaborator.email)
+    sign_in collaborator
+
+    get as_collaborator_projects_url(locale: :en)
+
+    assert_response :success
+    assert_select "a[href='#{collaborator_video_details_path(video, locale: :en)}']", text: "Project details"
+  end
+
+  test "creator chapter management page is localized in English" do
+    user = User.create!(email: "localized-chapters-owner@example.com", password: "Password123!", first_name: "Owner", last_name: "User", phone: "+33123456796")
+    dedication = Dedicace.create!(name: "On danse")
+    video = user.videos.create!(video_type: :solo, occasion: :anniversaire, dedicace: dedication, end_date: Date.new(2026, 7, 22))
+    video.video_destinataires.create!(name: "Jenny", age: 30)
+    ChapterType.create!(name: "Aventure")
+    sign_in user
+
+    get creator_manage_chapters_url(video, locale: :en)
+
+    assert_response :success
+    assert_select "h4", text: "Project"
+    assert_select ".p-text-16-bold", text: "Recipient's name (for whom we are preparing the film):"
+    assert_select ".p-text-16", text: "Birthday"
+    assert_select ".p-text-16", text: "We dance"
+    assert_select "span", text: "Adventure"
+    assert_select "input[placeholder='What text should this chapter contain...']"
+    assert_select "input[type='submit'][value='Save changes']"
+    assert_no_match(/Le projet|Nom du destinataire|Choisissez des chapitres|Sauvegarder/, response.body)
+  end
+
   test "closing a project uses the requested locale" do
     user = User.create!(
       email: "close-project-locale-test@example.com",

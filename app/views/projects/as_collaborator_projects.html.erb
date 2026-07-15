@@ -26,10 +26,10 @@
               <source src="<%= url_for(video.final_video_with_watermark) %>" type="video/mp4">
             </video>
           <%else%>
-            <%unless video.preview_id.nil?%>
-              <%preview_img = Preview.find(video.preview_id)%>
+            <% preview_img = video.video_previews.min_by { |video_preview| [video_preview.order, video_preview.id] }&.preview %>
+            <% if preview_img&.image&.attached? %>
               <%= image_tag preview_img.image, class: "prev-image preview-prof-img" %>
-            <%end%>
+            <% end %>
           <%end%>
         </div>
         <a href="<%= collaborator_video_details_path(video.id) %>" class="cta-button mt-2" data-turbo="false"><%= t('projects.collaborator_dashboard.project_details') %></a>
