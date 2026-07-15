@@ -2104,6 +2104,34 @@ h2 {
   z-index: 2 !important;
   display: block !important;
 }
+.chapter-attachment-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 4;
+  display: flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #1f1f1f;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.chapter-attachment-remove:hover {
+  background: #ff4646;
+  color: #fff;
+}
+.chapter-attachment-remove:disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: wait;
+}
 .payment-page {
   width: calc(100% - 48px);
   max-width: 1240px;

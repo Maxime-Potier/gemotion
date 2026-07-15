@@ -59,6 +59,19 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Le projet|Nom du destinataire|Choisissez des chapitres|Sauvegarder/, response.body)
   end
 
+  test "project invitation confirmation uses the requested locale" do
+    user = User.create!(email: "project-invitation-locale-test@example.com", password: "Password123!", first_name: "Owner", last_name: "User", phone: "+33123456795")
+    video = user.videos.create!(video_type: :solo, token: SecureRandom.urlsafe_base64(20))
+    sign_in user
+
+    post invite_collaborators_post_url(locale: :en), params: { video_id: video.id, email: "project-guest@example.com" }
+
+    assert_redirected_to invite_collaborators_url(locale: :en, video_id: video.id)
+    follow_redirect!
+    assert_select ".notice", text: "Invitation sent."
+    assert_no_match(/Invitation envoyée?\./, response.body)
+  end
+
   test "closing a project uses the requested locale" do
     user = User.create!(
       email: "close-project-locale-test@example.com",

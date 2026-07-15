@@ -399,6 +399,9 @@ en:
       no_image: "No image"
       select_chapter: "Select chapter"
       chapter_text_placeholder: "What text should this chapter contain..."
+      chapter_text_required: "Enter text for every selected chapter."
+      maximum_chapters: "Select no more than 12 chapters."
+      save_failed: "The selected chapters could not be saved. Please check the entered information."
     destinataire_details:
       title: "Tell us more about the recipient(s) of the film"
       subtitle: "Tell us more about the recipient(s)"
@@ -479,6 +482,13 @@ en:
       drag_to_change: "Click and drag to change the order"
       add_videos_limit: "Add 2 videos maximum"
       add_photos_limit: "Add 2 photos maximum"
+      remove_attachment: "Remove this file"
+      remove_confirmation: "Remove this photo or video?"
+      remove_failed: "The file could not be removed. Please try again."
+      attachment_deleted: "File removed successfully."
+      attachment_not_found: "File not found."
+      video_limit_alert: "You can upload a maximum of 2 videos."
+      photo_limit_alert: "You can upload a maximum of 2 photos."
     share:
       title_colab: "Invite your loved ones to participate in your project"
       title_solo: "Invite friends to collaborate on your project!"
@@ -487,6 +497,9 @@ en:
       invitation_header: "Send an invitation by email or share the project link"
       share_link: "Or share the link"
       skip_step_warning: "You can skip this step now and add collaborators later."
+      invitation_sent: "Invitation sent."
+      email_required: "Enter an email address to send the invitation."
+      owner_email: "You cannot invite the project creator. Please use a different email address."
     music:
       play: "Play music"
       play_track: "Play %{name}"

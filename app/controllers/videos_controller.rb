@@ -375,7 +375,21 @@ class VideosController < ApplicationController
   def select_chapters_post
     authorize @video, :select_chapters_post?, policy_class: VideoPolicy
     # On authorize que certain parametre
-    params_allow = params.permit(chapters: %i[select text slide_color text_family text_style text_size])["chapters"]
+    params_allow = params.permit(chapters: %i[select text slide_color text_family text_style text_size])["chapters"] ||
+                   ActionController::Parameters.new
+    selected_chapters = params_allow.to_h.select { |_id, values| values["select"] == "true" }
+
+    apply_submitted_chapter_values(params_allow)
+
+    if selected_chapters.any? { |_id, values| values["text"].blank? }
+      flash.now[:alert] = t("videos.select_chapters.chapter_text_required")
+      return render :select_chapters, status: :unprocessable_entity
+    end
+
+    if selected_chapters.size > 12
+      flash.now[:alert] = t("videos.select_chapters.maximum_chapters")
+      return render :select_chapters, status: :unprocessable_entity
+    end
 
     chapter_to_create = [] # Un tableau a remplir de chapitre a créer
     chapter_to_updates = {} # Un hash a remplir de chapitre a modifier
@@ -418,35 +432,30 @@ class VideosController < ApplicationController
       end
     end
 
-    # 12 chapitres maximum
-    if (chapter_to_create.size + chapter_to_updates.size) >= 12
-      flash[:alert] = "Ne sélectionnez que 12 chapitres maximum"
-      return render :select_chapters, status: :unprocessable_entity
-    end
-
     # Création, Mise à jour et suppression
-    if @video.video_chapters.create(chapter_to_create) &&
-       @video.video_chapters.update(chapter_to_updates.keys, chapter_to_updates.values)
-
-      @video.video_chapters.each do |chapter|
-        chapter.video_music.destroy if chapter.video_music
+    VideoChapter.transaction do
+      chapter_to_create.each { |attributes| @video.video_chapters.create!(attributes) }
+      chapter_to_updates.each do |id, attributes|
+        @video.video_chapters.find(id).update!(attributes)
       end
-
-      chapter_to_delete.destroy_all
-
-      # The selected chapters define the generated preview. Any change here
-      # must invalidate the previous render so edit_video can generate a new one.
-      @video.invalidate_generated_outputs!
-
-      @video.update(stop_at: @video.next_step)
-      p "*" * 1000
-      redirect_to send("#{@video.next_step}_path"), turbo: false
-
-    else
-      @video.update(stop_at: @video.current_step)
-      @chapterstype = ChapterType.all
-      render :select_chapters, status: :unprocessable_entity
+      @video.video_chapters.each do |chapter|
+        chapter.video_music.destroy! if chapter.video_music
+      end
+      chapter_to_delete.each(&:destroy!)
     end
+
+    @video.video_chapters.reset
+
+    # The selected chapters define the generated preview. Any change here
+    # must invalidate the previous render so edit_video can generate a new one.
+    @video.invalidate_generated_outputs!
+
+    @video.update!(stop_at: @video.next_step)
+    redirect_to send("#{@video.next_step}_path"), turbo: false
+  rescue ActiveRecord::RecordInvalid
+    @video.video_chapters.reset
+    flash.now[:alert] = t("videos.select_chapters.save_failed")
+    render :select_chapters, status: :unprocessable_entity
   end
 
   def music_post
@@ -562,14 +571,14 @@ class VideosController < ApplicationController
     # Le mailer fonctionne mais pas le join
     email = params[:email]
     if email.blank?
-      flash[:alert] = "Un email doit être indiqué pour envoyer l'invitation."
+      flash[:alert] = I18n.t("videos.share.email_required")
       return render :share, status: :unprocessable_entity
     end
 
     # create Collab obj
     collab_user = User.find_by_email(params[:email])
     if collab_user == @video.user
-      flash[:alert] = "Il s'agit de l'e-mail du créateur du projet, veuillez utiliser l'e-mail correct."
+      flash[:alert] = I18n.t("videos.share.owner_email")
       return render :share, status: :unprocessable_entity
     end
 
@@ -582,7 +591,7 @@ class VideosController < ApplicationController
     )
 
     InvitationMailer.with(url: join_url(@video.token), email:, locale: I18n.locale).send_invitation.deliver_later
-    flash[:notice] = "Invitation envoyé."
+    flash[:notice] = I18n.t("videos.share.invitation_sent")
     redirect_to share_path
   end
 
@@ -766,13 +775,13 @@ class VideosController < ApplicationController
     # Le mailer fonctionne mais pas le join
     email = params[:email]
     if email.blank?
-      flash[:alert] = "Un email doit être indiqué pour envoyer l'invitation."
+      flash[:alert] = I18n.t("videos.share.email_required")
       return render :confirmation, status: :unprocessable_entity
     end
 
     collab_user = User.find_by_email(params[:email])
     if collab_user == @video.user
-      flash[:alert] = "Il s'agit de l'e-mail du créateur du projet, veuillez utiliser l'e-mail correct."
+      flash[:alert] = I18n.t("videos.share.owner_email")
       return render :share, status: :unprocessable_entity
     end
 
@@ -785,7 +794,7 @@ class VideosController < ApplicationController
     )
 
     InvitationMailer.with(url: join_url(@video.token), email:, locale: I18n.locale).send_invitation.deliver_later
-    flash[:notice] = "Invitation envoyé."
+    flash[:notice] = I18n.t("videos.share.invitation_sent")
     redirect_to confirmation_path
   end
 
@@ -1049,17 +1058,26 @@ class VideosController < ApplicationController
 
   def purge_chapter_attachment
     attachment = ActiveStorage::Attachment.find_by(id: params[:id])
-    if attachment.nil?
+    record = attachment&.record
+    if attachment.nil? || !record.respond_to?(:video) || !%w[videos photos].include?(attachment.name)
       return respond_to do |format|
-        format.json { render json: { error: "Attachment not found" }, status: :not_found }
+        format.json { render json: { error: t("videos.content.attachment_not_found") }, status: :not_found }
       end
     end
-    video = attachment.record.video
+
+    video = record.video
     authorize video, :purge_chapter_attachment?, policy_class: VideoPolicy
+    order_attribute = attachment.name == "videos" ? :videos_order : :photos_order
+    filename = attachment.filename.to_s
+    remaining_order = record.public_send(order_attribute).to_s.split(",").map(&:strip).reject do |name|
+      name == filename
+    end
+
+    record.update!(order_attribute => remaining_order.join(","))
     attachment.purge
     video.invalidate_generated_outputs!
     respond_to do |format|
-      format.json { render json: { message: "Attachment deleted successfully" }, status: :ok }
+      format.json { render json: { message: t("videos.content.attachment_deleted") }, status: :ok }
     end
   end
 
@@ -1322,6 +1340,20 @@ class VideosController < ApplicationController
         slide_color: k["slide_color"], text_family: k["text_family"],
         text_style: k["text_style"], text_size: k["text_size"],
         select: k["text"].present? }
+    end
+  end
+
+  def apply_submitted_chapter_values(params_allow)
+    submitted_chapters = params_allow.to_h
+
+    @chapterstype.each do |chapter|
+      values = submitted_chapters[chapter[:ct].id.to_s]
+      next unless values
+
+      chapter[:select] = values["select"] == "true"
+      %w[text slide_color text_family text_style text_size].each do |attribute|
+        chapter[attribute.to_sym] = values[attribute]
+      end
     end
   end
 

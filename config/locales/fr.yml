@@ -378,6 +378,9 @@ fr:
       no_image: "Pas d'image"
       select_chapter: "Sélectionner"
       chapter_text_placeholder: "Quel texte doit contenir ce chapitre ..."
+      chapter_text_required: "Saisissez un texte pour chaque chapitre sélectionné."
+      maximum_chapters: "Sélectionnez au maximum 12 chapitres."
+      save_failed: "Les chapitres sélectionnés n'ont pas pu être enregistrés. Vérifiez les informations saisies."
     destinataire_details:
       title: "Dites nous en plus sur le, la, les destinataires du film"
       subtitle: "Dites nous en plus sur le ou les destinataires"
@@ -458,6 +461,13 @@ fr:
       drag_to_change: "Cliquez et faites glisser pour changer l'ordre"
       add_videos_limit: "Ajouter 2 vidéos maximum"
       add_photos_limit: "Ajouter 2 photos maximum"
+      remove_attachment: "Supprimer ce fichier"
+      remove_confirmation: "Supprimer cette photo ou vidéo ?"
+      remove_failed: "Le fichier n'a pas pu être supprimé. Veuillez réessayer."
+      attachment_deleted: "Fichier supprimé avec succès."
+      attachment_not_found: "Fichier introuvable."
+      video_limit_alert: "Vous pouvez ajouter au maximum 2 vidéos."
+      photo_limit_alert: "Vous pouvez ajouter au maximum 2 photos."
     share:
       title_colab: "Invitez vos proches à participer à votre projet"
       title_solo: "Invitez des amis à collaborer sur votre projet !"
@@ -466,6 +476,9 @@ fr:
       invitation_header: "Envoyez une invitation via un lien whatsapp, facebook, instagram ou en envoyant un email"
       share_link: "Ou partagez le lien"
       skip_step_warning: "Vous pouvez sauter cette étape maintenant et ajouter des collaborateurs aux étapes suivantes."
+      invitation_sent: "Invitation envoyée."
+      email_required: "Indiquez une adresse e-mail pour envoyer l'invitation."
+      owner_email: "Vous ne pouvez pas inviter le créateur du projet. Veuillez utiliser une autre adresse e-mail."
     music:
       play: "Lire la musique"
       play_track: "Lire %{name}"

@@ -638,14 +638,14 @@ class ProjectsController < ApplicationController
     # Le mailer fonctionne mais pas le join
     email = params[:email]
     if email.blank?
-      flash[:alert] = "Un email doit être indiqué pour envoyer l'invitation."
+      flash[:alert] = I18n.t("videos.share.email_required")
       return render invite_collaborators_path(video_id: @video.id), status: :unprocessable_entity
     end
 
     # create Collab obj
     collab_user = User.find_by_email(params[:email])
     if collab_user == @video.user
-      flash[:alert] = "Il s'agit de l'e-mail du créateur du projet, veuillez utiliser l'e-mail correct."
+      flash[:alert] = I18n.t("videos.share.owner_email")
       return render invite_collaborators_path(video_id: @video.id), status: :unprocessable_entity
     end
 
@@ -658,7 +658,7 @@ class ProjectsController < ApplicationController
     )
 
     InvitationMailer.with(url: join_url(@video.token), email:, locale: I18n.locale).send_invitation.deliver_later
-    flash[:notice] = "Invitation envoyé."
+    flash[:notice] = I18n.t("videos.share.invitation_sent")
     redirect_to invite_collaborators_path(video_id: @video.id)
   end
 

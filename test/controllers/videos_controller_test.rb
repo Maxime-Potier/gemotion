@@ -492,6 +492,89 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_select "label[for='chapter_select_#{chapter_type.id}']", text: "Select chapter"
   end
 
+  test "selected chapter without text shows validation instead of raising an error" do
+    user = User.create!(
+      email: "chapter-text-validation-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456775"
+    )
+    video = user.videos.create!(video_type: :solo, stop_at: "photo_intro")
+    chapter_type = ChapterType.create!(name: "Life story")
+    sign_in user
+
+    assert_no_difference("VideoChapter.count") do
+      post select_chapters_post_url(locale: :en), params: {
+        chapters: {
+          chapter_type.id.to_s => {
+            select: "true",
+            text: "",
+            slide_color: "white",
+            text_family: "Poppins",
+            text_style: "Normal",
+            text_size: "12"
+          }
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_select ".alert", text: "Enter text for every selected chapter."
+    assert_select "input#chapter_select_#{chapter_type.id}[checked='checked']"
+    assert_select "input[name='chapters[#{chapter_type.id}][text]'][value='']"
+    assert_equal "photo_intro", video.reload.stop_at
+  end
+
+  test "chapter content can remove one existing attachment without removing the others" do
+    user = User.create!(
+      email: "chapter-attachment-delete-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456774"
+    )
+    video = user.videos.create!(
+      video_type: :solo,
+      stop_at: "share",
+      concat_status: :completed,
+      processing_progress: 100
+    )
+    chapter_type = ChapterType.create!(name: "Memories")
+    chapter = video.video_chapters.create!(chapter_type:, text: "Our memories")
+    chapter.photos.attach([
+      { io: StringIO.new("first photo"), filename: "first.jpg", content_type: "image/jpeg" },
+      { io: StringIO.new("second photo"), filename: "second.jpg", content_type: "image/jpeg" }
+    ])
+    chapter.videos.attach(
+      io: StringIO.new("chapter video"), filename: "clip.mp4", content_type: "video/mp4"
+    )
+    chapter.update!(photos_order: "first.jpg,second.jpg", videos_order: "clip.mp4")
+    video.final_video_with_watermark.attach(
+      io: StringIO.new("completed preview"), filename: "preview.mp4", content_type: "video/mp4"
+    )
+    first_photo = chapter.photos.attachments.find_by!(blob: chapter.photos.blobs.find_by!(filename: "first.jpg"))
+    sign_in user
+
+    get content_url(locale: :en)
+
+    assert_response :success
+    assert_select "button.chapter-attachment-remove[data-url='#{purge_chapter_attachment_path(first_photo.id, locale: :en)}']"
+    assert_select "button.chapter-attachment-remove", count: 3
+
+    assert_difference("chapter.reload.photos.count", -1) do
+      delete purge_chapter_attachment_url(first_photo, locale: :en), as: :json
+    end
+
+    assert_response :success
+    assert_equal ["second.jpg"], chapter.reload.photos.map { |photo| photo.filename.to_s }
+    assert_equal ["clip.mp4"], chapter.videos.map { |chapter_video| chapter_video.filename.to_s }
+    assert_equal "second.jpg", chapter.photos_order
+    assert video.reload.pending?
+    assert_equal 0, video.processing_progress
+    assert_not video.final_video_with_watermark.attached?
+  end
+
   test "photo upload validation message uses the requested locale" do
     user = User.create!(
       email: "photo-upload-locale-test@example.com",
@@ -527,5 +610,24 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Invite friends to collaborate on your project!"
     assert_includes response.body, "If you invite friends, they can add content"
     assert_no_match(/translation missing/, response.body)
+  end
+
+  test "share invitation confirmation uses the requested locale" do
+    user = User.create!(
+      email: "share-invitation-locale-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456786"
+    )
+    user.videos.create!(video_type: :solo, stop_at: "dedicace", token: SecureRandom.urlsafe_base64(20))
+    sign_in user
+
+    post share_post_url(locale: :en), params: { email: "invited-person@example.com" }
+
+    assert_redirected_to share_url(locale: :en)
+    follow_redirect!
+    assert_select ".notice", text: "Invitation sent."
+    assert_no_match(/Invitation envoyée?\./, response.body)
   end
 end

@@ -40,6 +40,13 @@
                   <% video_chapter.ordered_videos.each_with_index do |video, index| %>
                     <div class="edit-video-container old-video-container" data-file-name="<%= video.filename.to_s %>">
                       <%= video_tag video, controls: true, autobuffer: true %>
+                      <button type="button"
+                              class="chapter-attachment-remove"
+                              data-url="<%= purge_chapter_attachment_path(video.id) %>"
+                              aria-label="<%= t('videos.content.remove_attachment') %>"
+                              title="<%= t('videos.content.remove_attachment') %>">
+                        <span aria-hidden="true">×</span>
+                      </button>
                     </div>
                   <% end %>
                 </div>
@@ -64,6 +71,13 @@
                   <% video_chapter.ordered_photos.each_with_index do |photo, index| %>
                     <div class="edit-image-container old-image-container"  data-file-name="<%= photo.filename.to_s %>">
                         <%= image_tag photo, class: "preview-image prev-image" %>
+                        <button type="button"
+                                class="chapter-attachment-remove"
+                                data-url="<%= purge_chapter_attachment_path(photo.id) %>"
+                                aria-label="<%= t('videos.content.remove_attachment') %>"
+                                title="<%= t('videos.content.remove_attachment') %>">
+                          <span aria-hidden="true">×</span>
+                        </button>
                     </div>
                   <% end %>
                 </div>
@@ -107,6 +121,13 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const videoChapters = <%= raw @video_chapters.map(&:id).to_json %>;
+  const messages = {
+    remove: <%= t('videos.content.remove_attachment').to_json.html_safe %>,
+    confirmRemove: <%= t('videos.content.remove_confirmation').to_json.html_safe %>,
+    removeFailed: <%= t('videos.content.remove_failed').to_json.html_safe %>,
+    videoLimit: <%= t('videos.content.video_limit_alert').to_json.html_safe %>,
+    photoLimit: <%= t('videos.content.photo_limit_alert').to_json.html_safe %>
+  };
 
   videoChapters.forEach(id => {
     const videoInput = document.getElementById(`videoElem-${id}`);
@@ -143,12 +164,44 @@ document.addEventListener("DOMContentLoaded", () => {
     videoInput.addEventListener("change", () => handleFiles(videoInput, videoGallery, videoDataTransfer, 'video'));
     photoInput.addEventListener("change", () => handleFiles(photoInput, photoGallery, photoDataTransfer, 'photo'));
 
+    [...videoGallery.querySelectorAll(".chapter-attachment-remove"),
+     ...photoGallery.querySelectorAll(".chapter-attachment-remove")].forEach(removeButton => {
+      removeButton.addEventListener("click", async event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!window.confirm(messages.confirmRemove)) return;
+
+        removeButton.disabled = true;
+        const container = removeButton.closest(".edit-video-container, .edit-image-container");
+        const gallery = container.closest(".gallery");
+        const orderInput = gallery === videoGallery ? videosOrderInput : imagesOrderInput;
+
+        try {
+          const response = await fetch(removeButton.dataset.url, {
+            method: "DELETE",
+            headers: {
+              "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+              Accept: "application/json"
+            }
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          container.remove();
+          updateOrder(gallery, orderInput);
+        } catch (error) {
+          console.error("Unable to remove chapter attachment", error);
+          removeButton.disabled = false;
+          window.alert(messages.removeFailed);
+        }
+      });
+    });
+
     function handleFiles(input, gallery, dataTransfer, type) {
       [...input.files].forEach(file => {
           const sanitizedFilename = file.name.replace(/,/g, ""); // Sanitize filename
 
           if (dataTransfer.items.length >= 2) {
-              alert(`You can only upload a maximum of 2 ${type}s.`);
+              alert(type === 'video' ? messages.videoLimit : messages.photoLimit);
               return;
           }
 
@@ -190,7 +243,11 @@ document.addEventListener("DOMContentLoaded", () => {
         videoContainer.setAttribute('data-file-name', file.name);
 
         const removeBtn = document.createElement("button");
-        removeBtn.textContent = "Remove";
+        removeBtn.type = "button";
+        removeBtn.classList.add("chapter-attachment-remove");
+        removeBtn.setAttribute("aria-label", messages.remove);
+        removeBtn.title = messages.remove;
+        removeBtn.innerHTML = '<span aria-hidden="true">×</span>';
         removeBtn.addEventListener("click", () => {
           videoContainer.remove();
           videoDataTransfer.items.remove([...videoDataTransfer.files].indexOf(file));
@@ -221,7 +278,11 @@ document.addEventListener("DOMContentLoaded", () => {
         imgContainer.setAttribute('data-file-name', file.name);
 
         const removeBtn = document.createElement("button");
-        removeBtn.textContent = "Remove";
+        removeBtn.type = "button";
+        removeBtn.classList.add("chapter-attachment-remove");
+        removeBtn.setAttribute("aria-label", messages.remove);
+        removeBtn.title = messages.remove;
+        removeBtn.innerHTML = '<span aria-hidden="true">×</span>';
         removeBtn.addEventListener("click", () => {
           imgContainer.remove();
           photoDataTransfer.items.remove([...photoDataTransfer.files].indexOf(file));
@@ -246,17 +307,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log(input.value);
     }
 
-    function createRemoveButton(container, input, dataTransfer, gallery, orderInput) {
-      const removeBtn = document.createElement("button");
-      removeBtn.textContent = "Remove";
-      removeBtn.addEventListener("click", () => {
-        container.remove();
-        dataTransfer.items.remove([...dataTransfer.files].indexOf(file));
-        input.files = dataTransfer.files;
-        updateOrder(gallery, orderInput);
-      });
-      return removeBtn;
-    }
   });
 });
 </script>
