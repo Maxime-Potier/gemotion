@@ -299,6 +299,7 @@ fr:
       manage_final_dedication: "Gérer la dédicace finale"
       invite_collaborators: "Inviter des collaborateurs"
       participant_progress: "Progression de %{name}"
+      participant_invited: "Invitation en attente pour %{email}"
       delete_collaborator: "Supprimer un collaborateur"
       delete_collaborator_confirmation: "Êtes-vous sûr de vouloir supprimer ce collaborateur ?"
       approved: "Approuvée"

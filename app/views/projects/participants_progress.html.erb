@@ -158,9 +158,16 @@
       </div>
     <% end %>
     <% @participants.each do |collaboration| %>
+      <% participant_name = collaboration.invited_user&.full_name.presence %>
       <div class="flex flex-col justify-center w-full mt-25">
         <div class="flex flex-row justify-start items-center">
-          <p><%= t('.participant_progress', name: "#{collaboration.invited_user.first_name.capitalize} #{collaboration.invited_user.last_name.capitalize}") %></p>
+          <p>
+            <% if participant_name.present? %>
+              <%= t('.participant_progress', name: participant_name) %>
+            <% else %>
+              <%= t('.participant_invited', email: collaboration.invited_email) %>
+            <% end %>
+          </p>
             <%= button_to t('.delete_collaborator'),
               delete_collaboration_path(collaboration.id),
               method: :delete,

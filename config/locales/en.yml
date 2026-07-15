@@ -320,6 +320,7 @@ en:
       manage_final_dedication: "Manage final dedication"
       invite_collaborators: "Invite collaborators"
       participant_progress: "%{name}'s progress"
+      participant_invited: "Invitation pending for %{email}"
       delete_collaborator: "Remove collaborator"
       delete_collaborator_confirmation: "Are you sure you want to remove this collaborator?"
       approved: "Approved"

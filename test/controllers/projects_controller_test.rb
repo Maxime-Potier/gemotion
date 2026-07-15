@@ -3,6 +3,33 @@ require "test_helper"
 class ProjectsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 
+  test "participants progress renders accepted users and pending email invitations" do
+    owner = User.create!(
+      email: "participant-progress-owner@example.com",
+      password: "Password123!",
+      first_name: "Owner",
+      last_name: "User",
+      phone: "+33123456791"
+    )
+    participant = User.create!(
+      email: "accepted-participant@example.com",
+      password: "Password123!",
+      first_name: "Accepted",
+      last_name: "Participant",
+      phone: "+33123456792"
+    )
+    video = owner.videos.create!(video_type: :colab, project_status: :started)
+    Collaboration.create!(video:, inviting_user: owner, invited_user: participant, invited_email: participant.email)
+    Collaboration.create!(video:, inviting_user: owner, invited_user: nil, invited_email: "pending-participant@example.com")
+    sign_in owner
+
+    get participants_progress_url(locale: :en, video_id: video.id)
+
+    assert_response :success
+    assert_select "p", text: "Accepted Participant's progress"
+    assert_select "p", text: "Invitation pending for pending-participant@example.com"
+  end
+
   test "creator dashboard includes projects with only the first preview" do
     user = User.create!(
       email: "creator-project-preview-test@example.com",
