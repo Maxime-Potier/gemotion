@@ -28,6 +28,15 @@
 #       enabled: "ON"
 
 en:
+  contact:
+    title_highlight: "Contact"
+    title_suffix: " us"
+    description: "Our team is always happy to help answer your questions."
+    name_placeholder: "First and last name*"
+    email_placeholder: "Email*"
+    message_placeholder: "Your question*"
+    submit: "Send"
+    success: "Your message has been sent successfully."
   invitation_mailer:
     subject: "You are invited to participate in a GeMotion video"
     heading: "You are invited to participate in a GeMotion video"

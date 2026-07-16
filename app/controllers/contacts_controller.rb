@@ -6,7 +6,7 @@ class ContactsController < ApplicationController
   def create
     @contact = Contact.new(contact_params)
     if @contact.save
-      redirect_to new_contact_path, notice: 'Message envoyé avec succès.'
+      redirect_to new_contact_path, notice: t("contact.success")
     else
       render :new, status: :unprocessable_entity
     end

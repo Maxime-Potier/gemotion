@@ -1,24 +1,24 @@
 <div id="contact" class="pt-[72px] pb-[104px] bg-[#FAFEFF]">
 
-  <h1 class="mb-[32px]"><span class="gradient-text">Contactez</span>-nous</h1>
-  <p class="text-center mb-[40px]">Notre équipe est toujours heureuse de vous aider à répondre à vos questions.</p>
+  <h1 class="mb-[32px]"><span class="gradient-text"><%= t("contact.title_highlight") %></span><%= t("contact.title_suffix") %></h1>
+  <p class="text-center mb-[40px]"><%= t("contact.description") %></p>
 
   <div class="max-w-[821px] m-auto rounded-[20px] border border-[#C9E1FF] bg-white shadow-[4px_4px_20px_5px_rgba(13,103,131,0.1)] p-[72px] mb-[64px]">
-    <%= form_with url: new_contact_path, method: :post, local: true do |form| %>
+    <%= form_with url: contacts_path, method: :post, local: true do |form| %>
       <div class="field mb-[16px]">
-        <%= form.text_field :name, required: true, placeholder: "Nom et prénom*", class: "w-full pt-[18px] pb-[17px] pl-[24px] rounded-[15px] border border-[#201F1F] placeholder-[#201F1F80] placeholder-red-hat-display placeholder-text-[16px] placeholder-font-normal placeholder-leading-[25px]" %>
+        <%= form.text_field :name, required: true, placeholder: t("contact.name_placeholder"), class: "w-full pt-[18px] pb-[17px] pl-[24px] rounded-[15px] border border-[#201F1F] placeholder-[#201F1F80] placeholder-red-hat-display placeholder-text-[16px] placeholder-font-normal placeholder-leading-[25px]" %>
       </div>
 
       <div class="field mb-[16px]">
-        <%= form.email_field :email, required: true, placeholder: "Email*", class: "w-full pt-[18px] pb-[17px] pl-[24px] rounded-[15px] border border-[#201F1F] placeholder-[#201F1F80] placeholder-red-hat-display placeholder-text-[16px] placeholder-font-normal placeholder-leading-[25px]" %>
+        <%= form.email_field :email, required: true, placeholder: t("contact.email_placeholder"), class: "w-full pt-[18px] pb-[17px] pl-[24px] rounded-[15px] border border-[#201F1F] placeholder-[#201F1F80] placeholder-red-hat-display placeholder-text-[16px] placeholder-font-normal placeholder-leading-[25px]" %>
       </div>
 
       <div class="field mb-[48px]">
-        <%= form.text_area :message, required: true, placeholder: "Votre question*", class: "w-full h-[158px] pt-[18px] pb-[17px] pl-[24px] rounded-[15px] border border-[#201F1F] placeholder-[#201F1F80] placeholder-red-hat-display placeholder-text-[16px] placeholder-font-normal placeholder-leading-[25px]" %>
+        <%= form.text_area :message, required: true, placeholder: t("contact.message_placeholder"), class: "w-full h-[158px] pt-[18px] pb-[17px] pl-[24px] rounded-[15px] border border-[#201F1F] placeholder-[#201F1F80] placeholder-red-hat-display placeholder-text-[16px] placeholder-font-normal placeholder-leading-[25px]" %>
       </div>
 
       <div class="actions w-full flex justify-center">
-        <%= form.submit "Envoyer", class: "black-link" %>
+        <%= form.submit t("contact.submit"), class: "black-link" %>
       </div>
     <% end %>
   </div>

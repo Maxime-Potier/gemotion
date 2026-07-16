@@ -1,4 +1,13 @@
 fr:
+  contact:
+    title_highlight: "Contactez"
+    title_suffix: "-nous"
+    description: "Notre équipe est toujours heureuse de vous aider à répondre à vos questions."
+    name_placeholder: "Nom et prénom*"
+    email_placeholder: "Email*"
+    message_placeholder: "Votre question*"
+    submit: "Envoyer"
+    success: "Message envoyé avec succès."
   invitation_mailer:
     subject: "Invitation à participer à une vidéo GeMotion"
     heading: "Vous êtes invité à participer à une vidéo GeMotion"
