@@ -101,12 +101,8 @@
         <%= render "shared/video_processing_state", video: @video %>
       </div>
     <% else %>
-      <div class="flex relative items-center gap-[61px]">
-        <%= video_tag asset_path('about.mp4'), id: 'about-video-element', controls: false, width: 982, height: 425, poster: asset_path('gemotion-about-video-poster.svg') %>
-        <div id="play-button" class="absolute inset-0 flex items-center justify-center cursor-pointer">
-            <%= image_tag 'icons/about-video-play.svg', alt: 'Play Button' %>
-            <%= image_tag 'icons/video-bottom.png', alt: 'Play Button Icon', class: 'absolute video-bottom-icon' %>
-        </div>
+      <div class="flex items-center justify-center bg-[#F2FCFF] rounded-[20px]" style="width: 100%; min-height: 320px;">
+        <p class="p-text-18-bold"><%= t('projects.preview_unavailable') %></p>
       </div>
     <% end %>
   </div>

@@ -270,6 +270,7 @@ en:
       project_description: "Description"
       download: "Download"
       view_progress: "View progress"
+      continue_project: "Continue project"
     collaborator_dashboard:
       description: "Here you can see all the films you are contributing to."
       project_details: "Project details"

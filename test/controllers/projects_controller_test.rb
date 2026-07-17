@@ -28,6 +28,8 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "p", text: "Accepted Participant's progress"
     assert_select "p", text: "Invitation pending for pending-participant@example.com"
+    assert_select "#about-video-element", count: 0
+    assert_select ".participants-progress-content", text: /Preview not available yet/
   end
 
   test "creator dashboard includes projects with only the first preview" do
@@ -49,6 +51,24 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "a[href='#{participants_progress_path(locale: :en, video_id: visible_video.id)}']", text: "View progress"
     assert_select "a[href='#{participants_progress_path(locale: :en, video_id: closed_video.id)}']", count: 0
+  end
+
+  test "creator dashboard resumes an unfinished project at its next step" do
+    user = User.create!(
+      email: "unfinished-creator-project@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456803"
+    )
+    video = user.videos.create!(video_type: :colab, project_status: :started, stop_at: "confirmation")
+    sign_in user
+
+    get as_creator_projects_url(locale: :en)
+
+    assert_response :success
+    assert_select "a[href='#{deadline_path(locale: :en)}']", text: "Continue project"
+    assert_select "a[href='#{participants_progress_path(locale: :en, video_id: video.id)}']", count: 0
   end
 
   test "collaborator dashboard includes projects with only the first preview" do

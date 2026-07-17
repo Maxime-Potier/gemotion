@@ -249,6 +249,7 @@ fr:
       project_description: "Description"
       download: "Télécharger"
       view_progress: "Voir la progression"
+      continue_project: "Continuer le projet"
     collaborator_dashboard:
       description: "Ici, vous pouvez voir tous les films auxquels vous participez."
       project_details: "Détails du projet"
