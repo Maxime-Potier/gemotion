@@ -328,6 +328,7 @@ fr:
       music_unavailable: "Aucune piste musicale n'est disponible. Veuillez réessayer plus tard."
       processing_restarted: "Le traitement de la vidéo a été relancé en arrière-plan."
     start:
+      confirm_new: "Commencer une nouvelle vidéo ? Votre brouillon actuel restera disponible dans votre profil."
       title: "Choisissez la méthode de création vidéo"
       video_choices: "Plusieurs choix de vidéos :"
       collaborative_description: "Pour un cadeau unique: Réalisez à plusieurs une vidéo collaborative, personnalisée riche en émotions"

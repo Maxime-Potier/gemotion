@@ -37,7 +37,7 @@
         <p class="text-title-color text-xl font-montserrat font-bold leading-6 break-words mb-[12px] gradient-text"><%= t('footer.create_video') %></p>
         <nav>
           <ul class="flex flex-col gap-[5px]">
-            <li><%= link_to t('footer.get_started'), start_path(continue: true), class: "p-text-16" %></li>
+            <li><%= link_to t('footer.get_started'), start_path(new: true), class: "p-text-16", data: { turbo: false }, onclick: new_video_confirmation_handler %></li>
             <li><%= link_to t('footer.how_it_works'), about_path, class: "p-text-16" %></li>
             <li><%= link_to t('footer.pricing'), pricing_path, class: "p-text-16" %></li>
           </ul>

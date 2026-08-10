@@ -79,6 +79,44 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_user_session_url
   end
 
+  test "starting a new video preserves the current draft" do
+    user = create_join_user("new-video-draft-test@example.com")
+    current_draft = user.videos.create!(video_type: :solo, stop_at: "occasion")
+    sign_in user
+
+    get start_url(locale: :en, new: true)
+
+    assert_response :success
+    assert_select "form[action*='new=true']"
+    assert_select "a[href*='videos/start'][href*='new=true'][onclick*='window.confirm']"
+
+    assert_difference "user.videos.count", 1 do
+      post start_post_url(locale: :en, new: true), params: { video_type: "solo" }
+    end
+
+    new_video = user.videos.order(created_at: :desc).first
+    assert_redirected_to occasion_url(locale: :en)
+    assert_equal new_video.id, session[:active_video_id]
+    assert Video.exists?(current_draft.id)
+  end
+
+  test "continuing a project from the profile selects that draft" do
+    user = create_join_user("select-profile-draft-test@example.com")
+    selected_draft = user.videos.create!(video_type: :solo, stop_at: "start")
+    user.videos.create!(video_type: :solo, stop_at: "start")
+    sign_in user
+
+    get occasion_url(locale: :en, video_id: selected_draft.id)
+
+    assert_response :success
+    assert_equal selected_draft.id, session[:active_video_id]
+
+    get occasion_url(locale: :en)
+
+    assert_response :success
+    assert_equal selected_draft.id, session[:active_video_id]
+  end
+
   test "dedicace validation renders the step instead of raising a missing template error" do
     user = User.create!(
       email: "dedicace-test@example.com",

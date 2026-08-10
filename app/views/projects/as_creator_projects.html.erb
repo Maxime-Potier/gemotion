@@ -77,7 +77,7 @@
         <% if video.finished? %>
           <%= link_to t('projects.creator_dashboard.view_progress'), participants_progress_path(video_id: video.id), class: "cta-button mt-2", data: {turbo: false} %>
         <% else %>
-          <%= link_to t('projects.creator_dashboard.continue_project'), public_send("#{video.next_step}_path"), class: "cta-button mt-2", data: {turbo: false} %>
+          <%= link_to t('projects.creator_dashboard.continue_project'), public_send("#{video.next_step}_path", video_id: video.id), class: "cta-button mt-2", data: {turbo: false} %>
         <% end %>
       </div>
     <%end%>

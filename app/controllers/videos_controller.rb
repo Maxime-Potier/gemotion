@@ -15,6 +15,7 @@ class VideosController < ApplicationController
   def start
     # authorize @video, :start?, policy_class: VideoPolicy
 
+    return if new_video_request?
     return if @video.nil?
     return unless @video.stop_at != "start_edit"
 
@@ -61,9 +62,8 @@ class VideosController < ApplicationController
   end
 
   def start_post
-    if current_user.videos.where.not(project_status: %i[finished closed]).count == 0 || current_user.videos.count == 0
+    if @video.nil?
       @video = Video.new(user: current_user)
-      @video.user = current_user
       skip_authorization
       return render :start, status: :unprocessable_entity if params[:video_type].nil?
 
@@ -79,6 +79,7 @@ class VideosController < ApplicationController
     end
 
     if @video.validate_start && @video.save
+      session[:active_video_id] = @video.id
       redirect_to send("#{@video.next_step}_path")
     else
       render :start, status: :unprocessable_entity
@@ -1293,7 +1294,19 @@ class VideosController < ApplicationController
   end
 
   def select_video
-    @video = current_user.videos.where.not(project_status: %i[finished closed]).order(created_at: :desc).first
+    if new_video_request?
+      @video = nil
+      return
+    end
+
+    active_videos = current_user.videos.where.not(project_status: %i[finished closed])
+    requested_video = active_videos.find_by(id: params[:video_id]) if params[:video_id].present?
+    session[:active_video_id] = requested_video.id if requested_video
+
+    @video = requested_video ||
+             active_videos.find_by(id: session[:active_video_id]) ||
+             active_videos.order(created_at: :desc).first
+    session[:active_video_id] = @video.id if @video
     # On check si une vidéo existe
 
     if @video.nil?
@@ -1311,6 +1324,10 @@ class VideosController < ApplicationController
       end
 
     end
+  end
+
+  def new_video_request?
+    %w[start start_post].include?(action_name) && ActiveModel::Type::Boolean.new.cast(params[:new])
   end
 
   def enqueue_preview_generation_if_needed

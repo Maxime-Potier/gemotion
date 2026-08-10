@@ -46,7 +46,7 @@
           <% end %>
         </li>
         <li class="flex items-center h-full">
-          <%= link_to t('header.start'), start_path(continue: true), class: "text-black text-lg font-montserrat font-bold leading-7 break-words w-full h-full bg-white rounded-[15px] px-[28.32px] pt-[14.43px] pb-[16.78px] flex items-center justify-center" %>
+          <%= link_to t('header.start'), start_path(new: true), class: "text-black text-lg font-montserrat font-bold leading-7 break-words w-full h-full bg-white rounded-[15px] px-[28.32px] pt-[14.43px] pb-[16.78px] flex items-center justify-center", data: { turbo: false }, onclick: new_video_confirmation_handler %>
         </li>
         <% if Rails.env.development? %>
           <li class="flex items-center h-full">

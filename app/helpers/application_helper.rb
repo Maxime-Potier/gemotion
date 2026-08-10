@@ -1,4 +1,12 @@
 module ApplicationHelper
+  def new_video_confirmation_handler
+    return unless user_signed_in?
+    return unless current_user.videos.where.not(project_status: %i[finished closed]).exists?
+
+    message = ERB::Util.json_escape(t("videos.start.confirm_new").to_json)
+    "return window.confirm(#{message});"
+  end
+
   def locale_switch_path(locale)
     route_parameters = request.path_parameters.symbolize_keys.except(:locale)
     query_parameters = request.query_parameters.symbolize_keys

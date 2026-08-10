@@ -31,5 +31,5 @@
       </div>
     </div>
   </div>
-  <%= link_to t('home.create_video'), start_path, class: "black-link create-video-link" %>
+  <%= link_to t('home.create_video'), start_path(new: true), class: "black-link create-video-link", data: { turbo: false }, onclick: new_video_confirmation_handler %>
 </section>

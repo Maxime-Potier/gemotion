@@ -27,7 +27,7 @@
                 <p class="video-h3"><%= t('about.tutorial.coming_soon') %></p>
             </div>
         </div>
-        <%= link_to t('home.create_video'), start_path, class:"black-link" %>
+        <%= link_to t('home.create_video'), start_path(new: true), class:"black-link", data: { turbo: false }, onclick: new_video_confirmation_handler %>
     </section>
 
     <%= render "shared/faq" %>

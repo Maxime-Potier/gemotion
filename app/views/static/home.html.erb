@@ -23,7 +23,7 @@
         <p class="hero-localized-subtitle"><%= t('home.hero.subtitle') %></p>
       <% end %>
     </div>
-    <%= link_to t('header.start'), start_path(continue: true), class: "black-link" %>
+    <%= link_to t('header.start'), start_path(new: true), class: "black-link", data: { turbo: false }, onclick: new_video_confirmation_handler %>
   </div>
 
 <%# <section class="hero">

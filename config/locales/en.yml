@@ -354,6 +354,7 @@ en:
       music_unavailable: "No music track is available. Please try again later."
       processing_restarted: "Video processing has been restarted in the background."
     start:
+      confirm_new: "Start a new video? Your current draft will remain available in your profile."
       title: "Choose the video creation method"
       video_choices: "Multiple video choices:"
       collaborative_description: "For a unique gift: Create a collaborative video with others, personalized and rich in emotions"

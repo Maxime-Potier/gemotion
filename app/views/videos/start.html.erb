@@ -25,7 +25,7 @@
       <div class="start-choices-choose">
         <h3 class="text-black text-center font-montserrat text-[32px] font-bold leading-[37px] mb-[40px]"><%= t('videos.start.i_choose') %></h3>
 
-        <%= form_with url: start_post_path, method: :post do |f| %>
+        <%= form_with url: start_post_path(new: params[:new]), method: :post do |f| %>
           <div class="flex space-x-4 max-w-[1006px] gap-[32px] mx-auto mb-45">
             <div class="flex items-center space-x-2 w-full">
               <%= f.radio_button :video_type, "colab", id: "video_type_colab", class: "hidden", checked: @video.nil? ? false : @video.colab?  %>
@@ -166,4 +166,3 @@ input[type="radio"]:checked + .custom-radio-label::before {
   transform: translateX(-50%);
 }
 </style>
-
