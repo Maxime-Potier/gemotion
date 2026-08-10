@@ -50,7 +50,7 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_equal "colab", video.reload.video_type
   end
 
-  test "deadline calendar renders its initial date in a browser-safe ISO format" do
+  test "deadline renders a required native date field with a browser-safe ISO value" do
     user = User.create!(
       email: "deadline-calendar-test@example.com",
       password: "Password123!",
@@ -68,8 +68,9 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     get deadline_url(locale: :en)
 
     assert_response :success
-    assert_select "[data-controller='custom-calendar'][data-custom-calendar-locale-value='en']"
-    assert_select "input[name='end_date'][value='2026-07-22']"
+    assert_select "label[for='deadline_end_date']", text: "Video publication date"
+    assert_select "input#deadline_end_date[type='date'][name='end_date'][value='2026-07-22'][required]"
+    assert_select "input#deadline_end_date[min='#{7.days.from_now.to_date.iso8601}']"
     assert_no_match(/2026-07-22 14:30:00/, response.body)
   end
 
@@ -678,6 +679,18 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     get content_url(locale: :en)
 
     assert_response :success
+    assert_includes response.body, "Choose or drop up to 20 videos"
+    assert_includes response.body, "Choose or drop up to 20 photos"
+    assert_includes response.body, "dataTransfer.items.length >= 20"
+    assert_select "input[type='file'][multiple]", minimum: 2
+    assert_select ".chapter-drop-zone[data-media-type='video']"
+    assert_select ".chapter-drop-zone[data-media-type='photo']"
+    assert_includes response.body, 'dropZone.addEventListener("drop"'
+    assert_select "form#chapter-content-form"
+    assert_select "#media-upload-progress[hidden] progress[max='100'][value='0']"
+    assert_includes response.body, 'request.upload.addEventListener("progress"'
+    assert_includes response.body, "request.status >= 200 && request.status < 400"
+    assert_includes response.body, "restoreUploadForm()"
     assert_select "button.chapter-attachment-remove[data-url='#{purge_chapter_attachment_path(first_photo.id, locale: :en)}']"
     assert_select "button.chapter-attachment-remove", count: 3
 
@@ -692,6 +705,44 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert video.reload.pending?
     assert_equal 0, video.processing_progress
     assert_not video.final_video_with_watermark.attached?
+  end
+
+  test "failed chapter media replacement keeps the existing attachment" do
+    user = User.create!(
+      email: "chapter-upload-rollback-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456773"
+    )
+    video = user.videos.create!(video_type: :solo, stop_at: "share")
+    chapter_type = ChapterType.create!(name: "Safe upload")
+    chapter = video.video_chapters.create!(chapter_type:, text: "Existing chapter")
+    chapter.photos.attach(io: StringIO.new("old photo"), filename: "old.jpg", content_type: "image/jpeg")
+    upload = Tempfile.new(["replacement", ".jpg"])
+    upload.write("new photo")
+    upload.rewind
+    uploaded_photo = ActionDispatch::Http::UploadedFile.new(
+      tempfile: upload,
+      filename: "new.jpg",
+      type: "image/jpeg"
+    )
+    sign_in user
+
+    post content_post_url(locale: :en), params: {
+      chapter.id.to_s => {
+        videos: [""],
+        photos: [uploaded_photo],
+        images_order: "x" * 300,
+        videos_order: ""
+      }
+    }
+
+    assert_response :unprocessable_entity
+    assert_equal ["old.jpg"], chapter.reload.photos.map { |photo| photo.filename.to_s }
+    assert_select ".alert", text: /upload/i
+  ensure
+    upload&.close!
   end
 
   test "photo upload validation message uses the requested locale" do

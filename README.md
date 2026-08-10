@@ -23,6 +23,19 @@ GE.motion is a web application that enables users to create personalized videos 
 
 ## Contributing as a Developer
 
+### Local Docker review
+
+The production-like local stack includes Rails, Sidekiq, PostgreSQL, and Redis:
+
+```sh
+docker compose up --build
+```
+
+Open `http://127.0.0.1:3300`. The local Compose configuration explicitly uses
+plain HTTP; it does not redirect to HTTPS. Stop the stack with
+`docker compose down`. Add `--volumes` only when you intentionally want to
+delete the local PostgreSQL data and uploaded files.
+
 ### 1. Setting Up the Development Environment
 
 1. Creata a fork in your repository of Github

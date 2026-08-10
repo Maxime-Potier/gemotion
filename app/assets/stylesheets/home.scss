@@ -19,6 +19,57 @@
   height: auto; /* Maintain aspect ratio */
 }
 
+.hero-media {
+  position: relative;
+}
+
+.hero-localized-title {
+  position: absolute;
+  top: 55%;
+  left: 9%;
+  width: 82%;
+  min-height: 32%;
+  margin: 0;
+  padding: 1.5% 3%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  column-gap: 0.22em;
+  background: #fafeff;
+  color: #201f1f;
+  font-family: "Montserrat", sans-serif;
+  font-size: clamp(28px, 4.2vw, 84px);
+  font-weight: 900;
+  line-height: 1.08;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.hero-localized-title span {
+  color: #0d6783;
+}
+
+.hero-localized-subtitle {
+  position: absolute;
+  top: 85%;
+  left: 58%;
+  width: 34%;
+  min-height: 8%;
+  margin: 0;
+  padding: 0.6% 1.5%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafeff;
+  color: #201f1f;
+  font-family: "Montserrat", sans-serif;
+  font-size: clamp(11px, 1.2vw, 22px);
+  font-weight: 400;
+  line-height: 1.3;
+  text-align: center;
+}
+
 .about-top-block {
   position: relative; /* Ensures the link is positioned relative to this container */
   width: 100%; /* Full width */
@@ -63,7 +114,7 @@
 
 .hero-block a {
   position: absolute; /* Position relative to .hero-block */
-  bottom: 215px; /* Distance from the bottom of the container */
+  bottom: 72px; /* Keep the CTA below the hero artwork and localized title */
   left: 50%; /* Center horizontally */
   transform: translateX(-50%); /* Correct alignment to the horizontal center */
 }

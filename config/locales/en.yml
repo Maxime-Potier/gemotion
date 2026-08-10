@@ -154,6 +154,11 @@ en:
       coming_soon: "Tutorial video coming soon"
   home:
     create_video: "Create a video"
+    hero:
+      prefix: "With E"
+      brand: "motions-video"
+      suffix: "give a unique and personalized gift"
+      subtitle: "Turn your videos and photos into true masterpieces in just a few clicks."
     satisfied:
       title: "You only pay if you are satisfied with the result!"
       description: "E-motions Video is an innovative platform that allows you to create unique and emotionally charged customized videos for all occasions with multiple participants. Offer an original and unforgettable gift to your loved ones by retracing the highlights of their lives."
@@ -447,6 +452,7 @@ en:
     deadline:
       title: "Confirm the deadline for creating the film"
       subtitle: "At least 7 days before the video publication date"
+      date_label: "Video publication date"
     edit_video:
       title: "Here, you can edit the video"
       your_media: "Your media"
@@ -502,15 +508,20 @@ en:
       invite_friends: "Invite friends"
       no_image: "No image"
       drag_to_change: "Click and drag to change the order"
-      add_videos_limit: "Add 2 videos maximum"
-      add_photos_limit: "Add 2 photos maximum"
+      add_videos_limit: "Add up to 20 videos"
+      add_photos_limit: "Add up to 20 photos"
+      choose_or_drop_videos: "Choose or drop up to 20 videos"
+      choose_or_drop_photos: "Choose or drop up to 20 photos"
       remove_attachment: "Remove this file"
       remove_confirmation: "Remove this photo or video?"
       remove_failed: "The file could not be removed. Please try again."
       attachment_deleted: "File removed successfully."
       attachment_not_found: "File not found."
-      video_limit_alert: "You can upload a maximum of 2 videos."
-      photo_limit_alert: "You can upload a maximum of 2 photos."
+      video_limit_alert: "You can upload a maximum of 20 videos."
+      photo_limit_alert: "You can upload a maximum of 20 photos."
+      media_limit_alert: "You can upload a maximum of %{count} photos and %{count} videos per chapter."
+      uploading_media: "Uploading media…"
+      upload_failed: "The upload failed. Please check your connection and try again."
     share:
       title_colab: "Invite your loved ones to participate in your project"
       title_solo: "Invite friends to collaborate on your project!"

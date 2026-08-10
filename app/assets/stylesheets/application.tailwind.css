@@ -754,7 +754,7 @@ h2 {
 /* HERO */
 
 #hero {
-  background-image: url('<%= asset_path("gemotion-hero-bg.svg") %>');
+  background-image: url("gemotion-hero-bg.svg");
   background-position: bottom center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -800,7 +800,7 @@ h2 {
 /* DEDICATION */
 
 #dedication {
-  background-image: url('<%= asset_path("gemotion-dedication-bg.svg") %>');
+  background-image: url("gemotion-dedication-bg.svg");
   background-position: bottom center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -1932,6 +1932,16 @@ h2 {
   padding-right: 25px;
   margin-bottom: 10px;
 }
+.chapter-drop-zone {
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.chapter-drop-zone:hover,
+.chapter-drop-zone.is-dragging {
+  background-color: rgba(201, 225, 255, 0.35);
+  border-color: #0d6783;
+  box-shadow: 0 0 0 3px rgba(13, 103, 131, 0.12);
+}
 .upload-attachment-block{
   width: 100%;
   height: 150px;
@@ -2567,7 +2577,7 @@ h2 {
 }
 
 .step:nth-child(even):not(:last-child)::after {
-  content: image-url("gemotion-next-step-left.svg");
+  content: url("gemotion-next-step-left.svg");
   position: absolute;
   left: -120px; /* Adjust positioning as needed */
   top: 100%;
@@ -2575,7 +2585,7 @@ h2 {
 }
 
 .step:nth-child(odd):not(:last-child)::after {
-  content: image-url("gemotion-next-step-right.svg");
+  content: url("gemotion-next-step-right.svg");
   position: absolute;
   right: -120px; /* Adjust positioning as needed */
   top: 100%;
@@ -2587,7 +2597,7 @@ h2 {
   content: none;
 }
 #about_hero {
-  background-image: image-url("gemotion-about-hero-bg.png");
+  background-image: url("gemotion-about-hero-bg.png");
   background-position: center 80%;
   background-repeat: no-repeat;
   background-size: cover;

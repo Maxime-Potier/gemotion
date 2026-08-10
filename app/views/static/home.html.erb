@@ -16,7 +16,13 @@
 -->
 <div class="home">
   <div class="hero-block">
-    <%= image_tag 'Hero2.png', class: ' w-full h-auto object-center' %>
+    <div class="hero-media">
+      <%= image_tag 'Hero2.png', class: 'w-full h-auto object-center', alt: '' %>
+      <% if I18n.locale == :en %>
+        <h1 class="hero-localized-title"><%= t('home.hero.prefix') %> <span><%= t('home.hero.brand') %></span> <%= t('home.hero.suffix') %></h1>
+        <p class="hero-localized-subtitle"><%= t('home.hero.subtitle') %></p>
+      <% end %>
+    </div>
     <%= link_to t('header.start'), start_path(continue: true), class: "black-link" %>
   </div>
 

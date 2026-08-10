@@ -3,6 +3,9 @@ require "open3"
 require "shellwords"
 
 class ContentDedicaceService
+  LANDSCAPE_IMAGE_FILTER = "scale=1280:720:force_original_aspect_ratio=decrease," \
+                           "pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1".freeze
+
   def initialize(video)
     @video = video
 
@@ -259,7 +262,7 @@ class ContentDedicaceService
         # Apply the filter to the image
         ffmpeg_command = "ffmpeg -y -loop 1 -i \"#{preview_path}\" " \
           "-f lavfi -i anullsrc=r=44100:cl=stereo " \
-          "-c:v libx264 -c:a aac -t #{@imgs_to_video_duration_in_seconds} -r 30 -vf \"scale=1280:720,#{drawtext_filter}\" -pix_fmt yuvj420p " \
+          "-c:v libx264 -c:a aac -t #{@imgs_to_video_duration_in_seconds} -r 30 -vf \"#{LANDSCAPE_IMAGE_FILTER},#{drawtext_filter}\" -pix_fmt yuvj420p " \
           "\"#{mp4_output_path}\""
 
         puts "Executing FFmpeg command for preview #{index} with animation '#{animation}':"
@@ -272,7 +275,7 @@ class ContentDedicaceService
         system(
           "ffmpeg -y -loop 1 -i \"#{preview_path}\" " \
           "-f lavfi -i anullsrc=r=44100:cl=stereo " \
-          "-c:v libx264 -c:a aac -t #{@imgs_to_video_duration_in_seconds} -r 30 -vf \"scale=1280:720\" -pix_fmt yuvj420p " \
+          "-c:v libx264 -c:a aac -t #{@imgs_to_video_duration_in_seconds} -r 30 -vf \"#{LANDSCAPE_IMAGE_FILTER}\" -pix_fmt yuvj420p " \
           "\"#{mp4_output_path}\""
         )
       end
@@ -435,7 +438,7 @@ class ContentDedicaceService
     system(
       "ffmpeg -y -loop 1 -i \"#{chapter_image_path}\" " \
       "-f lavfi -i anullsrc=r=44100:cl=stereo " \
-      "-vf \"scale=1280:720, drawtext=text='#{chapter_text}':fontfile='#{fontfile}':" \
+      "-vf \"#{LANDSCAPE_IMAGE_FILTER},drawtext=text='#{chapter_text}':fontfile='#{fontfile}':" \
       "fontcolor=white:fontsize=#{chapter_text_size}:x=(w-text_w)/2:y=(h-text_h)/2:" \
       "box=1:boxcolor=black@0.5:boxborderw=10\" " \
       "-t #{@imgs_to_video_duration_in_seconds} -c:v libx264 -pix_fmt yuvj420p -c:a aac -r 30 -shortest \"#{text_output_path}\""
@@ -469,7 +472,7 @@ class ContentDedicaceService
       p "+" * 100 + "process_photo" + "+" * 100
       system(
         "ffmpeg -y -loop 1 -i \"#{input_path}\" -f lavfi -i anullsrc=r=44100:cl=stereo " \
-        "-c:v libx264 -t #{@imgs_to_video_duration_in_seconds} -vf \"scale=1280:720\" " \
+        "-c:v libx264 -t #{@imgs_to_video_duration_in_seconds} -vf \"#{LANDSCAPE_IMAGE_FILTER}\" " \
         "-map 0:v -map 1:a -c:a aac -pix_fmt yuvj420p -r 30 \"#{output_path}\""
       )
       p "-" * 100 + "process_photo" + "-" * 100

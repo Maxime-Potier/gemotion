@@ -262,8 +262,10 @@ class ProjectsController < ApplicationController
           # Skip if the file is already attached
           next if chapter.videos.any? { |v| v.filename.to_s == video.original_filename }
 
-          # Purge the oldest video if there are already 2 videos
-          chapter.videos.first.purge if chapter.videos.count >= 2
+          if chapter.videos.count >= ChapterSharedBehavior::MEDIA_LIMIT
+            flash[:alert] = I18n.t("videos.content.video_limit_alert")
+            next
+          end
 
           chapter.videos.attach(video)
         end
@@ -281,8 +283,10 @@ class ProjectsController < ApplicationController
         # Skip if the file is already attached
         next if chapter.photos.any? { |p| p.filename.to_s == photo.original_filename }
 
-        # Purge the oldest photo if there are already 2 photos
-        chapter.photos.first.purge if chapter.photos.count >= 2
+        if chapter.photos.count >= ChapterSharedBehavior::MEDIA_LIMIT
+          flash[:alert] = I18n.t("videos.content.photo_limit_alert")
+          next
+        end
 
         chapter.photos.attach(photo)
       end
@@ -382,8 +386,10 @@ class ProjectsController < ApplicationController
           # Skip if the file is already attached
           next if chapter.videos.any? { |v| v.filename.to_s == video.original_filename }
 
-          # Purge the oldest video if there are already 2 videos
-          chapter.videos.first.purge if chapter.videos.count >= 2
+          if chapter.videos.count >= ChapterSharedBehavior::MEDIA_LIMIT
+            flash[:alert] = I18n.t("videos.content.video_limit_alert")
+            next
+          end
 
           chapter.videos.attach(video)
         end
@@ -401,8 +407,10 @@ class ProjectsController < ApplicationController
         # Skip if the file is already attached
         next if chapter.photos.any? { |p| p.filename.to_s == photo.original_filename }
 
-        # Purge the oldest photo if there are already 2 photos
-        chapter.photos.first.purge if chapter.photos.count >= 2
+        if chapter.photos.count >= ChapterSharedBehavior::MEDIA_LIMIT
+          flash[:alert] = I18n.t("videos.content.photo_limit_alert")
+          next
+        end
 
         chapter.photos.attach(photo)
       end

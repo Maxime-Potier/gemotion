@@ -1,0 +1,12 @@
+{
+  auto_https disable_redirects
+}
+
+:80 {
+  redir https://{$APP_HOST}{uri} permanent
+}
+
+https://{$APP_HOST} {
+  encode zstd gzip
+  reverse_proxy app:3000
+}

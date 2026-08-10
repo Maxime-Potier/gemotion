@@ -1,6 +1,8 @@
 module ChapterSharedBehavior
   extend ActiveSupport::Concern
 
+  MEDIA_LIMIT = 20
+
   included do
     belongs_to :chapter_type
     belongs_to :video
@@ -10,6 +12,7 @@ module ChapterSharedBehavior
     # validates :order, numericality: { only_integer: true }
 
     validates :text, presence: true
+    validate :media_attachment_counts_within_limit
   end
 
   def ordered_videos
@@ -20,6 +23,13 @@ module ChapterSharedBehavior
   def ordered_photos
     photo_filenames = (photos_order || '').split(',').map(&:strip)
     photos.sort_by { |p| photo_filenames.index(p.filename.to_s) || photos.size }
+  end
+
+  private
+
+  def media_attachment_counts_within_limit
+    errors.add(:videos, "cannot exceed #{MEDIA_LIMIT} files") if videos.attachments.size > MEDIA_LIMIT
+    errors.add(:photos, "cannot exceed #{MEDIA_LIMIT} files") if photos.attachments.size > MEDIA_LIMIT
   end
 
   # def videos_order_list

@@ -33,9 +33,9 @@ COPY . .
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-# Temporarily commented out due to SASS issues
-# RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompile the complete production asset manifest. Without this, Rails boots
+# successfully but rendered pages fail when image or stylesheet helpers resolve.
+RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 
 # Final stage for app image
@@ -69,7 +69,8 @@ COPY --from=build /rails /rails
 
 # Run and own only the runtime files as a non-root user for security
 RUN useradd rails --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp
+    mkdir -p /shared/storage && \
+    chown -R rails:rails db log storage tmp /shared
 USER rails:rails
 
 # Entrypoint prepares the database.

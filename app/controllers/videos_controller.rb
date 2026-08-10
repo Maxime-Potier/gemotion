@@ -636,6 +636,19 @@ class VideosController < ApplicationController
   def content_post
     authorize @video, :content_post?, policy_class: VideoPolicy
 
+    media_limit = ChapterSharedBehavior::MEDIA_LIMIT
+    media_limit_exceeded = params.each_pair.any? do |key, value|
+      next false unless key.match?(/^\d+$/) && value.respond_to?(:[])
+
+      Array(value["videos"]).reject(&:blank?).size > media_limit ||
+        Array(value["photos"]).reject(&:blank?).size > media_limit
+    end
+
+    if media_limit_exceeded
+      flash.now[:alert] = t("videos.content.media_limit_alert", count: media_limit)
+      return render :content, status: :unprocessable_entity
+    end
+
     # Check if all chapters in params have empty inputs, but records already exist in the DB
     all_empty = params.keys.grep(/^\d+$/).all? do |key|
       video_chapter = @video.video_chapters.find_by(id: key)
@@ -657,45 +670,52 @@ class VideosController < ApplicationController
       return skip_element(content_path)
     end
 
-    # Iterate over chapter-specific keys (e.g., "28", "29", "30")
-    params.each do |key, value|
-      # Skip unrelated keys
-      next unless key.match?(/^\d+$/)
+    replaced_blobs = []
 
-      video_chapter = @video.video_chapters.find_by(id: key)
-      next unless video_chapter
+    begin
+      ActiveRecord::Base.transaction do
+        # Iterate over chapter-specific keys (e.g., "28", "29", "30")
+        params.each do |key, value|
+          # Skip unrelated keys
+          next unless key.match?(/^\d+$/)
 
-      # Attach videos
-      if value["videos"].present? && value["videos"] != [""]
-        video_chapter.videos.purge
-        value["videos"].reject(&:blank?).each do |video|
-          video_chapter.videos.attach(video)
+          video_chapter = @video.video_chapters.find_by(id: key)
+          next unless video_chapter
+
+          new_videos = Array(value["videos"]).reject(&:blank?)
+          if new_videos.any?
+            replaced_blobs.concat(video_chapter.videos.blobs.to_a)
+            video_chapter.videos.detach
+            video_chapter.videos.attach(new_videos)
+          end
+
+          new_photos = Array(value["photos"]).reject(&:blank?)
+          if new_photos.any?
+            replaced_blobs.concat(video_chapter.photos.blobs.to_a)
+            video_chapter.photos.detach
+            video_chapter.photos.attach(new_photos)
+          end
+
+          # Handle ordering for photos
+          if value["images_order"].present?
+            video_chapter.photos_order = value["images_order"]
+          end
+
+          # Handle ordering for videos
+          if value["videos_order"].present?
+            video_chapter.videos_order = value["videos_order"]
+          end
+
+          video_chapter.save!
         end
       end
-
-      # Attach photos
-      if value["photos"].present? && value["photos"] != [""]
-        video_chapter.photos.purge
-        value["photos"].reject(&:blank?).each do |photo|
-          video_chapter.photos.attach(photo)
-        end
-      end
-
-      # Handle ordering for photos
-      if value["images_order"].present?
-        # image_ids = parse_order(params[:images_order], video_chapter.photos)
-        video_chapter.photos_order = value["images_order"]
-      end
-
-      # Handle ordering for videos
-      if value["videos_order"].present?
-        # video_ids = parse_order(params[:videos_order], video_chapter.videos)
-        video_chapter.videos_order = value["videos_order"]
-      end
-
-      video_chapter.save
+    rescue StandardError => e
+      Rails.logger.error("Unable to save content for video #{@video.id}: #{e.class}: #{e.message}")
+      flash.now[:alert] = t("videos.content.upload_failed")
+      return render :content, status: :unprocessable_entity
     end
 
+    replaced_blobs.uniq.each(&:purge_later)
     flash[:notice] = "Content added."
     skip_element(content_path)
   end
@@ -886,8 +906,10 @@ class VideosController < ApplicationController
           # Skip if the file is already attached
           next if chapter.videos.any? { |v| v.filename.to_s == video.original_filename }
 
-          # Purge the oldest video if there are already 2 videos
-          chapter.videos.first.purge if chapter.videos.count >= 2
+          if chapter.videos.count >= ChapterSharedBehavior::MEDIA_LIMIT
+            flash[:alert] = t("videos.content.video_limit_alert")
+            next
+          end
 
           chapter.videos.attach(video)
           preview_changed = true
@@ -909,8 +931,10 @@ class VideosController < ApplicationController
         # Skip if the file is already attached
         next if chapter.photos.any? { |p| p.filename.to_s == photo.original_filename }
 
-        # Purge the oldest photo if there are already 2 photos
-        chapter.photos.first.purge if chapter.photos.count >= 2
+        if chapter.photos.count >= ChapterSharedBehavior::MEDIA_LIMIT
+          flash[:alert] = t("videos.content.photo_limit_alert")
+          next
+        end
 
         chapter.photos.attach(photo)
         preview_changed = true

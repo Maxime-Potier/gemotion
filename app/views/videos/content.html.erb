@@ -20,7 +20,7 @@
 
   <div class="mt-6">
     <div>
-      <%= form_with url: content_post_path, method: :post, html: {data: {turbo: false}} do |f| %>
+      <%= form_with url: content_post_path, method: :post, html: { id: "chapter-content-form", data: {turbo: false}} do |f| %>
         <div class="content-frame">
           <div class="video-musics mb-minus-125 pb-40">
             <% @video.video_chapters.sort_by(&:order).each do |video_chapter| %>
@@ -56,9 +56,10 @@
                   <p class="p-text-16"><%= t('videos.content.drag_to_change') %></p>
                 </div>
 
-                <div class="w-100i text-center upload-music-block flex flex-col justify-center items-center">
-                  <label for="custom_music_<%= video_chapter.id %>" class="cursor-pointer flex flex-col justify-center items-center w-full" id="video-upload-<%= video_chapter.id %>">
-                    <span><%= t('videos.content.add_videos_limit') %></span>
+                <div class="w-100i text-center upload-music-block chapter-drop-zone flex flex-col justify-center items-center"
+                     data-media-type="video" id="video-drop-zone-<%= video_chapter.id %>">
+                  <label for="videoElem-<%= video_chapter.id %>" class="cursor-pointer flex flex-col justify-center items-center w-full" id="video-upload-<%= video_chapter.id %>">
+                    <span><%= t('videos.content.choose_or_drop_videos') %></span>
                     <div class="add-more-circle mt-6">
                       <span class="plus-sign">+</span>
                     </div>
@@ -87,9 +88,10 @@
                   <p class="p-text-16"><%= t('videos.content.drag_to_change') %></p>
                 </div>
 
-                <div class="w-100i text-center upload-music-block flex flex-col justify-center items-center">
-                  <label for="custom_music_<%= video_chapter.id %>" class="cursor-pointer flex flex-col justify-center items-center w-full" id="photo-upload-<%= video_chapter.id %>">
-                    <span><%= t('videos.content.add_photos_limit') %></span>
+                <div class="w-100i text-center upload-music-block chapter-drop-zone flex flex-col justify-center items-center"
+                     data-media-type="photo" id="photo-drop-zone-<%= video_chapter.id %>">
+                  <label for="photoElem-<%= video_chapter.id %>" class="cursor-pointer flex flex-col justify-center items-center w-full" id="photo-upload-<%= video_chapter.id %>">
+                    <span><%= t('videos.content.choose_or_drop_photos') %></span>
                     <div class="add-more-circle mt-6">
                       <span class="plus-sign">+</span>
                     </div>
@@ -105,9 +107,17 @@
           </div>
         </div>
 
+        <div id="media-upload-progress" class="w-full max-w-[1062px] mx-auto mt-8" hidden aria-live="polite">
+          <div class="flex justify-between items-center mb-2 p-text-16">
+            <span><%= t("videos.content.uploading_media") %></span>
+            <span id="media-upload-progress-value">0%</span>
+          </div>
+          <progress id="media-upload-progress-bar" class="w-full h-4" max="100" value="0">0%</progress>
+        </div>
+
         <div class="video-steps w-full">
           <%= render "videos/shared/back_button" %>
-          <%= f.submit t('next_step'), class: "black-link" %>
+          <%= f.submit t('next_step'), class: "black-link", id: "media-upload-submit" %>
         </div>
       <% end %>
     </div>
@@ -136,8 +146,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const imagesOrderInput = document.getElementById(`images_order_${id}`);
     const videosOrderInput = document.getElementById(`videos_order_${id}`);
 
-    const videoUploadBtn = document.getElementById(`video-upload-${id}`);
-    const photoUploadBtn = document.getElementById(`photo-upload-${id}`);
+    const videoDropZone = document.getElementById(`video-drop-zone-${id}`);
+    const photoDropZone = document.getElementById(`photo-drop-zone-${id}`);
 
     const videoGallery = document.getElementById(`video-gallery-${id}`);
     const photoGallery = document.getElementById(`photo-gallery-${id}`);
@@ -146,9 +156,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let videoDataTransfer = new DataTransfer();
     let photoDataTransfer = new DataTransfer();
-
-    videoUploadBtn.addEventListener("click", () => videoInput.click());
-    photoUploadBtn.addEventListener("click", () => photoInput.click());
 
     // Initialize Sortable for videos and photos
     new Sortable(videoGallery, {
@@ -163,6 +170,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     videoInput.addEventListener("change", () => handleFiles(videoInput, videoGallery, videoDataTransfer, 'video'));
     photoInput.addEventListener("change", () => handleFiles(photoInput, photoGallery, photoDataTransfer, 'photo'));
+
+    setupDropZone(videoDropZone, videoInput, videoGallery, videoDataTransfer, 'video');
+    setupDropZone(photoDropZone, photoInput, photoGallery, photoDataTransfer, 'photo');
 
     [...videoGallery.querySelectorAll(".chapter-attachment-remove"),
      ...photoGallery.querySelectorAll(".chapter-attachment-remove")].forEach(removeButton => {
@@ -196,11 +206,36 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    function handleFiles(input, gallery, dataTransfer, type) {
-      [...input.files].forEach(file => {
+    function setupDropZone(dropZone, input, gallery, dataTransfer, type) {
+      ["dragenter", "dragover"].forEach(eventName => {
+        dropZone.addEventListener(eventName, event => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+          dropZone.classList.add("is-dragging");
+        });
+      });
+
+      dropZone.addEventListener("dragleave", event => {
+        if (!dropZone.contains(event.relatedTarget)) dropZone.classList.remove("is-dragging");
+      });
+
+      dropZone.addEventListener("drop", event => {
+        event.preventDefault();
+        dropZone.classList.remove("is-dragging");
+
+        const acceptedPrefix = type === 'video' ? 'video/' : 'image/';
+        const acceptedFiles = [...event.dataTransfer.files].filter(file => file.type.startsWith(acceptedPrefix));
+        if (acceptedFiles.length === 0) return;
+
+        handleFiles(input, gallery, dataTransfer, type, acceptedFiles);
+      });
+    }
+
+    function handleFiles(input, gallery, dataTransfer, type, files = [...input.files]) {
+      files.forEach(file => {
           const sanitizedFilename = file.name.replace(/,/g, ""); // Sanitize filename
 
-          if (dataTransfer.items.length >= 2) {
+          if (dataTransfer.items.length >= <%= ChapterSharedBehavior::MEDIA_LIMIT %>) {
               alert(type === 'video' ? messages.videoLimit : messages.photoLimit);
               return;
           }
@@ -230,14 +265,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function addVideoToGallery(file, gallery) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const videoContainer = document.createElement("div");
-        videoContainer.classList.add("edit-video-container");
+      const videoContainer = document.createElement("div");
+      videoContainer.classList.add("edit-video-container");
 
-        const video = document.createElement("video");
-        video.src = e.target.result;
-        video.controls = true;
+      const video = document.createElement("video");
+      const objectUrl = URL.createObjectURL(file);
+      video.src = objectUrl;
+      video.controls = true;
 
         // Store the file name as a data attribute
         videoContainer.setAttribute('data-file-name', file.name);
@@ -249,6 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
         removeBtn.title = messages.remove;
         removeBtn.innerHTML = '<span aria-hidden="true">×</span>';
         removeBtn.addEventListener("click", () => {
+          URL.revokeObjectURL(objectUrl);
           videoContainer.remove();
           videoDataTransfer.items.remove([...videoDataTransfer.files].indexOf(file));
           videoInput.files = videoDataTransfer.files;
@@ -260,19 +295,16 @@ document.addEventListener("DOMContentLoaded", () => {
         gallery.appendChild(videoContainer);
 
         updateOrder(videoGallery, videosOrderInput);
-      };
-      reader.readAsDataURL(file);
     }
 
     function addPhotoToGallery(file, gallery) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const imgContainer = document.createElement("div");
-        imgContainer.classList.add("edit-image-container");
+      const imgContainer = document.createElement("div");
+      imgContainer.classList.add("edit-image-container");
 
-        const img = document.createElement("img");
-        img.src = e.target.result;
-        img.classList.add("preview-image");
+      const img = document.createElement("img");
+      const objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+      img.classList.add("preview-image");
 
         // Store the file name as a data attribute
         imgContainer.setAttribute('data-file-name', file.name);
@@ -284,6 +316,7 @@ document.addEventListener("DOMContentLoaded", () => {
         removeBtn.title = messages.remove;
         removeBtn.innerHTML = '<span aria-hidden="true">×</span>';
         removeBtn.addEventListener("click", () => {
+          URL.revokeObjectURL(objectUrl);
           imgContainer.remove();
           photoDataTransfer.items.remove([...photoDataTransfer.files].indexOf(file));
           photoInput.files = photoDataTransfer.files;
@@ -295,8 +328,6 @@ document.addEventListener("DOMContentLoaded", () => {
         gallery.appendChild(imgContainer);
 
         updateOrder(photoGallery, imagesOrderInput);
-      };
-      reader.readAsDataURL(file);
     }
 
     function updateOrder(gallery, input) {
@@ -307,6 +338,59 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log(input.value);
     }
 
+  });
+
+  const contentForm = document.getElementById("chapter-content-form");
+  const progressContainer = document.getElementById("media-upload-progress");
+  const progressBar = document.getElementById("media-upload-progress-bar");
+  const progressValue = document.getElementById("media-upload-progress-value");
+  const submitButton = document.getElementById("media-upload-submit");
+  const uploadFailedMessage = <%= t("videos.content.upload_failed").to_json.html_safe %>;
+
+  function restoreUploadForm() {
+    submitButton.disabled = false;
+    progressContainer.hidden = true;
+  }
+
+  contentForm.addEventListener("submit", event => {
+    event.preventDefault();
+    submitButton.disabled = true;
+    progressContainer.hidden = false;
+
+    const request = new XMLHttpRequest();
+    request.open(contentForm.method, contentForm.action);
+    request.setRequestHeader("Accept", "text/html");
+
+    request.upload.addEventListener("progress", uploadEvent => {
+      if (!uploadEvent.lengthComputable) return;
+
+      const percent = Math.round((uploadEvent.loaded / uploadEvent.total) * 100);
+      progressBar.value = percent;
+      progressBar.textContent = `${percent}%`;
+      progressValue.textContent = `${percent}%`;
+    });
+
+    request.addEventListener("load", () => {
+      if (request.status >= 200 && request.status < 400) {
+        if (request.responseURL) history.replaceState({}, "", request.responseURL);
+        document.open();
+        document.write(request.responseText);
+        document.close();
+        return;
+      }
+
+      restoreUploadForm();
+      window.alert(uploadFailedMessage);
+    });
+
+    request.addEventListener("error", () => {
+      restoreUploadForm();
+      window.alert(uploadFailedMessage);
+    });
+
+    request.addEventListener("abort", restoreUploadForm);
+
+    request.send(new FormData(contentForm));
   });
 });
 </script>

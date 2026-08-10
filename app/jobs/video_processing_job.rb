@@ -33,7 +33,14 @@ class VideoProcessingJob < ApplicationJob
     python_script = "#{Rails.root.join('lib/python/process_video.py')}"
 
     # Run Python script and capture output
-    stdout, stderr, status = Open3.capture3("python3.10 #{python_script} #{Shellwords.escape(temp_output_path)} #{Shellwords.escape(transparent_video_path)} #{Shellwords.escape(theme_video_path)}")
+    python_executable = ENV.fetch("PYTHON_EXECUTABLE", "python")
+    stdout, stderr, status = Open3.capture3(
+      python_executable,
+      python_script,
+      temp_output_path,
+      transparent_video_path,
+      theme_video_path
+    )
 
     # Check if the Python script ran successfully
     raise "Python script failed: #{stderr}" unless status.success? && File.exist?(transparent_video_path)

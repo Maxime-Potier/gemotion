@@ -23,8 +23,10 @@ Rails.application.configure do
   # Disable serving static files from `public/`, relying on NGINX/Apache to do so instead.
   # config.public_file_server.enabled = false
 
-  # Compress CSS using a preprocessor.
-  # config.assets.css_compressor = :sass
+  # Tailwind emits modern CSS expressions that the legacy SassC compressor
+  # cannot parse (for example calculations mixing percentages and pixels).
+  # Tailwind already minifies its own build, so keep Sprockets from reparsing it.
+  config.assets.css_compressor = nil
 
   # Do not fall back to assets pipeline if a precompiled asset is missed.
   config.assets.compile = false
@@ -49,7 +51,9 @@ Rails.application.configure do
   # config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
+  # Keep HTTPS mandatory in production by default, while allowing local Docker
+  # runs without a TLS-terminating reverse proxy to serve plain HTTP.
+  config.force_ssl = ENV.fetch("FORCE_SSL", "true").casecmp?("true")
 
   # Log to STDOUT by default
   config.logger = ActiveSupport::Logger.new(STDOUT)
@@ -83,8 +87,10 @@ config.logger = ActiveSupport::Logger.new("log/production.log")
     address: "smtp.gmail.com",
     port: 587,
     domain: "gmail.com",
-    user_name: ENV.fetch("GMAIL_USERNAME"),
-    password: ENV.fetch("GMAIL_APP_PASSWORD").delete(" "),
+    # Credentials are runtime configuration. Keep application boot and asset
+    # precompilation independent from secrets that are only needed to send mail.
+    user_name: ENV["GMAIL_USERNAME"],
+    password: ENV.fetch("GMAIL_APP_PASSWORD", "").delete(" "),
     authentication: :plain,
     enable_starttls_auto: true,
     openssl_verify_mode: "peer"
@@ -113,7 +119,7 @@ config.logger = ActiveSupport::Logger.new("log/production.log")
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
   public_url_options = {
-    host: ENV.fetch("APP_HOST"),
+    host: ENV.fetch("APP_HOST", "localhost"),
     protocol: ENV.fetch("APP_PROTOCOL", "https")
   }
   config.action_mailer.default_url_options = public_url_options

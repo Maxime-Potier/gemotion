@@ -239,6 +239,36 @@
   width: 100%;
 }
 
+.deadline-date-container {
+  width: calc(100% - 32px);
+  max-width: 350px;
+  padding: 18px;
+  border: 2px solid #0d6783;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.deadline-date-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #201f1f;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.deadline-date-field {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #0d6783;
+  border-radius: 6px;
+  background: #fff;
+  color: #201f1f;
+  font: inherit;
+  cursor: pointer;
+}
+
 .calendar-header {
   display: flex;
   justify-content: space-between;
