@@ -17,7 +17,7 @@
               </div>
               <div class="ml-50"><%= t('videos.content_dedicace.film_cost') %></div>
               <div class="flex justify-start items-center p-text-16">
-                <%= image_tag 'icons/ant-design_euro-outlined', alt: 'Time Icon', class: 'inline-block ml-2 mr-2', style: 'height: 24px; width: 24px;' %>
+                <%= image_tag 'icons/ant-design_euro-outlined.png', alt: 'Time Icon', class: 'inline-block ml-2 mr-2', style: 'height: 24px; width: 24px;' %>
                 <%duration_in_minutes = Video.calculate_duration(@video.final_video_duration) %>
                 <%=Video.calculate_price(duration_in_minutes)%>
               </div>
