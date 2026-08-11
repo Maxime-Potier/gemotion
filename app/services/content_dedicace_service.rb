@@ -5,6 +5,7 @@ require "shellwords"
 class ContentDedicaceService
   LANDSCAPE_IMAGE_FILTER = "scale=1280:720:force_original_aspect_ratio=decrease," \
                            "pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1".freeze
+  STILL_IMAGE_LOOP_OPTION = "-stream_loop -1".freeze
 
   def initialize(video)
     @video = video
@@ -260,7 +261,7 @@ class ContentDedicaceService
                          "box=1:boxcolor=black@0.0:boxborderw=5#{animation_params}"
 
         # Apply the filter to the image
-        ffmpeg_command = "ffmpeg -y -loop 1 -i \"#{preview_path}\" " \
+        ffmpeg_command = "ffmpeg -y #{STILL_IMAGE_LOOP_OPTION} -i \"#{preview_path}\" " \
           "-f lavfi -i anullsrc=r=44100:cl=stereo " \
           "-c:v libx264 -c:a aac -t #{@imgs_to_video_duration_in_seconds} -r 30 -vf \"#{LANDSCAPE_IMAGE_FILTER},#{drawtext_filter}\" -pix_fmt yuvj420p " \
           "\"#{mp4_output_path}\""
@@ -273,7 +274,7 @@ class ContentDedicaceService
       else
         # No text overlay, just use the standard processing
         system(
-          "ffmpeg -y -loop 1 -i \"#{preview_path}\" " \
+          "ffmpeg -y #{STILL_IMAGE_LOOP_OPTION} -i \"#{preview_path}\" " \
           "-f lavfi -i anullsrc=r=44100:cl=stereo " \
           "-c:v libx264 -c:a aac -t #{@imgs_to_video_duration_in_seconds} -r 30 -vf \"#{LANDSCAPE_IMAGE_FILTER}\" -pix_fmt yuvj420p " \
           "\"#{mp4_output_path}\""
@@ -436,7 +437,7 @@ class ContentDedicaceService
     fontfile = Rails.root.join("app/assets/images/fonts/#{chapter_text_family}-#{chapter_text_style}.ttf").to_s
 
     system(
-      "ffmpeg -y -loop 1 -i \"#{chapter_image_path}\" " \
+      "ffmpeg -y #{STILL_IMAGE_LOOP_OPTION} -i \"#{chapter_image_path}\" " \
       "-f lavfi -i anullsrc=r=44100:cl=stereo " \
       "-vf \"#{LANDSCAPE_IMAGE_FILTER},drawtext=text='#{chapter_text}':fontfile='#{fontfile}':" \
       "fontcolor=white:fontsize=#{chapter_text_size}:x=(w-text_w)/2:y=(h-text_h)/2:" \
@@ -470,12 +471,16 @@ class ContentDedicaceService
       input_path = ActiveStorage::Blob.service.send(:path_for, photo.key)
       output_path = @temp_dir.join("photo_#{chapter_index}_#{photo_index}.ts")
       p "+" * 100 + "process_photo" + "+" * 100
-      system(
-        "ffmpeg -y -loop 1 -i \"#{input_path}\" -f lavfi -i anullsrc=r=44100:cl=stereo " \
+      processed = system(
+        "ffmpeg -y #{STILL_IMAGE_LOOP_OPTION} -i \"#{input_path}\" -f lavfi -i anullsrc=r=44100:cl=stereo " \
         "-c:v libx264 -t #{@imgs_to_video_duration_in_seconds} -vf \"#{LANDSCAPE_IMAGE_FILTER}\" " \
         "-map 0:v -map 1:a -c:a aac -pix_fmt yuvj420p -r 30 \"#{output_path}\""
       )
       p "-" * 100 + "process_photo" + "-" * 100
+      unless processed && File.exist?(output_path) && File.size(output_path).positive?
+        raise "Failed to process photo #{photo.filename}"
+      end
+
       @ts_videos << output_path.to_s
       add_to_mlt_img(output_path, "photo_#{chapter_index}_#{photo_index}.ts", "photo_#{chapter_index}_#{photo_index}",
                      3)

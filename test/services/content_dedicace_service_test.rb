@@ -8,4 +8,11 @@ class ContentDedicaceServiceTest < ActiveSupport::TestCase
     assert_includes filter, "pad=1280:720"
     assert_includes filter, "setsar=1"
   end
+
+  test "still images use stream looping compatible with AVIF" do
+    option = ContentDedicaceService::STILL_IMAGE_LOOP_OPTION
+
+    assert_equal "-stream_loop -1", option
+    refute_includes option, "-loop 1"
+  end
 end
