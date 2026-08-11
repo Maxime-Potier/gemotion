@@ -6,6 +6,7 @@ class ContentDedicaceService
   LANDSCAPE_IMAGE_FILTER = "scale=1280:720:force_original_aspect_ratio=decrease," \
                            "pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1".freeze
   STILL_IMAGE_LOOP_OPTION = "-stream_loop -1".freeze
+  MP4_FASTSTART_OPTION = "-movflags +faststart".freeze
 
   def initialize(video)
     @video = video
@@ -517,7 +518,7 @@ class ContentDedicaceService
     system(
       "ffmpeg -y -i \"#{chapter_concatenated_video_path}\" -i \"#{chapter_music_path}\" " \
       "-filter_complex \"anullsrc=channel_layout=stereo:sample_rate=44100[a0];[1:a:0]volume=0.5[a1];[a0][a1]amix=inputs=2:duration=shortest[aout]\" " \
-      "-map 0:v:0 -map \"[aout]\" -c:v libx264 -pix_fmt yuv420p -r 30 -c:a aac -ar 44100 -movflags +faststart -shortest \"#{final_chapter_video_path}\""
+      "-map 0:v:0 -map \"[aout]\" -c:v libx264 -pix_fmt yuv420p -r 30 -c:a aac -ar 44100 #{MP4_FASTSTART_OPTION} -shortest \"#{final_chapter_video_path}\""
     )
     p "-" * 100 + "add_music_to_chapter" + "-" * 100
     unless File.exist?(final_chapter_video_path)
@@ -581,7 +582,7 @@ class ContentDedicaceService
       system(
         "ffmpeg -y -i \"#{final_concatenated_ts_path}\" -i \"#{final_music_path}\" " \
         "-filter_complex \"anullsrc=channel_layout=stereo:sample_rate=44100[a0];[1:a:0]volume=0.5[a1];[a0][a1]amix=inputs=2:duration=shortest[aout]\" " \
-        "-map 0:v:0 -map \"[aout]\" -c:v libx264 -pix_fmt yuv420p -r 30 -c:a aac -ar 44100 -movflags +faststart -shortest \"#{final_video_path}\""
+        "-map 0:v:0 -map \"[aout]\" -c:v libx264 -pix_fmt yuv420p -r 30 -c:a aac -ar 44100 #{MP4_FASTSTART_OPTION} -shortest \"#{final_video_path}\""
       )
       p "-" * 100 + "concatenate_final_video_with_music_on_whole_video" + "-" * 100
     else
@@ -638,7 +639,7 @@ class ContentDedicaceService
     p "+" * 100 + "concatenate_final_video_with_music_by_chapter_video" + "+" * 100
     system(
       "ffmpeg -y -f concat -safe 0 -i \"#{concat_file_path}\" -c:v libx264 -pix_fmt yuv420p " \
-      "-r 30 -c:a aac -ar 44100 \"#{final_video_path}\""
+      "-r 30 -c:a aac -ar 44100 #{MP4_FASTSTART_OPTION} \"#{final_video_path}\""
     )
     p "-" * 100 + "concatenate_final_video_with_music_by_chapter_video" + "-" * 100
 
@@ -690,7 +691,7 @@ class ContentDedicaceService
     ffmpeg_command = <<~CMD
       ffmpeg -i "#{video_path}" -i "#{watermark_image_path}" -i "#{watermark_image_path}" -filter_complex "
         [0:v][1:v]overlay=10:10[video1];
-        [video1][2:v]overlay=W-w-10:H-h-10" -c:a copy "#{watermarked_video_path}"
+        [video1][2:v]overlay=W-w-10:H-h-10" -c:a copy #{MP4_FASTSTART_OPTION} "#{watermarked_video_path}"
     CMD
 
     system(ffmpeg_command)

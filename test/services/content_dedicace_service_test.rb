@@ -15,4 +15,8 @@ class ContentDedicaceServiceTest < ActiveSupport::TestCase
     assert_equal "-stream_loop -1", option
     refute_includes option, "-loop 1"
   end
+
+  test "generated mp4 files are optimized for progressive playback" do
+    assert_equal "-movflags +faststart", ContentDedicaceService::MP4_FASTSTART_OPTION
+  end
 end
