@@ -232,13 +232,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function handleFiles(input, gallery, dataTransfer, type, files = [...input.files]) {
-      files.forEach(file => {
-          const sanitizedFilename = file.name.replace(/,/g, ""); // Sanitize filename
+      const mediaLimit = <%= ChapterSharedBehavior::MEDIA_LIMIT %>;
+      const availableSlots = Math.max(mediaLimit - dataTransfer.items.length, 0);
+      const acceptedFiles = files.slice(0, availableSlots);
 
-          if (dataTransfer.items.length >= <%= ChapterSharedBehavior::MEDIA_LIMIT %>) {
-              alert(type === 'video' ? messages.videoLimit : messages.photoLimit);
-              return;
-          }
+      if (files.length > availableSlots) {
+        window.alert(type === 'video' ? messages.videoLimit : messages.photoLimit);
+      }
+
+      acceptedFiles.forEach(file => {
+          const sanitizedFilename = file.name.replace(/,/g, ""); // Sanitize filename
 
           // Create a new File object with the sanitized filename
           const sanitizedFile = new File([file], sanitizedFilename, { type: file.type });

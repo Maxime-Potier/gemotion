@@ -134,6 +134,31 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_select ".alert", text: "Please select a dedication."
   end
 
+  test "dedicace validation alert does not persist after a successful selection" do
+    user = User.create!(
+      email: "dedicace-flash-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456788"
+    )
+    video = user.videos.create!(video_type: :solo, stop_at: "music", token: "dedicace-flash-token")
+    dedicace = Dedicace.create!(name: "Song")
+    sign_in user
+
+    post dedicace_post_url(locale: :en), params: { special_request_dedicace: "" }
+    assert_response :unprocessable_entity
+    assert_select ".alert", text: "Please select a dedication."
+
+    post dedicace_post_url(locale: :en), params: { dedicace: dedicace.id, special_request_dedicace: "" }
+
+    assert_redirected_to share_url(locale: :en)
+    follow_redirect!
+    assert_response :success
+    assert_select ".alert", count: 0
+    assert_equal dedicace, video.reload.dedicace
+  end
+
   test "recipient validation alert uses the requested locale" do
     user = User.create!(
       email: "recipient-validation-test@example.com",
@@ -607,6 +632,39 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_equal "music", video.reload.stop_at
   end
 
+  test "chapter music step accepts an uploaded MP3" do
+    user = User.create!(
+      email: "chapter-mp3-upload-test@example.com",
+      password: "Password123!",
+      first_name: "Test",
+      last_name: "User",
+      phone: "+33123456772"
+    )
+    video = user.videos.create!(
+      video_type: :solo,
+      stop_at: "select_chapters",
+      music_type: :by_chapters
+    )
+    chapter_type = ChapterType.create!(name: "Passions")
+    chapter = video.video_chapters.create!(chapter_type:, text: "Music upload")
+    upload = Rack::Test::UploadedFile.new(Rails.root.join("app/assets/musiques/ami-1.mp3"), "audio/mpeg")
+    sign_in user
+
+    get music_url(locale: :en)
+
+    assert_response :success
+    assert_select "input#custom_music_#{chapter.id}[type='file'][accept*='.mp3']"
+    assert_select ".custom-music-file-name[aria-live='polite']"
+
+    assert_enqueued_with(job: MusicProcessingJob, args: ["VideoChapter", chapter.id]) do
+      post music_post_url(locale: :en), params: { "custom_music_#{chapter.id}" => upload }
+    end
+
+    assert_redirected_to dedicace_url(locale: :en)
+    assert chapter.reload.custom_music.attached?
+    assert_equal "ami-1.mp3", chapter.custom_music.filename.to_s
+  end
+
   test "invalid chapter music selection uses the requested locale" do
     user = User.create!(
       email: "invalid-chapter-music-test@example.com",
@@ -719,7 +777,13 @@ class VideosControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Choose or drop up to 20 videos"
     assert_includes response.body, "Choose or drop up to 20 photos"
-    assert_includes response.body, "dataTransfer.items.length >= 20"
+    assert_includes response.body, "const availableSlots = Math.max(mediaLimit - dataTransfer.items.length, 0)"
+    assert_includes response.body, "const acceptedFiles = files.slice(0, availableSlots)"
+    assert_includes response.body, "if (files.length > availableSlots)"
+    assert_includes response.body, "window.alert(type === 'video' ? messages.videoLimit : messages.photoLimit)"
+    assert_operator response.body.index("window.alert(type === 'video' ? messages.videoLimit : messages.photoLimit)"),
+                    :<,
+                    response.body.index("acceptedFiles.forEach(file =>")
     assert_select "input[type='file'][multiple]", minimum: 2
     assert_select ".chapter-drop-zone[data-media-type='video']"
     assert_select ".chapter-drop-zone[data-media-type='photo']"

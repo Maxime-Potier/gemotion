@@ -90,7 +90,7 @@
                     <%= image_tag "icons/music_edit.png", alt: "Edit Icon", class: "edit-music-video-icon ml" %>
                   </div>
                 </div>
-                <%if video_chapter.custom_music.attached? && video_chapter.waveform.present?%>
+                <% if video_chapter.custom_music.attached? %>
                   <div class="relative audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= rails_blob_path(video_chapter.custom_music, disposition: 'inline') %>" data-waveform="<%= video_chapter.waveform.to_json %>">
                     <button type="button" class="play-icon play-button" aria-label="<%= t('videos.music.play') %>" data-audio-visualizer-target="playPauseButton">
                       <div class="play-button-icon"></div>
@@ -104,7 +104,7 @@
                 <%end%>
                 <div class="w-100i text-center h-170i upload-music-block flex flex-col justify-center items-center">
                   <label for="custom_music_<%= video_chapter.id %>" class="cursor-pointer flex flex-col justify-center items-center w-full">
-                    <span><%= t('videos.music.add_music_track') %></span>
+                    <span class="custom-music-file-name" aria-live="polite"><%= t('videos.music.add_music_track') %></span>
                     <div class="add-more-circle mt-6">
                       <span class="plus-sign">+</span>
                     </div>
@@ -113,7 +113,7 @@
                         id="custom_music_<%= video_chapter.id %>"
                         name="custom_music_<%= video_chapter.id %>"
                         class="hidden custom-music-file-input"
-                        accept="audio/mpeg">
+                        accept=".mp3,audio/mpeg,audio/mp3">
                 </div>
 
               <div class="w-full flex justify-center items-center p-text-center-bold-16"><%= t('or') %></div>
@@ -170,6 +170,14 @@ document.addEventListener("turbo:load", () => {
   const radioButtons = document.querySelectorAll('input[name="video[music_type]"]');
   const wholeVideoForm = document.getElementById('whole-video-form');
   const byChaptersForm = document.getElementById('by-chapters-form');
+
+  document.querySelectorAll('.custom-music-file-input').forEach((input) => {
+    input.addEventListener('change', () => {
+      const fileName = input.files?.[0]?.name;
+      const label = input.closest('.upload-music-block')?.querySelector('.custom-music-file-name');
+      if (fileName && label) label.textContent = fileName;
+    });
+  });
 
   radioButtons.forEach(radio => {
     radio.addEventListener('change', () => {

@@ -499,15 +499,8 @@ class VideosController < ApplicationController
         music_file = value
         video_chapter = @video.video_chapters.find_by(id: chapter_id)
         if video_chapter
-          # Save the custom music to a persistent location
-          music_path = Rails.root.join("tmp", "custom_music_#{video_chapter.id}.mp3")
-          File.open(music_path, "wb") do |file|
-            file.write(music_file.read)
-          end
-
-          # Attach the file to the video chapter and enqueue the job
-          video_chapter.custom_music.attach(io: File.open(music_path), filename: music_file.original_filename)
-          MusicProcessingJob.perform_later("VideoChapter", video_chapter.id, music_path.to_s)
+          video_chapter.custom_music.attach(music_file)
+          MusicProcessingJob.perform_later("VideoChapter", video_chapter.id)
         end
       end
     end
@@ -544,7 +537,7 @@ class VideosController < ApplicationController
   def dedicace_post
     authorize @video, :dedicace_post?, policy_class: VideoPolicy
     if params[:dedicace].nil?
-      flash[:alert] = I18n.t("videos.messages.dedicace_required")
+      flash.now[:alert] = I18n.t("videos.messages.dedicace_required")
       return render :dedicace, status: :unprocessable_entity
     end
 
@@ -553,7 +546,7 @@ class VideosController < ApplicationController
     # Utilisation de find_by pour avoir un objet nil si pas trouvé.
     dedicace = Dedicace.find_by(id: params[:dedicace])
     if dedicace.nil?
-      flash[:alert] = I18n.t("videos.messages.dedicace_invalid")
+      flash.now[:alert] = I18n.t("videos.messages.dedicace_invalid")
       return render :dedicace, status: :unprocessable_entity
     end
 
@@ -980,15 +973,8 @@ class VideosController < ApplicationController
         # Find the corresponding video chapter
         video_chapter = @video.video_chapters.find_by(id: chapter_id)
         if video_chapter && music_file.present?
-          # Save the custom music file temporarily
-          music_path = Rails.root.join("tmp", "custom_music_#{video_chapter.id}.mp3")
-          File.open(music_path, "wb") do |file|
-            file.write(music_file.read)
-          end
-
-          # Attach the file to the video chapter and enqueue the job
-          video_chapter.custom_music.attach(io: File.open(music_path), filename: music_file.original_filename)
-          MusicProcessingJob.perform_later("VideoChapter", video_chapter.id, music_path.to_s)
+          video_chapter.custom_music.attach(music_file)
+          MusicProcessingJob.perform_later("VideoChapter", video_chapter.id)
           preview_changed = true
         else
           flash[:alert] ||= []

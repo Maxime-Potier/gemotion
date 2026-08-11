@@ -336,15 +336,8 @@ class ProjectsController < ApplicationController
         # Find the corresponding video chapter
         video_chapter = @video.video_chapters.find_by(id: chapter_id)
         if video_chapter && music_file.present?
-          # Save the custom music file temporarily
-          music_path = Rails.root.join("tmp", "custom_music_#{video_chapter.id}.mp3")
-          File.open(music_path, "wb") do |file|
-            file.write(music_file.read)
-          end
-
-          # Attach the file to the video chapter and enqueue the job
-          video_chapter.custom_music.attach(io: File.open(music_path), filename: music_file.original_filename)
-          MusicProcessingJob.perform_later("VideoChapter", video_chapter.id, music_path.to_s)
+          video_chapter.custom_music.attach(music_file)
+          MusicProcessingJob.perform_later("VideoChapter", video_chapter.id)
         else
           flash[:alert] ||= []
           flash[:alert] << "Fichier de musique personnalisé manquant ou chapitre introuvable pour l'ID #{chapter_id}."
@@ -451,15 +444,8 @@ class ProjectsController < ApplicationController
         # Find the corresponding video chapter
         collaborator_chapter = @video.collaborator_chapters.find_by(id: chapter_id)
         if collaborator_chapter && music_file.present?
-          # Save the custom music file temporarily
-          music_path = Rails.root.join("tmp", "custom_music_#{collaborator_chapter.id}.mp3")
-          File.open(music_path, "wb") do |file|
-            file.write(music_file.read)
-          end
-
-          # Attach the file to the video chapter and enqueue the job
-          collaborator_chapter.custom_music.attach(io: File.open(music_path), filename: music_file.original_filename)
-          MusicProcessingJob.perform_later("CollaboratorChapter", collaborator_chapter.id, music_path.to_s)
+          collaborator_chapter.custom_music.attach(music_file)
+          MusicProcessingJob.perform_later("CollaboratorChapter", collaborator_chapter.id)
         else
           flash[:alert] ||= []
           flash[:alert] << "Fichier de musique personnalisé manquant ou chapitre introuvable pour l'ID #{chapter_id}."

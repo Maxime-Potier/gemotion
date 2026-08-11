@@ -68,7 +68,7 @@
                 <hr class="hr-divider-gray mt-4 mb-4"/>
                 <% if video.by_chapters? %>
                   <div class="music-selection w-full">
-                    <%if chapter.custom_music.attached? && chapter.waveform.present?%>
+                    <% if chapter.custom_music.attached? %>
                       <div class="relative audio-visualizer custom-audio-player" data-controller="audio-visualizer" data-audio-src="<%= rails_blob_path(chapter.custom_music, disposition: 'inline') %>" data-waveform="<%= chapter.waveform.to_json %>">
                         <button type="button" class="play-icon play-button" aria-label="<%= t('videos.music.play') %>" data-audio-visualizer-target="playPauseButton">
                           <div class="play-button-icon"></div>
